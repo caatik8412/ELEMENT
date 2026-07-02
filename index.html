@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Element Environment — Office Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--navy-deep:#0A1628;--navy-mid:#1A3A5C;--navy-light:#2563EB;--accent:#38BDF8;--bg:#F0F4FF;--card:#FFFFFF;--border:#CBD5E1;--text:#1E293B;--text-muted:#64748B;--success:#16A34A;--danger:#DC2626;--warning:#D97706;--sidebar-w:220px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
+#sidebar{width:var(--sidebar-w);background:var(--navy-deep);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:width .2s}
+#sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+#sidebar-logo .firm{font-size:11px;color:#38BDF8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+#sidebar-logo .client{font-size:13px;color:#fff;font-weight:700;line-height:1.3}
+#sidebar-logo .sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+nav{flex:1;padding:10px 0;overflow-y:auto}
+nav a{display:flex;align-items:center;gap:10px;padding:10px 16px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+nav a:hover{color:#fff;background:rgba(255,255,255,.06)}
+nav a.active{color:#fff;background:rgba(37,99,235,.25);border-left-color:#38BDF8}
+nav a .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+#sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.3)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+#topbar{background:#fff;border-bottom:1px solid #CBD5E1;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+#topbar h1{font-size:16px;font-weight:700;color:#1A3A5C}
+#topbar .meta{font-size:12px;color:#64748B}
+#content{padding:24px;flex:1}
+.card{background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.card-header h2{font-size:15px;font-weight:700;color:#1A3A5C}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:16px}
+.stat-card .label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.stat-card .value{font-size:22px;font-weight:800;color:#1A3A5C;margin-top:4px}
+.stat-card .sub{font-size:11px;color:#64748B;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F8FAFC;padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #CBD5E1}
+td{padding:9px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
+tr:hover td{background:#F8FAFF}
+.table-wrap{overflow-x:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:#2563EB;color:#fff}.btn-primary:hover{background:#1D4ED8}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-success{background:#16A34A;color:#fff}
+.btn-danger{background:#DC2626;color:#fff}
+.btn-outline{background:transparent;border:1px solid #CBD5E1;color:#1E293B}.btn-outline:hover{background:#F0F4FF}
+.btn-accent{background:#38BDF8;color:#0A1628}
+.btn-warning{background:#D97706;color:#fff}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.04em}
+.form-group input,.form-group select,.form-group textarea{padding:8px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;color:#1E293B;outline:none;transition:border .15s;background:#fff;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-group textarea{resize:vertical;min-height:70px}
+.form-section{font-size:11px;font-weight:700;color:#1A3A5C;text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;border-bottom:1px solid #CBD5E1;margin-bottom:4px;grid-column:1/-1}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:10px;width:90%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-head{padding:16px 20px;border-bottom:1px solid #CBD5E1;display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:15px;font-weight:700;color:#1A3A5C}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 20px;border-top:1px solid #CBD5E1;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:#64748B;line-height:1}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:#DCFCE7;color:#15803D}.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-red{background:#FEE2E2;color:#B91C1C}.badge-yellow{background:#FEF9C3;color:#854D0E}
+.badge-gray{background:#F1F5F9;color:#475569}
+#toast{position:fixed;bottom:24px;right:24px;background:#1A3A5C;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.2);min-width:200px}
+#toast.show{display:block}
+.due-overdue{color:#DC2626;font-weight:700}.due-soon{color:#D97706;font-weight:600}.due-ok{color:#16A34A}
+.pf-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.pf-box{border:1px solid #CBD5E1;border-radius:6px;padding:12px;text-align:center}
+.pf-box .lbl{font-size:10px;color:#64748B;text-transform:uppercase;font-weight:600}
+.pf-box .val{font-size:16px;font-weight:800;color:#1A3A5C;margin-top:4px}
+.loading{text-align:center;padding:40px;color:#64748B;font-size:13px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #CBD5E1;border-top-color:#2563EB;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.section-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #CBD5E1;padding-bottom:0}
+.section-tab{padding:8px 16px;font-size:13px;font-weight:600;color:#64748B;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.section-tab.active{color:#2563EB;border-bottom-color:#2563EB}
+@media print{#sidebar,#topbar,.no-print{display:none!important}#main{margin-left:0}body{background:#fff}.card{border:none;padding:0}}
+@media(max-width:768px){:root{--sidebar-w:60px}#sidebar-logo .client,#sidebar-logo .firm,#sidebar-logo .sub,nav a span{display:none}nav a{justify-content:center;padding:12px}nav a .icon{font-size:18px}#content{padding:12px}}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div id="sidebar-logo">
+    <div class="firm">CA Atik Bhayani</div>
+    <div class="client">The Element Environment</div>
+    <div class="sub">Pvt Ltd — Office Manager</div>
+  </div>
+  <nav>
+    <a onclick="showTab('dashboard')" class="active" id="nav-dashboard"><span class="icon">🏠</span><span>Dashboard</span></a>
+    <a onclick="showTab('billing')" id="nav-billing"><span class="icon">🧾</span><span>Billing</span></a>
+    <a onclick="showTab('purchases')" id="nav-purchases"><span class="icon">🛒</span><span>Purchases</span></a>
+    <a onclick="showTab('duedates')" id="nav-duedates"><span class="icon">📅</span><span>Due Dates</span></a>
+    <a onclick="showTab('pfesi')" id="nav-pfesi"><span class="icon">👥</span><span>PF &amp; ESI</span></a>
+    <a onclick="showTab('clients')" id="nav-clients"><span class="icon">🏢</span><span>Clients</span></a>
+    <a onclick="showTab('employees')" id="nav-employees"><span class="icon">🪪</span><span>Employees</span></a>
+    <a onclick="showTab('gstr1')" id="nav-gstr1"><span class="icon">📊</span><span>GSTR-1</span></a>
+  </nav>
+  <div id="sidebar-footer">Powered by CA Atik Bhayani</div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div class="meta" id="topbar-meta"></div>
+  </div>
+  <div id="content">
+    <div class="loading"><span class="spinner"></span>Connecting to server...</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══ MODALS ══════════════════════════════════════════════ -->
+
+<!-- Client Modal -->
+<div class="modal-bg" id="modal-client">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="client-modal-title">Add Client</h3>
+      <button class="close-btn" onclick="closeModal('modal-client')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">Basic Details</div>
+        <div class="form-group"><label>Client Name *</label><input id="cl-name" placeholder="Company / Individual name"/></div>
+        <div class="form-group"><label>GSTIN</label><input id="cl-gstin" placeholder="22AAAAA0000A1Z5" maxlength="15" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>PAN</label><input id="cl-pan" placeholder="AAAAA0000A" maxlength="10" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>State</label>
+          <select id="cl-state" onchange="document.getElementById('cl-stateCode').value=getStateCode(this.value)">
+            <option value="">-- Select State --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>State Code</label><input id="cl-stateCode" readonly placeholder="Auto-filled"/></div>
+        <div class="form-group"><label>City</label><input id="cl-city" placeholder="City"/></div>
+        <div class="form-section">Contact</div>
+        <div class="form-group"><label>Contact Person</label><input id="cl-contact" placeholder="Name"/></div>
+        <div class="form-group"><label>Phone</label><input id="cl-phone" placeholder="Mobile number" type="tel"/></div>
+        <div class="form-group"><label>Email</label><input id="cl-email" placeholder="email@example.com" type="email"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Address</label><textarea id="cl-address" placeholder="Full address"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-client')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient()">💾 Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-bg" id="modal-employee">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="emp-modal-title">Add Employee</h3>
+      <button class="close-btn" onclick="closeModal('modal-employee')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">Personal Details</div>
+        <div class="form-group"><label>Emp Code</label><input id="em-code" placeholder="EMP001"/></div>
+        <div class="form-group"><label>Full Name *</label><input id="em-name" placeholder="Full name as per Aadhaar"/></div>
+        <div class="form-group"><label>Father's Name</label><input id="em-father" placeholder="Father's / Husband's name"/></div>
+        <div class="form-group"><label>Date of Birth</label><input id="em-dob" type="date"/></div>
+        <div class="form-group"><label>Gender</label><select id="em-gender"><option value="">--</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="form-group"><label>Date of Joining</label><input id="em-doj" type="date"/></div>
+        <div class="form-group"><label>Designation</label><input id="em-designation" placeholder="e.g. Site Engineer"/></div>
+        <div class="form-group"><label>Department</label><input id="em-dept" placeholder="e.g. Operations"/></div>
+        <div class="form-group"><label>Mobile No</label><input id="em-mobile" type="tel" placeholder="10-digit mobile"/></div>
+        <div class="form-group"><label>Email</label><input id="em-email" type="email" placeholder="email@example.com"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Address</label><textarea id="em-address" placeholder="Residential address" style="min-height:50px"></textarea></div>
+        <div class="form-section">PF Details</div>
+        <div class="form-group"><label>Aadhaar No</label><input id="em-aadhaar" placeholder="12-digit Aadhaar" maxlength="12"/></div>
+        <div class="form-group"><label>PAN</label><input id="em-pan" placeholder="AAAAA0000A" maxlength="10" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>UAN</label><input id="em-uan" placeholder="Universal Account No (12 digits)" maxlength="12"/></div>
+        <div class="form-group"><label>PF Wages Ceiling (₹)</label><input id="em-pfceil" type="number" value="15000" placeholder="15000"/></div>
+        <div class="form-group"><label>PF Nominee Name</label><input id="em-nom-pf" placeholder="Nominee name"/></div>
+        <div class="form-group"><label>Nominee Relation (PF)</label><input id="em-nom-pf-rel" placeholder="e.g. Wife, Son"/></div>
+        <div class="form-section">ESI Details</div>
+        <div class="form-group"><label>ESIC IP Number</label><input id="em-esic" placeholder="17-digit ESIC IP No" maxlength="17"/></div>
+        <div class="form-group"><label>ESI Nominee Name</label><input id="em-nom-esi" placeholder="Nominee name"/></div>
+        <div class="form-group"><label>Nominee Relation (ESI)</label><input id="em-nom-esi-rel" placeholder="e.g. Wife"/></div>
+        <div class="form-section">Bank Details</div>
+        <div class="form-group"><label>Bank Name</label><input id="em-bank" placeholder="e.g. SBI"/></div>
+        <div class="form-group"><label>Account Number</label><input id="em-acc" placeholder="Account number"/></div>
+        <div class="form-group"><label>IFSC Code</label><input id="em-ifsc" placeholder="e.g. SBIN0001234" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>Status</label><select id="em-status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Left">Left</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-employee')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">💾 Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-bg" id="modal-invoice">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="inv-modal-title">New Invoice</h3>
+      <button class="close-btn" onclick="closeModal('modal-invoice')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">Invoice Details</div>
+        <div class="form-group"><label>Invoice No</label><input id="inv-no" placeholder="Auto-generated" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Invoice Date *</label><input id="inv-date" type="date"/></div>
+        <div class="form-section">Client</div>
+        <div class="form-group"><label>Select Client *</label>
+          <select id="inv-client" onchange="fillClientGST()">
+            <option value="">-- Select Client --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Client GSTIN</label><input id="inv-gstin" placeholder="Auto-filled from client" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>Client State</label><select id="inv-client-state" onchange="calcInvGST()"><option value="">-- Select --</option></select></div>
+        <div class="form-group"><label>Place of Supply</label><select id="inv-pos" onchange="calcInvGST()"><option value="">-- Select --</option></select></div>
+        <div class="form-section">Service</div>
+        <div class="form-group" style="grid-column:1/-1"><label>Service Description *</label><textarea id="inv-desc" placeholder="Describe the service rendered..."></textarea></div>
+        <div class="form-group"><label>SAC Code</label><input id="inv-sac" placeholder="e.g. 998319"/></div>
+        <div class="form-group"><label>Taxable Value (₹) *</label><input id="inv-taxable" type="number" step="0.01" oninput="calcInvGST()"/></div>
+        <div class="form-group"><label>GST Rate (%)</label>
+          <select id="inv-gstrate" onchange="calcInvGST()">
+            <option value="0">0% (Exempt)</option>
+            <option value="5">5%</option>
+            <option value="12">12%</option>
+            <option value="18" selected>18%</option>
+            <option value="28">28%</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Supply Type</label><input id="inv-supply-type" readonly style="background:#F8FAFC" placeholder="Intra / Inter State"/></div>
+        <div class="form-section">GST Breakup</div>
+        <div class="form-group"><label>CGST (₹)</label><input id="inv-cgst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>SGST (₹)</label><input id="inv-sgst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>IGST (₹)</label><input id="inv-igst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Total Amount (₹)</label><input id="inv-total" readonly style="background:#F8FAFC;font-weight:700"/></div>
+        <div class="form-group"><label>Notes</label><input id="inv-notes" placeholder="Optional remarks"/></div>
+        <div class="form-group"><label>Status</label><select id="inv-status"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option><option value="Partial">Partial</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-invoice')">Cancel</button>
+      <button class="btn btn-warning no-print" onclick="printInvoice()">🖨️ Print Preview</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">💾 Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Modal -->
+<div class="modal-bg" id="modal-purchase">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add Purchase / Expense</h3>
+      <button class="close-btn" onclick="closeModal('modal-purchase')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Date *</label><input id="pur-date" type="date"/></div>
+        <div class="form-group"><label>Vendor Name *</label><input id="pur-vendor" placeholder="Vendor / Supplier name"/></div>
+        <div class="form-group"><label>Vendor GSTIN</label><input id="pur-gstin" placeholder="GSTIN if available" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="form-group"><label>Vendor Invoice No</label><input id="pur-invno" placeholder="Vendor's invoice number"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Description</label><textarea id="pur-desc" placeholder="Description of goods/services purchased" style="min-height:55px"></textarea></div>
+        <div class="form-group"><label>Expense Head</label>
+          <select id="pur-head">
+            <option>Office Supplies</option><option>Travel & Conveyance</option><option>Professional Fees</option>
+            <option>Rent</option><option>Utilities</option><option>Repairs & Maintenance</option>
+            <option>Advertisement</option><option>Printing & Stationery</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Taxable Value (₹) *</label><input id="pur-taxable" type="number" step="0.01" oninput="calcPurGST()"/></div>
+        <div class="form-group"><label>GST Rate (%)</label>
+          <select id="pur-gstrate" onchange="calcPurGST()">
+            <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option>
+            <option value="18" selected>18%</option><option value="28">28%</option>
+          </select>
+        </div>
+        <div class="form-group"><label>CGST (₹)</label><input id="pur-cgst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>SGST (₹)</label><input id="pur-sgst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>IGST (₹)</label><input id="pur-igst" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Total Amount (₹)</label><input id="pur-total" readonly style="background:#F8FAFC;font-weight:700"/></div>
+        <div class="form-group"><label>Payment Status</label><select id="pur-status"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-purchase')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePurchase()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Due Date Modal -->
+<div class="modal-bg" id="modal-duedate">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h3>Add Due Date</h3>
+      <button class="close-btn" onclick="closeModal('modal-duedate')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1"><label>Compliance *</label>
+          <select id="dd-compliance">
+            <option>GSTR-1</option><option>GSTR-3B</option><option>TDS Payment</option>
+            <option>TDS Return (24Q)</option><option>TDS Return (26Q)</option>
+            <option>Advance Tax</option><option>PF Challan</option><option>ESI Challan</option>
+            <option>PT (Professional Tax)</option><option>ROC Filing</option><option>Income Tax Return</option>
+            <option>Tax Audit</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Period</label><input id="dd-period" placeholder="e.g. Apr 2025, Q1 FY25-26"/></div>
+        <div class="form-group"><label>Due Date *</label><input id="dd-date" type="date"/></div>
+        <div class="form-group"><label>Status</label><select id="dd-status"><option value="Pending">Pending</option><option value="Done">Done</option><option value="NA">N/A</option></select></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Remarks</label><input id="dd-remarks" placeholder="Any notes"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-duedate')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDueDate()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PF/ESI Monthly Entry Modal -->
+<div class="modal-bg" id="modal-pfesi">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Monthly PF &amp; ESI Entry</h3>
+      <button class="close-btn" onclick="closeModal('modal-pfesi')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Month</label>
+          <select id="pf-month">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Year</label><input id="pf-year" type="number" value="2025" min="2020" max="2035"/></div>
+        <div class="form-group"><label>Employee *</label>
+          <select id="pf-emp" onchange="fillPFEmpDetails()"><option value="">-- Select Employee --</option></select>
+        </div>
+        <div class="form-group"><label>UAN</label><input id="pf-uan" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>ESIC IP No</label><input id="pf-esic" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Total Days in Month</label><input id="pf-totaldays" type="number" value="30" min="28" max="31" oninput="calcPFESI()"/></div>
+        <div class="form-group"><label>Present Days</label><input id="pf-present" type="number" min="0" max="31" oninput="calcPFESI()" placeholder="0"/></div>
+        <div class="form-group"><label>Gross Monthly Salary (₹)</label><input id="pf-gross" type="number" step="0.01" oninput="calcPFESI()" placeholder="0"/></div>
+        <div class="form-group"><label>PF Wages Ceiling (₹)</label><input id="pf-ceil" type="number" value="15000" oninput="calcPFESI()"/></div>
+        <div class="form-section">Computed Values</div>
+        <div class="form-group"><label>Proportional Gross (₹)</label><input id="pf-prop-gross" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>PF Wages (₹)</label><input id="pf-pfwages" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>ESIC Wages (₹)</label><input id="pf-esicwages" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>ESIC Eligible?</label><input id="pf-esicelig" readonly style="background:#F8FAFC"/></div>
+        <div class="form-section">Employee Deductions</div>
+        <div class="form-group"><label>Emp PF (12%) (₹)</label><input id="pf-emp-pf" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Emp ESI (0.75%) (₹)</label><input id="pf-emp-esi" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Total Deduction (₹)</label><input id="pf-total-ded" readonly style="background:#F8FAFC;font-weight:700"/></div>
+        <div class="form-group"><label>Net Salary (₹)</label><input id="pf-net" readonly style="background:#F8FAFC;font-weight:700"/></div>
+        <div class="form-section">Employer Contributions</div>
+        <div class="form-group"><label>Emplr EPF (3.67%) (₹)</label><input id="pf-emplr-epf" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Emplr EPS (8.33%) (₹)</label><input id="pf-emplr-eps" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Emplr ESI (3.25%) (₹)</label><input id="pf-emplr-esi" readonly style="background:#F8FAFC"/></div>
+        <div class="form-group"><label>Total Emplr Contribution (₹)</label><input id="pf-emplr-total" readonly style="background:#F8FAFC;font-weight:700"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-pfesi')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePFESI()">💾 Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ CONFIG ═════════════════════════════════════════════════
+const API_URL = 'YOUR_APPS_SCRIPT_URL_HERE'; // Replace after deployment
+
+// ══ STATE ══════════════════════════════════════════════════
+let clients = [], employees = [], invoices = [], purchases = [], dueDates = [], pfesi = [];
+let editingId = null;
+const TEPL_STATE_CODE = '27'; // Maharashtra
+
+// ══ INDIAN STATES ══════════════════════════════════════════
+const STATES = [
+  {name:'Andaman & Nicobar Islands',code:'35'},{name:'Andhra Pradesh',code:'37'},
+  {name:'Arunachal Pradesh',code:'12'},{name:'Assam',code:'18'},{name:'Bihar',code:'10'},
+  {name:'Chandigarh',code:'04'},{name:'Chhattisgarh',code:'22'},
+  {name:'Dadra & Nagar Haveli & Daman & Diu',code:'26'},{name:'Delhi',code:'07'},
+  {name:'Goa',code:'30'},{name:'Gujarat',code:'24'},{name:'Haryana',code:'06'},
+  {name:'Himachal Pradesh',code:'02'},{name:'Jammu & Kashmir',code:'01'},
+  {name:'Jharkhand',code:'20'},{name:'Karnataka',code:'29'},{name:'Kerala',code:'32'},
+  {name:'Ladakh',code:'38'},{name:'Lakshadweep',code:'31'},{name:'Madhya Pradesh',code:'23'},
+  {name:'Maharashtra',code:'27'},{name:'Manipur',code:'14'},{name:'Meghalaya',code:'17'},
+  {name:'Mizoram',code:'15'},{name:'Nagaland',code:'13'},{name:'Odisha',code:'21'},
+  {name:'Puducherry',code:'34'},{name:'Punjab',code:'03'},{name:'Rajasthan',code:'08'},
+  {name:'Sikkim',code:'11'},{name:'Tamil Nadu',code:'33'},{name:'Telangana',code:'36'},
+  {name:'Tripura',code:'16'},{name:'Uttar Pradesh',code:'09'},{name:'Uttarakhand',code:'05'},
+  {name:'West Bengal',code:'19'}
+];
+
+function getStateCode(name){ const s=STATES.find(x=>x.name===name); return s?s.code:''; }
+
+// ══ API ════════════════════════════════════════════════════
+async function api(action, data={}) {
+  const resp = await fetch(API_URL, {
+    method:'POST', body:JSON.stringify({action,data}),
+    headers:{'Content-Type':'application/json'}
+  });
+  const json = await resp.json();
+  if (!json.success) throw new Error(json.error || 'Server error');
+  return json.result;
+}
+
+// ══ TOAST ══════════════════════════════════════════════════
+function toast(msg, dur=3000) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ══ MODAL ══════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); editingId=null; }
+
+// ══ NAV ════════════════════════════════════════════════════
+const tabTitles = {
+  dashboard:'Dashboard', billing:'Billing — Invoices', purchases:'Purchases & Expenses',
+  duedates:'Compliance Due Dates', pfesi:'PF & ESI Working', clients:'Client Master',
+  employees:'Employee Master', gstr1:'GSTR-1 Report'
+};
+
+async function showTab(tab) {
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  document.getElementById('page-title').textContent = tabTitles[tab]||tab;
+  const c = document.getElementById('content');
+  c.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    if (tab==='dashboard') await renderDashboard();
+    else if (tab==='billing') await renderBilling();
+    else if (tab==='purchases') await renderPurchases();
+    else if (tab==='duedates') await renderDueDates();
+    else if (tab==='pfesi') await renderPFESI();
+    else if (tab==='clients') await renderClients();
+    else if (tab==='employees') await renderEmployees();
+    else if (tab==='gstr1') await renderGSTR1();
+  } catch(e){ c.innerHTML=`<div class="card"><p style="color:#DC2626">⚠️ ${e.message}</p></div>`; }
+}
+
+// ══ DASHBOARD ══════════════════════════════════════════════
+async function renderDashboard() {
+  [clients,employees,invoices,purchases,dueDates,pfesi] = await Promise.all([
+    api('getClients'), api('getEmployees'), api('getInvoices'),
+    api('getPurchases'), api('getDueDates'), api('getPFESI')
+  ]);
+  const totalBilled = invoices.reduce((s,i)=>s+(+i.totalAmount||0),0);
+  const unpaid = invoices.filter(i=>i.status==='Unpaid').reduce((s,i)=>s+(+i.totalAmount||0),0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcomingDD = dueDates.filter(d=>d.status==='Pending' && new Date(d.dueDate)>=today).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate)).slice(0,5);
+  document.getElementById('content').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Billed (FY)</div><div class="value">₹${fmtNum(totalBilled)}</div><div class="sub">${invoices.length} invoices</div></div>
+      <div class="stat-card"><div class="label">Outstanding</div><div class="value" style="color:#DC2626">₹${fmtNum(unpaid)}</div><div class="sub">Unpaid invoices</div></div>
+      <div class="stat-card"><div class="label">Total Purchases</div><div class="value">₹${fmtNum(purchases.reduce((s,p)=>s+(+p.totalAmount||0),0))}</div><div class="sub">${purchases.length} entries</div></div>
+      <div class="stat-card"><div class="label">Active Employees</div><div class="value">${employees.filter(e=>e.status==='Active').length}</div><div class="sub">PF/ESI registered</div></div>
+      <div class="stat-card"><div class="label">Clients</div><div class="value">${clients.length}</div><div class="sub">In master</div></div>
+      <div class="stat-card"><div class="label">Due Dates Pending</div><div class="value" style="color:#D97706">${dueDates.filter(d=>d.status==='Pending').length}</div><div class="sub">Compliances</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>📅 Upcoming Compliances</h2></div>
+      ${upcomingDD.length ? `<div class="table-wrap"><table><thead><tr><th>Compliance</th><th>Period</th><th>Due Date</th><th>Days Left</th></tr></thead><tbody>
+        ${upcomingDD.map(d=>{const days=Math.ceil((new Date(d.dueDate)-today)/(86400000));return`<tr><td>${d.compliance}</td><td>${d.period||'—'}</td><td>${fmtDate(d.dueDate)}</td><td class="${days<=0?'due-overdue':days<=7?'due-soon':'due-ok'}">${days<=0?'OVERDUE':days+' days'}</td></tr>`}).join('')}
+      </tbody></table></div>` : '<p style="color:#64748B;font-size:13px">No upcoming due dates. <a onclick="showTab(\'duedates\')" style="color:#2563EB;cursor:pointer">Add compliance dates →</a></p>'}
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>🧾 Recent Invoices</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Client</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+        ${[...invoices].sort((a,b)=>new Date(b.invoiceDate)-new Date(a.invoiceDate)).slice(0,5).map(i=>`<tr><td>${i.invoiceNo}</td><td>${i.clientName}</td><td>${fmtDate(i.invoiceDate)}</td><td>₹${fmtNum(+i.totalAmount)}</td><td>${statusBadge(i.status)}</td></tr>`).join('')||'<tr><td colspan="5" style="color:#64748B;text-align:center">No invoices yet</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+
+// ══ BILLING ════════════════════════════════════════════════
+async function renderBilling() {
+  invoices = await api('getInvoices');
+  clients = await api('getClients');
+  const total = invoices.reduce((s,i)=>s+(+i.totalAmount||0),0);
+  const unpaid = invoices.filter(i=>i.status==='Unpaid').reduce((s,i)=>s+(+i.totalAmount||0),0);
+  document.getElementById('content').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Billed</div><div class="value">₹${fmtNum(total)}</div></div>
+      <div class="stat-card"><div class="label">Outstanding</div><div class="value" style="color:#DC2626">₹${fmtNum(unpaid)}</div></div>
+      <div class="stat-card"><div class="label">Invoices</div><div class="value">${invoices.length}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>All Invoices</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm no-print" onclick="showTab('gstr1')">📊 GSTR-1 Export</button>
+          <button class="btn btn-primary btn-sm no-print" onclick="openInvoiceModal()">+ New Invoice</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>GSTIN</th><th>Taxable</th><th>GST</th><th>Total</th><th>Type</th><th>Status</th><th class="no-print">Actions</th></tr></thead><tbody>
+        ${[...invoices].sort((a,b)=>new Date(b.invoiceDate)-new Date(a.invoiceDate)).map(i=>`<tr>
+          <td>${i.invoiceNo}</td><td>${fmtDate(i.invoiceDate)}</td><td>${i.clientName}</td>
+          <td style="font-size:11px">${i.clientGSTIN||'—'}</td>
+          <td>₹${fmtNum(+i.taxableValue)}</td>
+          <td>₹${fmtNum((+i.cgst||0)+(+i.sgst||0)+(+i.igst||0))}</td>
+          <td style="font-weight:700">₹${fmtNum(+i.totalAmount)}</td>
+          <td><span class="badge ${i.supplyType==='Inter-State'?'badge-blue':'badge-green'}">${i.supplyType||'—'}</span></td>
+          <td>${statusBadge(i.status)}</td>
+          <td class="no-print" style="white-space:nowrap">
+            <button class="btn btn-outline btn-sm" onclick="editInvoice('${i.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRecord('invoice','${i.id}')">🗑</button>
+          </td>
+        </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:#64748B;padding:30px">No invoices yet</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+  populateStateDropdowns();
+  populateClientDropdown();
+}
+
+async function openInvoiceModal(id=null) {
+  editingId=id;
+  document.getElementById('inv-modal-title').textContent = id?'Edit Invoice':'New Invoice';
+  ['inv-no','inv-date','inv-client','inv-gstin','inv-client-state','inv-pos','inv-desc','inv-sac',
+   'inv-taxable','inv-gstrate','inv-supply-type','inv-cgst','inv-sgst','inv-igst','inv-total',
+   'inv-notes','inv-status'].forEach(f=>{
+    const el=document.getElementById(f);
+    if(el) el.value='';
+  });
+  document.getElementById('inv-gstrate').value='18';
+  document.getElementById('inv-status').value='Unpaid';
+  if(!id){
+    try{ const n=await api('getNextInvoiceNo'); document.getElementById('inv-no').value=n; }catch(e){}
+  }
+  if(id){
+    const inv=invoices.find(i=>i.id===id);
+    if(inv){
+      ['no','date','gstin','desc','sac','notes','status'].forEach(f=>{ const el=document.getElementById('inv-'+f); if(el) el.value=inv[f==='no'?'invoiceNo':f==='date'?'invoiceDate':f==='gstin'?'clientGSTIN':f==='desc'?'serviceDescription':f==='sac'?'sacCode':f]||''; });
+      document.getElementById('inv-taxable').value=inv.taxableValue||'';
+      document.getElementById('inv-gstrate').value=inv.gstRate||'18';
+      document.getElementById('inv-supply-type').value=inv.supplyType||'';
+      document.getElementById('inv-cgst').value=inv.cgst||'';
+      document.getElementById('inv-sgst').value=inv.sgst||'';
+      document.getElementById('inv-igst').value=inv.igst||'';
+      document.getElementById('inv-total').value=inv.totalAmount||'';
+      // Set client select
+      const csel=document.getElementById('inv-client');
+      [...csel.options].forEach(o=>{ if(o.value===inv.clientId) csel.value=inv.clientId; });
+    }
+  }
+  const today=new Date().toISOString().split('T')[0];
+  if(!document.getElementById('inv-date').value) document.getElementById('inv-date').value=today;
+  populateStateDropdowns();
+  populateClientDropdown(id?invoices.find(i=>i.id===id)?.clientId:null);
+  openModal('modal-invoice');
+}
+function editInvoice(id){ openInvoiceModal(id); }
+
+function fillClientGST(){
+  const sel=document.getElementById('inv-client');
+  const cl=clients.find(c=>c.id===sel.value);
+  if(cl){
+    document.getElementById('inv-gstin').value=cl.gstin||'';
+    const stSel=document.getElementById('inv-client-state');
+    [...stSel.options].forEach(o=>{ if(o.value===cl.state) stSel.value=cl.state; });
+    calcInvGST();
+  }
+}
+
+function calcInvGST(){
+  const taxable=parseFloat(document.getElementById('inv-taxable').value)||0;
+  const rate=parseFloat(document.getElementById('inv-gstrate').value)||0;
+  const clientState=document.getElementById('inv-client-state').value||'';
+  const pos=document.getElementById('inv-pos').value||clientState;
+  const isInter = pos && pos!=='Maharashtra';
+  const gstAmt=taxable*rate/100;
+  document.getElementById('inv-supply-type').value=isInter?'Inter-State':'Intra-State';
+  document.getElementById('inv-cgst').value=isInter?'0.00':(gstAmt/2).toFixed(2);
+  document.getElementById('inv-sgst').value=isInter?'0.00':(gstAmt/2).toFixed(2);
+  document.getElementById('inv-igst').value=isInter?gstAmt.toFixed(2):'0.00';
+  document.getElementById('inv-total').value=(taxable+gstAmt).toFixed(2);
+}
+
+function calcPurGST(){
+  const taxable=parseFloat(document.getElementById('pur-taxable').value)||0;
+  const rate=parseFloat(document.getElementById('pur-gstrate').value)||0;
+  const gst=taxable*rate/100;
+  document.getElementById('pur-cgst').value=(gst/2).toFixed(2);
+  document.getElementById('pur-sgst').value=(gst/2).toFixed(2);
+  document.getElementById('pur-igst').value='0.00';
+  document.getElementById('pur-total').value=(taxable+gst).toFixed(2);
+}
+
+async function saveInvoice(){
+  const d={
+    id:editingId||null,
+    invoiceNo:document.getElementById('inv-no').value,
+    invoiceDate:document.getElementById('inv-date').value,
+    clientId:document.getElementById('inv-client').value,
+    clientName:document.getElementById('inv-client').options[document.getElementById('inv-client').selectedIndex]?.text||'',
+    clientGSTIN:document.getElementById('inv-gstin').value,
+    clientState:document.getElementById('inv-client-state').value,
+    placeOfSupply:document.getElementById('inv-pos').value,
+    supplyType:document.getElementById('inv-supply-type').value,
+    serviceDescription:document.getElementById('inv-desc').value,
+    sacCode:document.getElementById('inv-sac').value,
+    taxableValue:document.getElementById('inv-taxable').value,
+    gstRate:document.getElementById('inv-gstrate').value,
+    cgst:document.getElementById('inv-cgst').value,
+    sgst:document.getElementById('inv-sgst').value,
+    igst:document.getElementById('inv-igst').value,
+    totalAmount:document.getElementById('inv-total').value,
+    notes:document.getElementById('inv-notes').value,
+    status:document.getElementById('inv-status').value
+  };
+  if(!d.invoiceDate||!d.serviceDescription||!d.taxableValue){ toast('⚠️ Fill required fields'); return; }
+  await api('saveInvoice',d);
+  toast('✅ Invoice saved');
+  closeModal('modal-invoice');
+  renderBilling();
+}
+
+// ══ PURCHASES ══════════════════════════════════════════════
+async function renderPurchases(){
+  purchases=await api('getPurchases');
+  const total=purchases.reduce((s,p)=>s+(+p.totalAmount||0),0);
+  document.getElementById('content').innerHTML=`
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Purchases</div><div class="value">₹${fmtNum(total)}</div></div>
+      <div class="stat-card"><div class="label">Entries</div><div class="value">${purchases.length}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Purchases & Expenses</h2>
+        <button class="btn btn-primary btn-sm no-print" onclick="openPurchaseModal()">+ Add Entry</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Vendor</th><th>Invoice No</th><th>Head</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th class="no-print">Actions</th></tr></thead><tbody>
+        ${[...purchases].sort((a,b)=>new Date(b.purchaseDate)-new Date(a.purchaseDate)).map(p=>`<tr>
+          <td>${fmtDate(p.purchaseDate)}</td><td>${p.vendorName}</td><td>${p.invoiceNo||'—'}</td>
+          <td>${p.expenseHead}</td><td>₹${fmtNum(+p.taxableValue)}</td>
+          <td>₹${fmtNum((+p.cgst||0)+(+p.sgst||0)+(+p.igst||0))}</td>
+          <td style="font-weight:700">₹${fmtNum(+p.totalAmount)}</td>
+          <td>${statusBadge(p.paymentStatus)}</td>
+          <td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteRecord('purchase','${p.id}')">🗑</button></td>
+        </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#64748B;padding:30px">No purchases yet</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+function openPurchaseModal(){ openModal('modal-purchase'); document.getElementById('pur-date').value=new Date().toISOString().split('T')[0]; }
+async function savePurchase(){
+  const d={
+    purchaseDate:document.getElementById('pur-date').value,
+    vendorName:document.getElementById('pur-vendor').value,
+    vendorGSTIN:document.getElementById('pur-gstin').value,
+    invoiceNo:document.getElementById('pur-invno').value,
+    description:document.getElementById('pur-desc').value,
+    expenseHead:document.getElementById('pur-head').value,
+    taxableValue:document.getElementById('pur-taxable').value,
+    gstRate:document.getElementById('pur-gstrate').value,
+    cgst:document.getElementById('pur-cgst').value,
+    sgst:document.getElementById('pur-sgst').value,
+    igst:document.getElementById('pur-igst').value,
+    totalAmount:document.getElementById('pur-total').value,
+    paymentStatus:document.getElementById('pur-status').value
+  };
+  if(!d.purchaseDate||!d.vendorName){ toast('⚠️ Fill required fields'); return; }
+  await api('savePurchase',d); toast('✅ Purchase saved'); closeModal('modal-purchase'); renderPurchases();
+}
+
+// ══ DUE DATES ══════════════════════════════════════════════
+async function renderDueDates(){
+  dueDates=await api('getDueDates');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const sorted=[...dueDates].sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header"><h2>Compliance Calendar</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-warning btn-sm no-print" onclick="seedDefaultDueDates()">🔁 Load Defaults</button>
+          <button class="btn btn-primary btn-sm no-print" onclick="openModal('modal-duedate');document.getElementById('dd-date').value=''">+ Add</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Compliance</th><th>Period</th><th>Due Date</th><th>Days Left</th><th>Status</th><th>Remarks</th><th class="no-print">Actions</th></tr></thead><tbody>
+        ${sorted.map(d=>{
+          const due=new Date(d.dueDate); due.setHours(0,0,0,0);
+          const days=Math.ceil((due-today)/86400000);
+          const cls=d.status==='Done'?'':'(days<=0?\'due-overdue\':days<=7?\'due-soon\':\'due-ok\')';
+          const daysLabel=d.status==='Done'?'✅ Done':days<=0?'OVERDUE':days+' days';
+          const daysClass=d.status==='Done'?'due-ok':days<=0?'due-overdue':days<=7?'due-soon':'due-ok';
+          return`<tr>
+            <td>${d.compliance}</td><td>${d.period||'—'}</td><td>${fmtDate(d.dueDate)}</td>
+            <td class="${daysClass}" style="font-weight:600">${daysLabel}</td>
+            <td>${statusBadge(d.status)}</td><td style="font-size:12px">${d.remarks||'—'}</td>
+            <td class="no-print" style="white-space:nowrap">
+              <button class="btn btn-success btn-sm" onclick="markDone('${d.id}','${d.status}')">✅</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteRecord('duedate','${d.id}')">🗑</button>
+            </td>
+          </tr>`;
+        }).join('')||'<tr><td colspan="7" style="text-align:center;color:#64748B;padding:30px">No due dates. Click "Load Defaults" to add standard GST/TDS/PF dates.</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+async function markDone(id,curr){
+  const newStatus=curr==='Done'?'Pending':'Done';
+  await api('saveDueDate',{id,status:newStatus}); renderDueDates();
+}
+async function saveDueDate(){
+  const d={compliance:document.getElementById('dd-compliance').value,period:document.getElementById('dd-period').value,dueDate:document.getElementById('dd-date').value,status:document.getElementById('dd-status').value,remarks:document.getElementById('dd-remarks').value};
+  if(!d.dueDate){ toast('⚠️ Enter due date'); return; }
+  await api('saveDueDate',d); toast('✅ Saved'); closeModal('modal-duedate'); renderDueDates();
+}
+async function seedDefaultDueDates(){
+  const now=new Date(); const y=now.getFullYear(); const m=now.getMonth()+1;
+  const fy=m>=4?y:y-1;
+  const defaults=[
+    {compliance:'GSTR-1',period:`Apr ${fy}`,dueDate:`${fy}-05-11`},{compliance:'GSTR-3B',period:`Apr ${fy}`,dueDate:`${fy}-05-20`},
+    {compliance:'TDS Payment',period:`Apr ${fy}`,dueDate:`${fy}-05-07`},{compliance:'PF Challan',period:`Apr ${fy}`,dueDate:`${fy}-05-15`},
+    {compliance:'ESI Challan',period:`Apr ${fy}`,dueDate:`${fy}-05-15`},{compliance:'GSTR-1',period:`May ${fy}`,dueDate:`${fy}-06-11`},
+    {compliance:'GSTR-3B',period:`May ${fy}`,dueDate:`${fy}-06-20`},{compliance:'TDS Payment',period:`May ${fy}`,dueDate:`${fy}-06-07`},
+    {compliance:'PF Challan',period:`May ${fy}`,dueDate:`${fy}-06-15`},{compliance:'ESI Challan',period:`May ${fy}`,dueDate:`${fy}-06-15`},
+    {compliance:'Advance Tax',period:`Q1 FY${String(fy).slice(2)}-${String(fy+1).slice(2)}`,dueDate:`${fy}-06-15`},
+    {compliance:'Advance Tax',period:`Q2 FY${String(fy).slice(2)}-${String(fy+1).slice(2)}`,dueDate:`${fy}-09-15`},
+    {compliance:'Tax Audit',period:`FY${String(fy).slice(2)}-${String(fy+1).slice(2)}`,dueDate:`${fy+1}-09-30`},
+    {compliance:'Income Tax Return',period:`FY${String(fy).slice(2)}-${String(fy+1).slice(2)}`,dueDate:`${fy+1}-10-31`},
+  ];
+  for(const d of defaults){ try{ await api('saveDueDate',{...d,status:'Pending'}); }catch(e){} }
+  toast('✅ Default due dates loaded'); renderDueDates();
+}
+
+// ══ CLIENTS ════════════════════════════════════════════════
+async function renderClients(){
+  clients=await api('getClients');
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header"><h2>Client Master</h2>
+        <button class="btn btn-primary btn-sm no-print" onclick="openClientModal()">+ Add Client</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>GSTIN</th><th>State</th><th>Contact</th><th>Phone</th><th class="no-print">Actions</th></tr></thead><tbody>
+        ${clients.map(c=>`<tr>
+          <td style="font-weight:600">${c.name}</td><td style="font-size:11px">${c.gstin||'—'}</td>
+          <td>${c.state||'—'}</td><td>${c.contactPerson||'—'}</td><td>${c.phone||'—'}</td>
+          <td class="no-print" style="white-space:nowrap">
+            <button class="btn btn-outline btn-sm" onclick="editClient('${c.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRecord('client','${c.id}')">🗑</button>
+          </td>
+        </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#64748B;padding:30px">No clients yet</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+  populateStateDropdowns();
+}
+
+function openClientModal(cl=null){
+  editingId=cl?cl.id:null;
+  document.getElementById('client-modal-title').textContent=cl?'Edit Client':'Add Client';
+  ['cl-name','cl-gstin','cl-pan','cl-city','cl-contact','cl-phone','cl-email','cl-address','cl-stateCode'].forEach(id=>document.getElementById(id).value=cl?cl[{
+    'cl-name':'name','cl-gstin':'gstin','cl-pan':'pan','cl-city':'city',
+    'cl-contact':'contactPerson','cl-phone':'phone','cl-email':'email',
+    'cl-address':'address','cl-stateCode':'stateCode'}[id]]||'':'');
+  document.getElementById('cl-state').value=cl?cl.state||'':'';
+  openModal('modal-client');
+}
+function editClient(id){ openClientModal(clients.find(c=>c.id===id)); }
+async function saveClient(){
+  const d={id:editingId||null,name:document.getElementById('cl-name').value,gstin:document.getElementById('cl-gstin').value,pan:document.getElementById('cl-pan').value,state:document.getElementById('cl-state').value,stateCode:document.getElementById('cl-stateCode').value,city:document.getElementById('cl-city').value,contactPerson:document.getElementById('cl-contact').value,phone:document.getElementById('cl-phone').value,email:document.getElementById('cl-email').value,address:document.getElementById('cl-address').value};
+  if(!d.name){ toast('⚠️ Enter client name'); return; }
+  await api('saveClient',d); toast('✅ Client saved'); closeModal('modal-client'); renderClients();
+}
+
+// ══ EMPLOYEES ══════════════════════════════════════════════
+async function renderEmployees(){
+  employees=await api('getEmployees');
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header"><h2>Employee Master</h2>
+        <button class="btn btn-primary btn-sm no-print" onclick="openEmployeeModal()">+ Add Employee</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>UAN</th><th>ESIC IP No</th><th>Designation</th><th>DOJ</th><th>Status</th><th class="no-print">Actions</th></tr></thead><tbody>
+        ${employees.map(e=>`<tr>
+          <td>${e.empCode||'—'}</td><td style="font-weight:600">${e.name}</td>
+          <td style="font-size:11px">${e.uan||'—'}</td><td style="font-size:11px">${e.esicIpNo||'—'}</td>
+          <td>${e.designation||'—'}</td><td>${fmtDate(e.doj)}</td>
+          <td><span class="badge ${e.status==='Active'?'badge-green':e.status==='Left'?'badge-red':'badge-gray'}">${e.status||'—'}</span></td>
+          <td class="no-print" style="white-space:nowrap">
+            <button class="btn btn-outline btn-sm" onclick="editEmployee('${e.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRecord('employee','${e.id}')">🗑</button>
+          </td>
+        </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#64748B;padding:30px">No employees yet</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+function openEmployeeModal(emp=null){
+  editingId=emp?emp.id:null;
+  document.getElementById('emp-modal-title').textContent=emp?'Edit Employee':'Add Employee';
+  const fields={
+    'em-code':'empCode','em-name':'name','em-father':'fatherName','em-dob':'dob','em-doj':'doj',
+    'em-gender':'gender','em-designation':'designation','em-dept':'department',
+    'em-aadhaar':'aadhaar','em-pan':'pan','em-uan':'uan','em-esic':'esicIpNo',
+    'em-pfceil':'pfWagesCeiling','em-bank':'bankName','em-acc':'bankAccount','em-ifsc':'bankIFSC',
+    'em-nom-pf':'nomineeNamePF','em-nom-pf-rel':'nomineeRelPF',
+    'em-nom-esi':'nomineeNameESIC','em-nom-esi-rel':'nomineeRelESIC',
+    'em-mobile':'mobileNo','em-email':'email','em-address':'address','em-status':'status'
+  };
+  Object.entries(fields).forEach(([id,key])=>{ document.getElementById(id).value=emp?emp[key]||'':''; });
+  if(!emp) document.getElementById('em-pfceil').value='15000';
+  if(!emp) document.getElementById('em-status').value='Active';
+  openModal('modal-employee');
+}
+function editEmployee(id){ openEmployeeModal(employees.find(e=>e.id===id)); }
+async function saveEmployee(){
+  const g=(id)=>document.getElementById(id).value;
+  const d={id:editingId||null,empCode:g('em-code'),name:g('em-name'),fatherName:g('em-father'),dob:g('em-dob'),doj:g('em-doj'),gender:g('em-gender'),designation:g('em-designation'),department:g('em-dept'),aadhaar:g('em-aadhaar'),pan:g('em-pan'),uan:g('em-uan'),esicIpNo:g('em-esic'),pfWagesCeiling:g('em-pfceil')||15000,bankName:g('em-bank'),bankAccount:g('em-acc'),bankIFSC:g('em-ifsc'),nomineeNamePF:g('em-nom-pf'),nomineeRelPF:g('em-nom-pf-rel'),nomineeNameESIC:g('em-nom-esi'),nomineeRelESIC:g('em-nom-esi-rel'),mobileNo:g('em-mobile'),email:g('em-email'),address:g('em-address'),status:g('em-status')};
+  if(!d.name){ toast('⚠️ Enter employee name'); return; }
+  await api('saveEmployee',d); toast('✅ Employee saved'); closeModal('modal-employee'); renderEmployees();
+}
+
+// ══ PF & ESI WORKING ═══════════════════════════════════════
+async function renderPFESI(){
+  [pfesi, employees] = await Promise.all([api('getPFESI'), api('getEmployees')]);
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const allMonths=[...new Set(pfesi.map(r=>`${months[r.month-1]} ${r.year}`))];
+  const selMonth=allMonths[allMonths.length-1]||'';
+  const filtered=pfesi.filter(r=>selMonth===''||`${months[r.month-1]} ${r.year}`===selMonth);
+  const totEmpPF=filtered.reduce((s,r)=>s+(+r.empPF||0),0);
+  const totEmpESI=filtered.reduce((s,r)=>s+(+r.empESIC||0),0);
+  const totEmplrPF=filtered.reduce((s,r)=>s+(+r.emplrEPF_diff||0)+(+r.emplrEPS||0),0);
+  const totEmplrESI=filtered.reduce((s,r)=>s+(+r.emplrESIC||0),0);
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <h2>PF &amp; ESI Monthly Working</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select onchange="renderPFESI()" id="pf-filter-month" style="padding:6px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">
+            ${allMonths.map(m=>`<option ${m===selMonth?'selected':''}>${m}</option>`).join('')}
+            <option value="">All</option>
+          </select>
+          <button class="btn btn-outline btn-sm no-print" onclick="exportPFESIExcel()">⬇️ ECR Excel</button>
+          <button class="btn btn-primary btn-sm no-print" onclick="openPFESIModal()">+ Add Entry</button>
+        </div>
+      </div>
+      <div class="pf-summary">
+        <div class="pf-box"><div class="lbl">Emp PF Deduction</div><div class="val">₹${fmtNum(totEmpPF)}</div></div>
+        <div class="pf-box"><div class="lbl">Emp ESI Deduction</div><div class="val">₹${fmtNum(totEmpESI)}</div></div>
+        <div class="pf-box"><div class="lbl">Emplr PF Contribution</div><div class="val">₹${fmtNum(totEmplrPF)}</div></div>
+        <div class="pf-box"><div class="lbl">Emplr ESI Contribution</div><div class="val">₹${fmtNum(totEmplrESI)}</div></div>
+        <div class="pf-box"><div class="lbl">Total PF Challan</div><div class="val">₹${fmtNum(totEmpPF+totEmplrPF)}</div></div>
+        <div class="pf-box"><div class="lbl">Total ESI Challan</div><div class="val">₹${fmtNum(totEmpESI+totEmplrESI)}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table><thead><tr>
+        <th>Emp</th><th>UAN</th><th>ESIC IP</th><th>Days</th><th>Gross</th><th>PF Wages</th><th>Emp PF</th><th>Emp ESI</th><th>Net Salary</th><th>Emplr EPF</th><th>Emplr EPS</th><th>Emplr ESI</th><th class="no-print">Del</th>
+      </tr></thead><tbody>
+        ${filtered.map(r=>`<tr>
+          <td style="font-weight:600">${r.empName}</td>
+          <td style="font-size:11px">${r.uan||'—'}</td><td style="font-size:11px">${r.esicIpNo||'—'}</td>
+          <td>${r.presentDays}/${r.totalDays}</td>
+          <td>₹${fmtNum(+r.grossSalary)}</td><td>₹${fmtNum(+r.pfWages)}</td>
+          <td>₹${fmtNum(+r.empPF)}</td>
+          <td>${r.esicEligible==='Yes'?'₹'+fmtNum(+r.empESIC):'N/A'}</td>
+          <td style="font-weight:700">₹${fmtNum(+r.netSalary)}</td>
+          <td>₹${fmtNum(+r.emplrEPF_diff)}</td><td>₹${fmtNum(+r.emplrEPS)}</td>
+          <td>${r.esicEligible==='Yes'?'₹'+fmtNum(+r.emplrESIC):'N/A'}</td>
+          <td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteRecord('pfesi','${r.id}')">🗑</button></td>
+        </tr>`).join('')||'<tr><td colspan="13" style="text-align:center;color:#64748B;padding:30px">No entries for this period</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+function openPFESIModal(){
+  const now=new Date();
+  document.getElementById('pf-month').value=now.getMonth()+1;
+  document.getElementById('pf-year').value=now.getFullYear();
+  const sel=document.getElementById('pf-emp');
+  sel.innerHTML='<option value="">-- Select Employee --</option>'+employees.filter(e=>e.status==='Active').map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  ['pf-uan','pf-esic','pf-totaldays','pf-present','pf-gross','pf-ceil','pf-prop-gross','pf-pfwages','pf-esicwages','pf-esicelig','pf-emp-pf','pf-emp-esi','pf-total-ded','pf-net','pf-emplr-epf','pf-emplr-eps','pf-emplr-esi','pf-emplr-total'].forEach(id=>{ const el=document.getElementById(id); if(el){ if(id==='pf-totaldays') el.value='30'; else if(id==='pf-ceil') el.value='15000'; else el.value=''; }});
+  openModal('modal-pfesi');
+}
+function fillPFEmpDetails(){
+  const id=document.getElementById('pf-emp').value;
+  const emp=employees.find(e=>e.id===id);
+  if(emp){
+    document.getElementById('pf-uan').value=emp.uan||'';
+    document.getElementById('pf-esic').value=emp.esicIpNo||'';
+    document.getElementById('pf-ceil').value=emp.pfWagesCeiling||15000;
+  }
+}
+function calcPFESI(){
+  const gross=parseFloat(document.getElementById('pf-gross').value)||0;
+  const total=parseInt(document.getElementById('pf-totaldays').value)||30;
+  const present=parseInt(document.getElementById('pf-present').value)||0;
+  const ceil=parseFloat(document.getElementById('pf-ceil').value)||15000;
+  const propGross=total>0?(gross*present/total):0;
+  const pfWages=Math.min(propGross,ceil);
+  const esicEligible=propGross<=21000;
+  const esicWages=esicEligible?propGross:0;
+  const empPF=Math.round(pfWages*0.12*100)/100;
+  const empESI=esicEligible?Math.round(esicWages*0.0075*100)/100:0;
+  const totalDed=empPF+empESI;
+  const netSal=propGross-totalDed;
+  const emplrEPS=Math.round(Math.min(pfWages,15000)*0.0833*100)/100;
+  const emplrEPF=Math.round(pfWages*0.12*100)/100;
+  const emplrEPFdiff=Math.round((emplrEPF-emplrEPS)*100)/100;
+  const emplrESI=esicEligible?Math.round(esicWages*0.0325*100)/100:0;
+  const emplrTotal=emplrEPFdiff+emplrEPS+emplrESI;
+  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=typeof val==='number'?val.toFixed(2):val; };
+  set('pf-prop-gross',propGross); set('pf-pfwages',pfWages); set('pf-esicwages',esicWages);
+  document.getElementById('pf-esicelig').value=esicEligible?'Yes (≤₹21,000)':'No (>₹21,000)';
+  set('pf-emp-pf',empPF); set('pf-emp-esi',empESI); set('pf-total-ded',totalDed); set('pf-net',netSal);
+  set('pf-emplr-epf',emplrEPFdiff); set('pf-emplr-eps',emplrEPS); set('pf-emplr-esi',emplrESI); set('pf-emplr-total',emplrTotal);
+}
+async function savePFESI(){
+  const empId=document.getElementById('pf-emp').value;
+  const emp=employees.find(e=>e.id===empId);
+  if(!empId||!emp){ toast('⚠️ Select employee'); return; }
+  const g=id=>document.getElementById(id).value;
+  const d={month:g('pf-month'),year:g('pf-year'),empId,empCode:emp.empCode,empName:emp.name,uan:g('pf-uan'),esicIpNo:g('pf-esic'),totalDays:g('pf-totaldays'),presentDays:g('pf-present'),grossSalary:g('pf-gross'),pfWages:g('pf-pfwages'),esicWages:g('pf-esicwages'),empPF:g('pf-emp-pf'),empESIC:g('pf-emp-esi'),emplrEPS:g('pf-emplr-eps'),emplrEPF_diff:g('pf-emplr-epf'),emplrESIC:g('pf-emplr-esi'),totalDeduction:g('pf-total-ded'),netSalary:g('pf-net'),esicEligible:g('pf-esicelig').startsWith('Yes')?'Yes':'No'};
+  await api('savePFESI',d); toast('✅ PF/ESI entry saved'); closeModal('modal-pfesi'); renderPFESI();
+}
+
+function exportPFESIExcel(){
+  if(!pfesi.length){ toast('No data to export'); return; }
+  const rows=[['UAN','Employee Name','Total Days','Present Days','PF Wages','Gross PF Contrib (Emplr 12%)','EPS Wages','Gross EPS Contrib (8.33%)','EPF Diff (3.67%)','Emp PF (12%)','NCP Days']];
+  pfesi.forEach(r=>{
+    const totalDays=+r.totalDays||30; const presentDays=+r.presentDays||0;
+    rows.push([r.uan||'',r.empName,totalDays,presentDays,r.pfWages,r.emplrEPF_diff+r.emplrEPS,Math.min(+r.pfWages,15000),r.emplrEPS,r.emplrEPF_diff,r.empPF,totalDays-presentDays]);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,'ECR',ws);
+  // ESI sheet
+  const esiRows=[['ESIC IP No','Employee Name','Days','Gross Wages','Emp ESI (0.75%)','Emplr ESI (3.25%)','Total ESI']];
+  pfesi.filter(r=>r.esicEligible==='Yes').forEach(r=>{
+    esiRows.push([r.esicIpNo||'',r.empName,r.presentDays,r.esicWages,r.empESIC,r.emplrESIC,(+r.empESIC||0)+(+r.emplrESIC||0)]);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(esiRows);
+  XLSX.utils.book_append_sheet(wb,'ESI Working',ws2);
+  XLSX.writeFile(wb,'PF_ESI_Working.xlsx');
+  toast('✅ Excel downloaded');
+}
+
+// ══ GSTR-1 ═════════════════════════════════════════════════
+async function renderGSTR1(){
+  invoices=await api('getInvoices');
+  const b2b=invoices.filter(i=>i.clientGSTIN&&i.supplyType==='Inter-State');
+  const b2bIntra=invoices.filter(i=>i.clientGSTIN&&i.supplyType==='Intra-State');
+  const b2c=invoices.filter(i=>!i.clientGSTIN);
+  const totalTaxable=invoices.reduce((s,i)=>s+(+i.taxableValue||0),0);
+  const totalGST=invoices.reduce((s,i)=>s+(+i.cgst||0)+(+i.sgst||0)+(+i.igst||0),0);
+  document.getElementById('content').innerHTML=`
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Taxable Value</div><div class="value">₹${fmtNum(totalTaxable)}</div></div>
+      <div class="stat-card"><div class="label">Total GST</div><div class="value">₹${fmtNum(totalGST)}</div></div>
+      <div class="stat-card"><div class="label">B2B (Inter-State)</div><div class="value">${b2b.length}</div></div>
+      <div class="stat-card"><div class="label">B2B (Intra-State)</div><div class="value">${b2bIntra.length}</div></div>
+      <div class="stat-card"><div class="label">B2C</div><div class="value">${b2c.length}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>GSTR-1 Summary</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-accent btn-sm no-print" onclick="exportGSTR1Excel()">⬇️ Download Excel</button>
+          <button class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="section-tabs">
+        <div class="section-tab active" onclick="gstr1Tab(this,'b2b-inter')">B2B Inter-State (IGST)</div>
+        <div class="section-tab" onclick="gstr1Tab(this,'b2b-intra')">B2B Intra-State (CGST+SGST)</div>
+        <div class="section-tab" onclick="gstr1Tab(this,'b2c-tab')">B2C</div>
+        <div class="section-tab" onclick="gstr1Tab(this,'gstrate-tab')">Rate-wise Summary</div>
+      </div>
+      <div id="b2b-inter" class="gstr1-panel">
+        <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Date</th><th>Client Name</th><th>Client GSTIN</th><th>POS</th><th>Taxable</th><th>Rate%</th><th>IGST</th></tr></thead><tbody>
+          ${b2b.map(i=>`<tr><td>${i.invoiceNo}</td><td>${fmtDate(i.invoiceDate)}</td><td>${i.clientName}</td><td>${i.clientGSTIN}</td><td>${i.placeOfSupply||i.clientState}</td><td>₹${fmtNum(+i.taxableValue)}</td><td>${i.gstRate}%</td><td>₹${fmtNum(+i.igst)}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#64748B;padding:20px">No inter-state B2B invoices</td></tr>'}
+        </tbody></table></div>
+      </div>
+      <div id="b2b-intra" class="gstr1-panel" style="display:none">
+        <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Date</th><th>Client Name</th><th>Client GSTIN</th><th>Taxable</th><th>Rate%</th><th>CGST</th><th>SGST</th></tr></thead><tbody>
+          ${b2bIntra.map(i=>`<tr><td>${i.invoiceNo}</td><td>${fmtDate(i.invoiceDate)}</td><td>${i.clientName}</td><td>${i.clientGSTIN}</td><td>₹${fmtNum(+i.taxableValue)}</td><td>${i.gstRate}%</td><td>₹${fmtNum(+i.cgst)}</td><td>₹${fmtNum(+i.sgst)}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#64748B;padding:20px">No intra-state B2B invoices</td></tr>'}
+        </tbody></table></div>
+      </div>
+      <div id="b2c-tab" class="gstr1-panel" style="display:none">
+        <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Taxable</th><th>Rate%</th><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead><tbody>
+          ${b2c.map(i=>`<tr><td>${i.invoiceNo}</td><td>${fmtDate(i.invoiceDate)}</td><td>${i.clientName}</td><td>₹${fmtNum(+i.taxableValue)}</td><td>${i.gstRate}%</td><td>₹${fmtNum(+i.cgst)}</td><td>₹${fmtNum(+i.sgst)}</td><td>₹${fmtNum(+i.igst)}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#64748B;padding:20px">No B2C invoices</td></tr>'}
+        </tbody></table></div>
+      </div>
+      <div id="gstrate-tab" class="gstr1-panel" style="display:none">
+        <div class="table-wrap"><table><thead><tr><th>GST Rate</th><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total GST</th></tr></thead><tbody>
+          ${rateWiseSummary(invoices).map(r=>`<tr><td style="font-weight:700">${r.rate}%</td><td>₹${fmtNum(r.taxable)}</td><td>₹${fmtNum(r.cgst)}</td><td>₹${fmtNum(r.sgst)}</td><td>₹${fmtNum(r.igst)}</td><td style="font-weight:700">₹${fmtNum(r.cgst+r.sgst+r.igst)}</td></tr>`).join('')}
+          <tr style="background:#F0F4FF;font-weight:700"><td>TOTAL</td><td>₹${fmtNum(totalTaxable)}</td><td>₹${fmtNum(invoices.reduce((s,i)=>s+(+i.cgst||0),0))}</td><td>₹${fmtNum(invoices.reduce((s,i)=>s+(+i.sgst||0),0))}</td><td>₹${fmtNum(invoices.reduce((s,i)=>s+(+i.igst||0),0))}</td><td>₹${fmtNum(totalGST)}</td></tr>
+        </tbody></table></div>
+      </div>
+    </div>`;
+}
+function gstr1Tab(el,id){
+  document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.gstr1-panel').forEach(p=>p.style.display='none');
+  el.classList.add('active'); document.getElementById(id).style.display='';
+}
+function rateWiseSummary(invs){
+  const map={};
+  invs.forEach(i=>{ const r=i.gstRate||0; if(!map[r]) map[r]={rate:r,taxable:0,cgst:0,sgst:0,igst:0}; map[r].taxable+=(+i.taxableValue||0); map[r].cgst+=(+i.cgst||0); map[r].sgst+=(+i.sgst||0); map[r].igst+=(+i.igst||0); });
+  return Object.values(map).sort((a,b)=>a.rate-b.rate);
+}
+function exportGSTR1Excel(){
+  if(!invoices.length){ toast('No invoices to export'); return; }
+  const wb=XLSX.utils.book_new();
+  const b2bRows=[['Invoice No','Date','Receiver Name','Receiver GSTIN','Place of Supply','Invoice Value','Taxable Value','Rate','IGST','CGST','SGST']];
+  invoices.filter(i=>i.clientGSTIN).forEach(i=>b2bRows.push([i.invoiceNo,i.invoiceDate,i.clientName,i.clientGSTIN,i.placeOfSupply||i.clientState,i.totalAmount,i.taxableValue,i.gstRate+'%',i.igst||0,i.cgst||0,i.sgst||0]));
+  XLSX.utils.book_append_sheet(wb,'B2B',XLSX.utils.aoa_to_sheet(b2bRows));
+  const b2cRows=[['Invoice No','Date','Client','Invoice Value','Taxable Value','Rate','CGST','SGST','IGST']];
+  invoices.filter(i=>!i.clientGSTIN).forEach(i=>b2cRows.push([i.invoiceNo,i.invoiceDate,i.clientName,i.totalAmount,i.taxableValue,i.gstRate+'%',i.cgst||0,i.sgst||0,i.igst||0]));
+  XLSX.utils.book_append_sheet(wb,'B2C',XLSX.utils.aoa_to_sheet(b2cRows));
+  const sumRows=[['GST Rate','Taxable Value','CGST','SGST','IGST','Total GST']];
+  rateWiseSummary(invoices).forEach(r=>sumRows.push([r.rate+'%',r.taxable,r.cgst,r.sgst,r.igst,r.cgst+r.sgst+r.igst]));
+  XLSX.utils.book_append_sheet(wb,'Rate Summary',XLSX.utils.aoa_to_sheet(sumRows));
+  XLSX.writeFile(wb,'GSTR1_Export.xlsx');
+  toast('✅ GSTR-1 Excel downloaded');
+}
+
+// ══ DELETE ═════════════════════════════════════════════════
+async function deleteRecord(type,id){
+  if(!confirm('Delete this record?')) return;
+  const actionMap={client:'deleteClient',employee:'deleteEmployee',invoice:'deleteInvoice',purchase:'deletePurchase',duedate:'deleteDueDate',pfesi:'deletePFESI'};
+  const renderMap={client:renderClients,employee:renderEmployees,invoice:renderBilling,purchase:renderPurchases,duedate:renderDueDates,pfesi:renderPFESI};
+  await api(actionMap[type],{id}); toast('🗑 Deleted'); renderMap[type]();
+}
+
+// ══ HELPERS ════════════════════════════════════════════════
+function fmtNum(n){ return isNaN(n)?'0':(+n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d){ if(!d) return '—'; try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){ return d; } }
+function statusBadge(s){ const m={'Paid':'badge-green','Unpaid':'badge-red','Partial':'badge-yellow','Done':'badge-green','Pending':'badge-yellow','NA':'badge-gray','Active':'badge-green','Left':'badge-red','Inactive':'badge-gray'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'—'}</span>`; }
+
+function populateStateDropdowns(){
+  const opts=STATES.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  ['cl-state','inv-client-state','inv-pos'].forEach(id=>{ const el=document.getElementById(id); if(el&&!el.dataset.populated){ el.innerHTML='<option value="">-- Select --</option>'+opts; el.dataset.populated='1'; }});
+}
+function populateClientDropdown(selectedId=null){
+  const sel=document.getElementById('inv-client');
+  if(!sel) return;
+  sel.innerHTML='<option value="">-- Select Client --</option>'+clients.map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${c.name}</option>`).join('');
+}
+
+function printInvoice(){
+  const inv={
+    no:document.getElementById('inv-no').value,
+    date:document.getElementById('inv-date').value,
+    clientName:document.getElementById('inv-client').options[document.getElementById('inv-client').selectedIndex]?.text||'',
+    gstin:document.getElementById('inv-gstin').value,
+    desc:document.getElementById('inv-desc').value,
+    sac:document.getElementById('inv-sac').value,
+    taxable:document.getElementById('inv-taxable').value,
+    gstRate:document.getElementById('inv-gstrate').value,
+    cgst:document.getElementById('inv-cgst').value,
+    sgst:document.getElementById('inv-sgst').value,
+    igst:document.getElementById('inv-igst').value,
+    total:document.getElementById('inv-total').value,
+    supplyType:document.getElementById('inv-supply-type').value,
+    notes:document.getElementById('inv-notes').value
+  };
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Invoice ${inv.no}</title><style>body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#1E293B}h1{color:#1A3A5C}.header{display:flex;justify-content:space-between;border-bottom:3px solid #1A3A5C;padding-bottom:16px;margin-bottom:20px}.co{font-size:18px;font-weight:800;color:#1A3A5C}.inv-meta{text-align:right}.lbl{font-size:11px;color:#64748B;text-transform:uppercase;font-weight:700;margin-top:6px}table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#1A3A5C;color:#fff;padding:10px 12px;text-align:left;font-size:12px}td{padding:10px 12px;border-bottom:1px solid #E2E8F0}.total-row td{font-weight:700;background:#F0F4FF}.footer{margin-top:30px;font-size:11px;color:#64748B;text-align:center;border-top:1px solid #E2E8F0;padding-top:12px}@media print{body{margin:0}}</style></head><body>
+  <div class="header"><div><div class="co">The Element Environment Pvt Ltd</div><div style="font-size:12px;color:#64748B;margin-top:4px">CIN: U74909PN2026PTC253784</div></div><div class="inv-meta"><div class="lbl">Tax Invoice</div><div style="font-size:20px;font-weight:800;color:#1A3A5C">${inv.no}</div><div style="font-size:13px">${fmtDate(inv.date)}</div></div></div>
+  <div style="margin-bottom:16px"><div class="lbl">Bill To</div><div style="font-size:15px;font-weight:700">${inv.clientName}</div>${inv.gstin?`<div style="font-size:12px;color:#64748B">GSTIN: ${inv.gstin}</div>`:''}</div>
+  <table><thead><tr><th>Description</th><th>SAC</th><th>Taxable Value</th><th>GST%</th>${inv.supplyType==='Inter-State'?'<th>IGST</th>':'<th>CGST</th><th>SGST</th>'}<th>Total</th></tr></thead><tbody>
+  <tr><td>${inv.desc}</td><td>${inv.sac||'—'}</td><td>₹${fmtNum(+inv.taxable)}</td><td>${inv.gstRate}%</td>${inv.supplyType==='Inter-State'?`<td>₹${fmtNum(+inv.igst)}</td>`:`<td>₹${fmtNum(+inv.cgst)}</td><td>₹${fmtNum(+inv.sgst)}</td>`}<td>₹${fmtNum(+inv.total)}</td></tr>
+  <tr class="total-row"><td colspan="${inv.supplyType==='Inter-State'?4:5}" style="text-align:right">Total Amount</td><td>₹${fmtNum(+inv.total)}</td></tr>
+  </tbody></table>
+  ${inv.notes?`<div style="margin-top:16px;font-size:13px"><strong>Notes:</strong> ${inv.notes}</div>`:''}
+  <div class="footer">Powered by CA Atik Bhayani Associates | FRN: 159465W</div>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+// ══ INIT ═══════════════════════════════════════════════════
+async function init(){
+  try{
+    // Setup sheets on first run (idempotent)
+    await api('setupSheets');
+  }catch(e){ console.warn('Setup skipped:',e.message); }
+  showTab('dashboard');
+}
+init();
+</script>
+</body>
+</html>
