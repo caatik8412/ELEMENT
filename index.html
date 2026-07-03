@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Element Environment — Office Manager</title>
   <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* Critical: ensure app is hidden before stylesheet loads */
+    #app { display: none; }
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0A1628; }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -28,12 +33,12 @@
     </div>
     <button id="login-btn">Sign In →</button>
     <div class="login-error" id="login-error"></div>
-    <div class="login-powered">Powered by CA Atik Bhayani Associates | FRN: 159465W | M.No. 609911</div>
+    <div class="login-powered">Powered by CA Atik Bhayani Associates</div>
   </div>
 </div>
 
 <!-- ══ APP ════════════════════════════════════════════════ -->
-<div id="app">
+<div id="app" style="display:none">
 
   <!-- Sidebar -->
   <div id="sidebar">
