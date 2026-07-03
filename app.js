@@ -743,7 +743,7 @@ function printInvoice(inv) {
       <b>Terms &amp; Conditions:</b>
       ${co.terms.map((t, i) => `${i + 1}. ${t}`).join('<br>')}
     </div>
-    <div class="powered">Powered by CA Atik Bhayani Associates | FRN: 159465W | M.No. 609911</div>
+    <div class="powered">Powered by CA Atik Bhayani Associates</div>
   </div>
   </body></html>`);
   w.document.close();
