@@ -73,14 +73,12 @@ const API = {
   async call(action, data = {}) {
     this._pending++;
     try {
-      const body = { action, data };
-      if (SESSION.token) body.token = SESSION.token;
+      const payload = { action, data };
+      if (SESSION.token) payload.token = SESSION.token;
 
-      const res  = await fetch(APP.API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body)
-      });
+      // Use GET + URL param to avoid CORS preflight on Apps Script
+      const url = APP.API_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
+      const res  = await fetch(url, { method: 'GET', redirect: 'follow' });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
