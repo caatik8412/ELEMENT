@@ -1,493 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Element Environment - Office Manager</title>
-  <style>
-    :root {
-      --primary-navy: #0B2545;
-      --secondary-blue: #134074;
-      --light-blue: #8DA9C4;
-      --ice-white: #EEF4F8;
-      --accent-dark: #001427;
-      --success-green: #2D6A4F;
-      --warning-orange: #D68C45;
-      --danger-red: #A4161A;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background-color: var(--ice-white);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Sidebar Navigation Shell */
-    #sidebar {
-      width: 260px;
-      background-color: var(--primary-navy);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
-      flex-shrink: 0;
-    }
-
-    .brand-title {
-      padding: 20px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-align: center;
-      background-color: var(--accent-dark);
-      border-bottom: 2px solid var(--secondary-blue);
-      letter-spacing: 0.5px;
-    }
-
-    .nav-menu {
-      list-style: none;
-      overflow-y: auto;
-      flex-grow: 1;
-    }
-
-    .nav-item {
-      padding: 14px 20px;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
-    }
-
-    .nav-item:hover, .nav-item.active {
-      background-color: var(--secondary-blue);
-      border-left: 4px solid var(--light-blue);
-    }
-
-    /* Content Pane Window Configuration */
-    #main-content {
-      flex-grow: 1;
-      height: 100%;
-      overflow-y: auto;
-      padding: 30px;
-    }
-
-    .module-pane {
-      display: none;
-    }
-
-    .module-pane.active {
-      display: block;
-    }
-
-    h2 {
-      color: var(--primary-navy);
-      margin-bottom: 20px;
-      border-bottom: 2px solid var(--secondary-blue);
-      padding-bottom: 8px;
-    }
-
-    /* Dashboard UI Grid Elements */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .kpi-card {
-      background: white;
-      border-radius: 6px;
-      padding: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      border-top: 4px solid var(--secondary-blue);
-    }
-
-    .kpi-title {
-      font-size: 0.85rem;
-      color: #666;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: var(--primary-navy);
-    }
-
-    /* Form Data Fields Layout Structuring Elements */
-    .form-container {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      max-width: 900px;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 15px;
-    }
-
-    .form-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-group label {
-      font-size: 0.85rem;
-      margin-bottom: 5px;
-      font-weight: 600;
-      color: var(--secondary-blue);
-    }
-
-    .form-group input, .form-group select, .form-group textarea {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--secondary-blue);
-    }
-
-    button.btn-primary {
-      background-color: var(--primary-navy);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-
-    button.btn-primary:hover {
-      background-color: var(--secondary-blue);
-    }
-
-    /* Table Matrix Formatting Rules */
-    table.data-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      margin-top: 15px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    table.data-table th {
-      background-color: var(--primary-navy);
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-size: 0.9rem;
-    }
-
-    table.data-table td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      font-size: 0.88rem;
-    }
-
-    /* Audit Trail Status Badges & Components */
-    .badge {
-      padding: 4px 8px;
-      border-radius: 4px;
-      color: white;
-      font-weight: bold;
-      font-size: 0.75rem;
-    }
-    .bg-success { background-color: var(--success-green); }
-    .bg-warning { background-color: var(--warning-orange); }
-    .bg-danger { background-color: var(--danger-red); }
-  </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Element Environment — Office Manager</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
+<!-- ══ LOGIN ══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="leaf">🌿</div>
+      <div class="co-name">The Element Environment<br>Private Limited</div>
+      <div class="co-sub">Office Management System V1</div>
+    </div>
+    <h2>Sign In to Continue</h2>
+    <div class="login-field">
+      <label>User ID</label>
+      <input id="login-userid" type="text" placeholder="Enter User ID" autocomplete="off"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input id="login-password" type="password" placeholder="Enter Password"/>
+    </div>
+    <button id="login-btn">Sign In →</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-powered">Powered by CA Atik Bhayani Associates | FRN: 159465W | M.No. 609911</div>
+  </div>
+</div>
+
+<!-- ══ APP ════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Sidebar -->
   <div id="sidebar">
-    <div class="brand-title">THE ELEMENT ENVIRONMENT</div>
-    <ul class="nav-menu">
-      <li class="nav-item active" onclick="switchModule('dashboard')">Dashboard</li>
-      <li class="nav-item" onclick="switchModule('billing')">Billing Engine</li>
-      <li class="nav-item" onclick="switchModule('purchase')">Purchase Entries</li>
-      <li class="nav-item" onclick="switchModule('outstanding')">Outstanding Control</li>
-      <li class="nav-item" onclick="switchModule('gstr2a')">GSTR-2A Ledger</li>
-      <li class="nav-item" onclick="switchModule('gstr3b')">Estimated GSTR-3B</li>
-      <li class="nav-item" onclick="switchModule('compliance')">Compliance Calendar</li>
-      <li class="nav-item" onclick="switchModule('clients')">Client Master</li>
-      <li class="nav-item" onclick="switchModule('employees')">Employee Registry</li>
-      <li class="nav-item" onclick="switchModule('pfesi')">PF & ESI Management</li>
-      <li class="nav-item" onclick="switchModule('reports')">Report Archives</li>
-      <li class="nav-item" onclick="switchModule('settings')">System Settings</li>
-    </ul>
+    <div class="sb-brand">
+      <div class="firm">CA Atik Bhayani</div>
+      <div class="co">The Element<br>Environment Pvt Ltd</div>
+      <div class="cin">CIN: U74909PN2026PTC253784</div>
+    </div>
+    <nav id="sidebar-nav"></nav>
+    <div class="sb-footer">
+      <div class="sb-user" onclick="navigateTo('settings')">
+        <div class="sb-avatar" id="sb-avatar">A</div>
+        <div class="sb-user-info">
+          <div class="uname" id="sb-uname">User</div>
+          <div class="urole" id="sb-urole">Role</div>
+        </div>
+      </div>
+      <div class="sb-footer-powered">Powered by CA Atik Bhayani</div>
+    </div>
   </div>
 
-  <div id="main-content">
-    
-    <div id="dashboard" class="module-pane active">
-      <h2>Executive Control Dashboard</h2>
-      <div class="dashboard-grid">
-        <div class="kpi-card"><div class="kpi-title">Sales This Month</div><div class="kpi-value" id="dash-sales">₹0.00</div></div>
-        <div class="kpi-card"><div class="kpi-title">Purchases This Month</div><div class="kpi-value" id="dash-purchases">₹0.00</div></div>
-        <div class="kpi-card"><div class="kpi-title">Est. GST Liability</div><div class="kpi-value" id="dash-gst">₹0.00</div></div>
-        <div class="kpi-card"><div class="kpi-title">Outstanding Receivables</div><div class="kpi-value" id="dash-receivables">₹0.00</div></div>
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-left">
+        <button id="sidebar-toggle">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+        <span class="topbar-fy"   id="topbar-fy"></span>
+        <button class="btn btn-ghost btn-sm" id="logout-btn" style="color:var(--muted)">↩ Logout</button>
       </div>
     </div>
-
-    <div id="billing" class="module-pane">
-      <h2>Invoicing & Output Billings Engine</h2>
-      <div class="form-container">
-        <form id="billingForm" onsubmit="handleBillingSubmit(event)">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Document Class Type</label>
-              <select id="billDocType"><option>Invoice</option><option>Proforma Invoice</option><option>Quotation</option></select>
-            </div>
-            <div class="form-group">
-              <label>Invoice/Doc Serial Number</label>
-              <input type="text" id="billInvoiceNo" placeholder="Auto-generated if left blank">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Client Target Entity</label>
-              <input type="text" id="billClientName" required>
-            </div>
-            <div class="form-group">
-              <label>Execution Date</label>
-              <input type="date" id="billDate" required>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Taxable Value (₹)</label>
-              <input type="number" step="0.01" id="billTaxable" oninput="calculateBillingTaxes()" required>
-            </div>
-            <div class="form-group">
-              <label>Calculated GST (₹)</label>
-              <input type="number" step="0.01" id="billGst" readonly>
-            </div>
-            <div class="form-group">
-              <label>Gross Invoiced Sum Total (₹)</label>
-              <input type="number" step="0.01" id="billTotal" readonly>
-            </div>
-          </div>
-          <button type="submit" class="btn-primary">Generate, Route & Sync Invoice</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="purchase" class="module-pane">
-      <h2>Procurement & Purchase Inward Registration</h2>
-      <div class="form-container">
-        <form id="purchaseForm" onsubmit="handlePurchaseSubmit(event)">
-          <div class="form-row">
-            <div class="form-group"><label>Supplier Name</label><input type="text" id="pSupplier" required></div>
-            <div class="form-group"><label>Supplier GSTIN</label><input type="text" id="pGstin" required></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Invoice Serial ID</label><input type="text" id="pInvoiceNo" required></div>
-            <div class="form-group"><label>Supplier Invoice Date</label><input type="date" id="pDate" required></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Taxable Corporate Basis (₹)</label><input type="number" step="0.01" id="pTaxable" oninput="calcPurchaseTotals()" required></div>
-            <div class="form-group"><label>GST Paid (₹)</label><input type="number" step="0.01" id="pGst" oninput="calcPurchaseTotals()" required></div>
-            <div class="form-group"><label>Total Bill Net Cost (₹)</label><input type="number" step="0.01" id="pTotal" readonly></div>
-          </div>
-          <button type="submit" class="btn-primary">Commit Entry to Reconciliation Sync</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="gstr2a" class="module-pane">
-      <h2>GSTR-2A Input Tax Verification Dashboard</h2>
-      <table class="data-table" id="gstr2aTable">
-        <thead>
-          <tr>
-            <th>Supplier</th><th>GSTIN</th><th>Invoice ID</th><th>Date</th><th>Taxable</th><th>GST Value</th><th>Audit Status</th><th>Control Exec</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Sample Supplier Ltd</td>
-            <td>27AAAAA0000A1Z5</td>
-            <td>INV-992</td>
-            <td>2026-03-15</td>
-            <td>₹10,000.00</td>
-            <td>₹1,800.00</td>
-            <td><span class="badge bg-warning">Pending</span></td>
-            <td><button onclick="promptStatusUpdate('INV-992')" style="padding: 4px 8px; cursor: pointer; background: var(--primary-navy); color: white; border: none; border-radius: 4px;">Modify Status</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div id="employees" class="module-pane">
-      <h2>Corporate Employee Registry & Compliance Records</h2>
-      <div class="form-container">
-        <form id="employeeForm" onsubmit="handleEmployeeSubmit(event)">
-          <div class="form-row">
-            <div class="form-group"><label>Employee ID Code</label><input type="text" id="eId" required></div>
-            <div class="form-group"><label>Full Legal Name</label><input type="text" id="eName" required></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Date of Birth</label><input type="date" id="eDob" required></div>
-            <div class="form-group"><label>Primary Contact Mobile</label><input type="text" id="eMobile" required></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Aadhaar Identity Verification Number</label><input type="text" id="eAadhaar" placeholder="Enter 12-digit Aadhaar" required></div>
-            <div class="form-group"><label>Permanent Account Number (PAN)</label><input type="text" id="ePan" required></div>
-          </div>
-          <button type="submit" class="btn-primary">Register Employee Account File</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="outstanding" class="module-pane"><h2>Accounts Receivables Control Matrix</h2><p>Real-time outstanding balances and ageing analysis interface.</p></div>
-    <div id="gstr3b" class="module-pane"><h2>Estimated GSTR-3B Dynamic Computation Statement</h2><p>Automatic output vs input tax credit synthesis engine.</p></div>
-    <div id="compliance" class="module-pane"><h2>Statutory Compliance Ledger Calendar Matrix</h2><p>Color-coded regulatory compliance operational timeline tracking.</p></div>
-    <div id="clients" class="module-pane"><h2>Client Enterprise Master Registry</h2><p>Customer accounts profile database access terminal.</p></div>
-    <div id="pfesi" class="module-pane"><h2>PF Wages & ESI Mathematical Working Models</h2><p>Automated statutory contribution configurations.</p></div>
-    <div id="reports" class="module-pane"><h2>Analytical Enterprise Reporting Engine</h2><p>Exportable performance ledgers and operational summaries.</p></div>
-    <div id="settings" class="module-pane"><h2>Global System Environment Controls</h2><p>System structural configurations and sequence profile tools.</p></div>
-
+    <div id="content"></div>
   </div>
 
-  <script>
-    // Embedded Active Target Script Web App Macro End-Point Environment Variable
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGp2-0yuXfsv2joLHreA6UtNClf4G8Q5Zw79HCrsWh50Hbdj0Sz99ZaA3IC3-xOsic/exec";
+</div>
 
-    function switchModule(moduleId) {
-      document.querySelectorAll('.module-pane').forEach(element => element.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(element => element.classList.remove('active'));
-      
-      document.getElementById(moduleId).classList.add('active');
-      
-      const indexMap = {
-        'dashboard': 1, 'billing': 2, 'purchase': 3, 'outstanding': 4,
-        'gstr2a': 5, 'gstr3b': 6, 'compliance': 7, 'clients': 8,
-        'employees': 9, 'pfesi': 10, 'reports': 11, 'settings': 12
-      };
-      
-      const items = document.querySelectorAll('.nav-item');
-      if(items[indexMap[moduleId] - 1]) {
-        items[indexMap[moduleId] - 1].classList.add('active');
-      }
-    }
+<!-- Toast container -->
+<div id="toast-container"></div>
 
-    function calculateBillingTaxes() {
-      const taxable = parseFloat(document.getElementById('billTaxable').value) || 0;
-      const gstCalculated = taxable * 0.18; // 18% Base rule conversion
-      document.getElementById('billGst').value = gstCalculated.toFixed(2);
-      document.getElementById('billTotal').value = (taxable + gstCalculated).toFixed(2);
-    }
+<!-- ══ JS — order matters ══════════════════════════════════ -->
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/billing.js"></script>
+<script src="js/purchase.js"></script>
+<script src="js/outstanding.js"></script>
+<script src="js/gstr2a.js"></script>
+<script src="js/gstr3b.js"></script>
+<script src="js/duedates.js"></script>
+<script src="js/clients.js"></script>
+<script src="js/employee.js"></script>
+<script src="js/pfesi.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/settings.js"></script>
 
-    function calcPurchaseTotals() {
-      const taxable = parseFloat(document.getElementById('pTaxable').value) || 0;
-      const gst = parseFloat(document.getElementById('pGst').value) || 0;
-      document.getElementById('pTotal').value = (taxable + gst).toFixed(2);
-    }
-
-    // Dynamic execution wrapper supporting runtime environments
-    function executeBackendAction(methodName, argumentData, successCallback) {
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run.withSuccessHandler(successCallback)[methodName](argumentData);
-      } else {
-        // Fallback interface configuration routing using API pipeline endpoints
-        fetch(`${SCRIPT_URL}?action=${methodName}`, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify(argumentData),
-          headers: { 'Content-Type': 'application/json' }
-        })
-        .then(() => successCallback({ success: true, message: "Request deployed successfully." }))
-        .catch(err => alert("Pipeline sync failure optimization required: " + err));
-      }
-    }
-
-    function handlePurchaseSubmit(e) {
-      e.preventDefault();
-      const payload = {
-        supplier: document.getElementById('pSupplier').value,
-        gstin: document.getElementById('pGstin').value,
-        invoiceNo: document.getElementById('pInvoiceNo').value,
-        invoiceDate: document.getElementById('pDate').value,
-        taxableValue: document.getElementById('pTaxable').value,
-        gstAmount: document.getElementById('pGst').value,
-        totalAmount: document.getElementById('pTotal').value,
-        expenseCategory: 'Direct Materials',
-        paymentStatus: 'Pending'
-      };
-
-      executeBackendAction('savePurchaseInvoice', payload, function(response) {
-         alert('Purchase documents synced and auto-routed to GSTR-2A tracking modules.');
-         document.getElementById('purchaseForm').reset();
-      });
-    }
-
-    function handleBillingSubmit(e) {
-      e.preventDefault();
-      const payload = {
-        docType: document.getElementById('billDocType').value,
-        invoiceNo: document.getElementById('billInvoiceNo').value || 'INV-AUTO',
-        clientName: document.getElementById('billClientName').value,
-        invoiceDate: document.getElementById('billDate').value,
-        taxableAmount: document.getElementById('billTaxable').value,
-        gstAmount: document.getElementById('billGst').value,
-        totalAmount: document.getElementById('billTotal').value,
-        status: 'Unpaid'
-      };
-
-      executeBackendAction('saveBillingInvoice', payload, function() {
-        alert('Billing ledger documents generated successfully and routed to Accounts Receivable.');
-        document.getElementById('billingForm').reset();
-      });
-    }
-
-    function handleEmployeeSubmit(e) {
-      e.preventDefault();
-      const payload = {
-        empId: document.getElementById('eId').value,
-        name: document.getElementById('eName').value,
-        dob: document.getElementById('eDob').value,
-        mobile: document.getElementById('eMobile').value,
-        pan: document.getElementById('ePan').value
-      };
-
-      executeBackendAction('saveEmployeeMaster', payload, function() {
-        alert('Personnel master profiles appended successfully.');
-        document.getElementById('employeeForm').reset();
-      });
-    }
-
-    function promptStatusUpdate(invoiceNo) {
-      const statusOptions = ['Matched', 'Mismatch', 'Not Available', 'Ineligible ITC'];
-      const userSelection = prompt("Change GSTR-2A Matching Status. Enter matching context option sequence number:\n1. Matched\n2. Mismatch\n3. Not Available\n4. Ineligible ITC");
-      
-      if (userSelection && userSelection >= 1 && userSelection <= 4) {
-        const targetStatus = statusOptions[parseInt(userSelection) - 1];
-        
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-          google.script.run.withSuccessHandler(function(success) {
-            if(success) { alert("Audit trail state modified."); location.reload(); }
-          }).updateGSTR2AStatus(invoiceNo, targetStatus);
-        } else {
-          alert(`Status target execution initialized locally: [${targetStatus}] for Invoice ${invoiceNo}`);
-        }
-      }
-    }
-  </script>
 </body>
 </html>
