@@ -1517,7 +1517,7 @@ function renderInvoices() {
   
   document.getElementById('proformaTableBody').innerHTML = pro.length ? pro.map(i => `
     <tr>
-      <td><strong>${i.invoiceNo}</strong></td><td>${i.date}</td>
+      <td><strong>${i.invoiceNo}</strong></td><td>${fmtDate(i.date)}</td>
       <td>${i.clientName || '—'}</td><td><strong>${fmt(i.total)}</strong></td>
       <td>${statusBadge(i.payStatus)}</td>
       <td class="no-print">
@@ -1529,7 +1529,7 @@ function renderInvoices() {
 
   document.getElementById('quotationTableBody').innerHTML = quo.length ? quo.map(i => `
     <tr>
-      <td><strong>${i.invoiceNo}</strong></td><td>${i.date}</td>
+      <td><strong>${i.invoiceNo}</strong></td><td>${fmtDate(i.date)}</td>
       <td>${i.clientName || '—'}</td><td><strong>${fmt(i.total)}</strong></td>
       <td>${statusBadge(i.payStatus)}</td>
       <td class="no-print">
@@ -1552,7 +1552,7 @@ function filterInvoices() {
   // re-render filtered
   const inv = list.filter(i => i.type === 'Invoice' || !i.type);
   document.getElementById('invoiceTableBody').innerHTML = inv.length ? inv.map(i => `
-    <tr><td><strong>${i.invoiceNo}</strong></td><td>${i.date}</td><td>${i.clientName || '—'}</td>
+    <tr><td><strong>${i.invoiceNo}</strong></td><td>${fmtDate(i.date)}</td><td>${i.clientName || '—'}</td>
     <td><span class="badge badge-blue">${i.type || 'Invoice'}</span></td>
     <td>${fmt(i.taxable)}</td><td>${fmt(i.totalGST)}</td><td><strong>${fmt(i.total)}</strong></td>
     <td>${statusBadge(i.payStatus)}</td>
@@ -1744,8 +1744,13 @@ async function saveInvoice() {
   if (!data.items.length || data.total === 0) { toast('Add at least one line item', 'error'); return; }
   await apiPost('saveInvoice', data);
   closeModal('invoiceModal');
-  toast('Invoice saved', 'success');
-  setTimeout(() => { loadInvoices(); loadOutstanding(); loadGSTR2A(); loadDashboard(); }, 800);
+  toast('Invoice saved — opening print preview...', 'success');
+  // Render print and open print dialog after short delay
+  renderInvoicePrint(data);
+  setTimeout(() => {
+    loadInvoices(); loadOutstanding(); loadGSTR2A(); loadDashboard();
+  }, 800);
+  setTimeout(() => window.print(), 600);
 }
 async function deleteInvoice(id) {
   if (!confirm('Delete this document?')) return;
@@ -1869,7 +1874,7 @@ function renderPurchases(list) {
   if (!list.length) { tb.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:24px;">No purchases yet.</td></tr>'; return; }
   tb.innerHTML = list.map(p => `
     <tr>
-      <td>${p.date}</td><td><strong>${p.vendor}</strong></td><td>${p.gstin || '—'}</td>
+      <td>${fmtDate(p.date)}</td><td><strong>${p.vendor}</strong></td><td>${p.gstin || '—'}</td>
       <td>${p.invNo}</td><td>${p.category}</td><td>${fmt(p.taxable)}</td>
       <td>${p.gstRate}%</td><td>${fmt(p.cgst)}</td><td>${fmt(p.sgst)}</td>
       <td><strong>${fmt(p.total)}</strong></td><td>${statusBadge(p.payStatus)}</td>
@@ -1955,7 +1960,7 @@ function renderOutstanding(list) {
     const daysCls = days > 60 ? 'days-critical' : days > 30 ? 'days-warning' : '';
     return `<tr>
       <td><strong>${o.invoiceNo}</strong></td><td>${o.clientName || '—'}</td>
-      <td>${o.date}</td><td>${fmt(o.invoiceAmt)}</td>
+      <td>${fmtDate(o.date)}</td><td>${fmt(o.invoiceAmt)}</td>
       <td>${fmt(o.received)}</td><td><strong>${fmt(o.balance)}</strong></td>
       <td class="${daysCls}">${days}d</td><td>${statusBadge(o.status)}</td>
       <td class="no-print">
@@ -2011,7 +2016,7 @@ function renderGSTR2A(list) {
   if (!list.length) { tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:24px;">No GST purchases yet. Add purchases with GSTIN to see here.</td></tr>'; return; }
   tb.innerHTML = list.map(r => `
     <tr>
-      <td>${r.date}</td><td>${r.vendor}</td><td>${r.gstin || '—'}</td>
+      <td>${fmtDate(r.date)}</td><td>${r.vendor}</td><td>${r.gstin || '—'}</td>
       <td>${r.invNo}</td><td>${fmt(r.taxable)}</td>
       <td>${fmt((r.cgst || 0) + (r.sgst || 0) + (r.igst || 0))}</td>
       <td class="status-${(r.status || 'pending').toLowerCase().replace(' ', '')}">${r.status || 'Pending'}</td>
@@ -2118,7 +2123,7 @@ async function loadDashboard() {
       const due = new Date(d.dueDate);
       const diff = Math.floor((due - today) / 86400000);
       const cls = diff < 0 ? 'days-critical' : diff <= 7 ? 'days-warning' : '';
-      return `<tr><td>${d.compliance}</td><td class="${cls}">${d.dueDate}</td><td>${statusBadge(d.status)}</td></tr>`;
+      return `<tr><td>${d.compliance}</td><td class="${cls}">${fmtDate(d.dueDate)}</td><td>${statusBadge(d.status)}</td></tr>`;
     }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:12px;">No upcoming dues</td></tr>';
   } catch (e) {}
 }
@@ -2344,7 +2349,7 @@ function renderEmployees(list) {
       <td>${e.name}</td>
       <td>${e.desig || '—'}</td>
       <td>${e.dept || '—'}</td>
-      <td>${e.doj || '—'}</td>
+      <td>${fmtDate(e.doj) || '—'}</td>
       <td>₹${(parseFloat(e.salary) || 0).toLocaleString('en-IN')} <small style='color:var(--text-muted);font-size:0.68rem;'>(CTC)</small></td>
       <td>${e.uan || '—'}</td>
       <td>${e.esicno || '—'}</td>
@@ -2604,7 +2609,7 @@ function renderPFHistory(list) {
   }
   tb.innerHTML = list.map(r => `
     <tr>
-      <td>${r.month}/${r.year}</td>
+      <td>${monthIN(r.month)} ${r.year}</td>
       <td>${r.empid}</td>
       <td>${r.empName}</td>
       <td>${fmt(r.grossSalary)}</td>
@@ -2701,7 +2706,7 @@ function renderDueDates(list) {
       <td><strong>${d.compliance}</strong></td>
       <td>${catBadge}</td>
       <td>${d.period || '—'}</td>
-      <td>${d.dueDate}</td>
+      <td>${fmtDate(d.dueDate)}</td>
       <td>${d.status === 'Done' ? '<span class="badge badge-green">Done</span>' : diff < 0 ? '<span class="badge badge-red">Overdue</span>' : diff <= 7 ? '<span class="badge badge-yellow">Due Soon</span>' : '<span class="badge badge-gray">Pending</span>'}</td>
       <td>${d.remarks || '—'}</td>
       <td class="no-print" style="white-space:nowrap;">
@@ -2792,9 +2797,44 @@ function confirmSeedDueDates() {
   seedDueDates();
 }
 async function seedDueDates() {
-  await apiPost('seedDueDates', { fy: '2025-26' });
-  toast('FY defaults seeded', 'success');
-  setTimeout(loadDueDates, 1000);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const entries = [];
+  const exists = (compliance, dueDate) => allDueDates.find(d => d.compliance === compliance && d.dueDate === dueDate);
+  const push = (compliance, category, dueDate, period, remarks) => {
+    if (exists(compliance, dueDate)) return;
+    entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      compliance, category, period: period||'', dueDate, status: 'Pending', remarks: remarks||'' });
+  };
+  for (let i = 0; i < 12; i++) {
+    const dt = new Date(y, m + i, 1);
+    const mm = dt.getMonth(), yy = dt.getFullYear();
+    const period = MONTHS_IN[mm] + ' ' + yy;
+    const next = (day) => { const d = new Date(yy, mm+1, day); return d.toISOString().split('T')[0]; };
+    const cur  = (day) => { const d = new Date(yy, mm, day);   return d.toISOString().split('T')[0]; };
+    push('GSTR-3B Filing', 'GST', next(20), period);
+    push('GSTR-1 Filing',  'GST', next(11), period);
+    push('PF ECR Challan', 'PF',  next(15), period);
+    push('ESI Challan',    'ESI', next(15), period);
+    push('TDS Payment',    'TDS', next(7),  period);
+    if (mm === 2)  push('Professional Tax Return (PTRC)', 'Other', cur(31), 'FY '+(yy-1)+'-'+String(yy).slice(2));
+    if (mm === 5)  push('TDS Return (24Q/26Q)', 'TDS', yy+'-07-31', 'Q1 Apr–Jun '+yy);
+    if (mm === 8)  push('TDS Return (24Q/26Q)', 'TDS', yy+'-10-31', 'Q2 Jul–Sep '+yy);
+    if (mm === 11) push('TDS Return (24Q/26Q)', 'TDS', (yy+1)+'-01-31', 'Q3 Oct–Dec '+yy);
+    if (mm === 2)  push('TDS Return (24Q/26Q)', 'TDS', yy+'-05-31', 'Q4 Jan–Mar '+yy);
+    if (mm === 5)  push('Advance Tax — 15% (Q1)', 'Advance Tax', yy+'-06-15', 'FY '+yy+'-'+String(yy+1).slice(2));
+    if (mm === 8)  push('Advance Tax — 45% (Q2)', 'Advance Tax', yy+'-09-15', 'FY '+yy+'-'+String(yy+1).slice(2));
+    if (mm === 11) push('Advance Tax — 75% (Q3)', 'Advance Tax', yy+'-12-15', 'FY '+yy+'-'+String(yy+1).slice(2));
+    if (mm === 2)  push('Advance Tax — 100% (Q4)', 'Advance Tax', yy+'-03-15', 'FY '+(yy-1)+'-'+String(yy).slice(2));
+    if (mm === 9)  push('ROC Annual Return (MGT-7)', 'ROC', yy+'-11-29', 'FY '+(yy-1)+'-'+String(yy).slice(2));
+    if (mm === 9)  push('ROC Financial Statements (AOC-4)', 'ROC', yy+'-10-29', 'FY '+(yy-1)+'-'+String(yy).slice(2));
+    if (mm === 9)  push('Income Tax Return — Company', 'ITR', yy+'-10-31', 'AY '+yy+'-'+String(yy+1).slice(2));
+    if (mm === 8)  push('Tax Audit Report (3CD)', 'Audit', yy+'-09-30', 'AY '+yy+'-'+String(yy+1).slice(2));
+  }
+  for (const e of entries) await apiPost('saveDueDate', e);
+  toast(entries.length + ' due dates seeded (¹12 months)', 'success');
+  setTimeout(loadDueDates, 1200);
 }
 
 // EXPORT DUE DATES
@@ -2819,6 +2859,16 @@ function downloadFile(filename, content, mimeType) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// ─── Indian Date & Month Helpers ───────────────────────────
+function fmtDate(d) {
+  if (!d) return '—';
+  const p = String(d).split('-');
+  if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
+  return d;
+}
+const MONTHS_IN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthIN(m) { return MONTHS_IN[(parseInt(m)||1)-1] || ''; }
 
 // Modal overlay close on click outside
 document.querySelectorAll('.modal-overlay').forEach(ov => {
