@@ -6,10 +6,10 @@
 <title>ELEMENT Office Manager — Billing</title>
 <style>
   :root {
-    --sidebar-bg: #0A1628;
-    --header-bg: #1A3A5C;
-    --accent: #2563EB;
-    --accent-light: #38BDF8;
+    --sidebar-bg: #1F3864;
+    --header-bg: #1F3864;
+    --accent: #2E75B6;
+    --accent-light: #5B9BD5;
     --bg: #F0F4F8;
     --card-bg: #FFFFFF;
     --text: #1E293B;
@@ -30,10 +30,10 @@
     display: flex; align-items: center; justify-content: center; z-index: 9999;
   }
   .login-box {
-    background: #fff; border-radius: 12px; padding: 40px 36px; width: 340px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    background: #fff; border-radius: 14px; padding: 42px 40px; width: 370px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4); border-top: 4px solid #2E75B6;
   }
-  .login-box h2 { color: var(--sidebar-bg); font-size: 1.2rem; margin-bottom: 4px; }
+  .login-box h2 { color: #1F3864; font-size: 1.25rem; margin-bottom: 4px; }
   .login-box p { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 24px; }
   .login-box input {
     width: 100%; padding: 10px 12px; border: 1px solid var(--border);
@@ -44,14 +44,14 @@
     width: 100%; padding: 11px; background: var(--accent); color: #fff;
     border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
   }
-  .login-box button:hover { background: #1d4ed8; }
+  .login-box button:hover { background: #1F3864; }
   #loginError { color: var(--danger); font-size: 0.82rem; margin-top: 8px; display: none; }
 
   /* LAYOUT */
   #appShell { display: none; }
   .sidebar {
     position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width);
-    background: var(--sidebar-bg); display: flex; flex-direction: column;
+    background: linear-gradient(175deg,#1a3a6e 0%,#1F3864 50%,#162d52 100%); display: flex; flex-direction: column;
     z-index: 100; transition: transform 0.25s;
   }
   .sidebar-logo {
@@ -63,14 +63,15 @@
     outline: none; margin-bottom: 8px;
   }
   .sidebar-logo .app-name { color: rgba(255,255,255,0.5); font-size: 0.72rem; letter-spacing: 0.05em; }
-  .nav-group { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .nav-group { flex: 1; overflow-y: auto; padding: 8px 0; scrollbar-width: none; }
+  .nav-group::-webkit-scrollbar { display: none; }
   .nav-item {
-    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    display: flex; align-items: center; gap: 9px; padding: 8px 16px;
     color: rgba(255,255,255,0.65); cursor: pointer; font-size: 0.88rem;
     border-left: 3px solid transparent; transition: all 0.15s; user-select: none;
   }
   .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-  .nav-item.active { background: rgba(56,189,248,0.12); color: var(--accent-light); border-left-color: var(--accent-light); }
+  .nav-item.active { background: rgba(91,155,213,0.15); color: var(--accent-light); border-left-color: var(--accent-light); }
   .nav-item .icon { font-size: 1rem; width: 18px; text-align: center; }
   .nav-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 6px 12px; }
   .sidebar-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -83,7 +84,7 @@
   .main-wrap { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
   .top-bar {
     height: var(--header-h); background: var(--header-bg); display: flex; align-items: center;
-    padding: 0 24px; position: sticky; top: 0; z-index: 50; gap: 12px;
+    padding: 0 24px; position: sticky; top: 0; z-index: 50; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
   .top-bar h1 { color: #fff; font-size: 1rem; font-weight: 600; flex: 1; }
   .top-bar .menu-btn { display: none; background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; }
@@ -110,7 +111,7 @@
   /* BUTTONS */
   .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: background 0.15s; }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #1d4ed8; }
+  .btn-primary:hover { background: #1F3864; }
   .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { background: var(--border); }
   .btn-danger { background: var(--danger); color: #fff; }
@@ -282,8 +283,9 @@
 <!-- LOGIN -->
 <div id="loginOverlay">
   <div class="login-box">
-    <h2>THE ELEMENT ENVIRONMENT</h2>
-    <p>Office Manager — Billing</p>
+    <div style="font-size:0.68rem;font-weight:700;color:#2E75B6;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">The Element Environment Pvt Ltd</div>
+    <h2 style="font-size:1.25rem;line-height:1.2;color:#1F3864;">ELEMENT Office Manager</h2>
+    <p style="margin-top:5px;">Sign in to continue</p>
     <input type="text" id="loginUser" placeholder="Username" />
     <input type="password" id="loginPass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" />
     <button onclick="doLogin()">Sign In</button>
@@ -300,9 +302,8 @@
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <select class="firm-selector" id="firmSelector" onchange="onFirmChange()">
-        <option value="TEEPL">The Element Environment Pvt Ltd</option>
-        <!-- MORE FIRMS: add <option> here when onboarded -->
+      <select class="firm-selector" id="firmSelector" onchange="onFirmChange()" style="font-weight:600;">
+        <option value="TEEPL">Office Manager v1</option>
       </select>
       <div class="app-name">OFFICE MANAGER v1</div>
     </div>
@@ -319,9 +320,9 @@
       <div class="nav-item" onclick="showModule('clients')"><span class="icon">👥</span> Clients</div>
       <div class="nav-item" onclick="showModule('reports')"><span class="icon">📈</span> Reports</div>
       <div class="nav-section">HR &amp; Compliance</div>
-      <div class="nav-item" onclick="showModule('employees')"><span class="icon">&#129333;</span> Employees</div>
-      <div class="nav-item" onclick="showModule('pfesi')"><span class="icon">&#129518;</span> PF &amp; ESI Working</div>
-      <div class="nav-item" onclick="showModule('duedates')"><span class="icon">&#128197;</span> Due Dates</div>
+      <div class="nav-item" onclick="showModule('employees')"><span class="icon">&#128100;</span> Employees</div>
+      <div class="nav-item" onclick="showModule('pfesi')"><span class="icon">&#9775;</span> PF &amp; ESI Working</div>
+      <div class="nav-item" onclick="showModule('duedates')"><span class="icon">&#128337;</span> Due Dates</div>
       <div class="nav-divider"></div>
       <div class="nav-item" onclick="showModule('vault')"><span class="icon">🗄️</span> Document Vault</div>
       <div class="nav-divider"></div>
@@ -1728,6 +1729,10 @@ function getInvoiceData() {
     clientId, clientName: client ? client.name : '',
     clientGstin: document.getElementById('inv-clientGstin').value,
     clientAddress: client ? client.address : '',
+    clientCity: client ? client.city : '',
+    clientState: client ? client.state : '',
+    clientPhone: client ? client.phone : '',
+    clientPan: client ? client.pan : '',
     pos, isIGST,
     items, taxable, cgst, sgst, igst,
     totalGST: cgst + sgst + igst,
@@ -1808,14 +1813,17 @@ function renderInvoicePrint(inv) {
     <div class="inv-meta">
       <div class="inv-meta-col">
         <p><strong>Invoice No:</strong> ${inv.invoiceNo}</p>
-        <p><strong>Date:</strong> ${inv.date}</p>
+        <p><strong>Date:</strong> ${fmtDate(inv.date)}</p>
         <p><strong>Place of Supply:</strong> ${inv.pos || 'Maharashtra'}</p>
       </div>
       <div class="inv-meta-col">
         <p><strong>Bill To:</strong></p>
         <p><strong>${inv.clientName || ''}</strong></p>
         <p>${inv.clientAddress || ''}</p>
-        <p>${inv.clientGstin ? 'GSTIN: ' + inv.clientGstin : ''}</p>
+        ${inv.clientCity || inv.clientState ? `<p>${[inv.clientCity, inv.clientState].filter(Boolean).join(', ')}</p>` : ''}
+        ${inv.clientPhone ? `<p>Ph: ${inv.clientPhone}</p>` : ''}
+        ${inv.clientGstin ? `<p><strong>GSTIN:</strong> ${inv.clientGstin}</p>` : ''}
+        ${inv.clientPan ? `<p>PAN: ${inv.clientPan}</p>` : ''}
       </div>
     </div>
     <table class="inv-items-table">
