@@ -1353,7 +1353,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // ============================================================
 // SETTINGS
 // ============================================================
-async async function loadSettings() {
+async function loadSettings() {
   try {
     const data = await apiGet('getSettings');
     if (data && data.companyName) {
