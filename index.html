@@ -774,28 +774,40 @@
       <!-- SETTINGS -->
       <div class="module" id="mod-settings">
         <div class="module-header"><h2>Settings</h2></div>
-        <div style="background:var(--card-bg);border-radius:10px;padding:24px;max-width:600px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-          <div class="form-grid" style="margin-bottom:16px;">
-            <div class="form-group form-full"><label>Company Name</label><input id="s-companyName" type="text"></div>
-            <div class="form-group form-full"><label>Address</label><textarea id="s-address"></textarea></div>
-            <div class="form-group"><label>GSTIN</label><input id="s-gstin" type="text"></div>
-            <div class="form-group"><label>PAN</label><input id="s-pan" type="text"></div>
-            <div class="form-group"><label>CIN</label><input id="s-cin" type="text"></div>
-            <div class="form-group"><label>Phone</label><input id="s-phone" type="text"></div>
-            <div class="form-group"><label>Email</label><input id="s-email" type="text"></div>
-            <div class="form-group"><label>Invoice Prefix</label><input id="s-prefix" type="text"></div>
-            <div class="form-group"><label>Bank Name</label><input id="s-bankName" type="text"></div>
-            <div class="form-group"><label>Account No</label><input id="s-accNo" type="text"></div>
-            <div class="form-group"><label>IFSC Code</label><input id="s-ifsc" type="text"></div>
-            <div class="form-group"><label>Branch</label><input id="s-branch" type="text"></div>
-            <div class="form-group form-full"><label>State</label>
+        <div style="background:var(--card-bg);border-radius:10px;padding:28px;max-width:640px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--border);">&#127970; Company Details</div>
+          <div class="form-grid" style="margin-bottom:20px;">
+            <div class="form-group form-full">
+              <label>Company Name</label>
+              <input id="s-companyName" type="text" placeholder="THE ELEMENT ENVIRONMENT PRIVATE LIMITED">
+            </div>
+            <div class="form-group form-full">
+              <label>Address</label>
+              <textarea id="s-address" rows="2" placeholder="SR. NO. 43/76, Flat No. 1, Chidanand Heights, Narhe, Pune - 411041"></textarea>
+            </div>
+            <div class="form-group"><label>GSTIN</label><input id="s-gstin" type="text" placeholder="27AAMCT9717A1Z5"></div>
+            <div class="form-group"><label>PAN</label><input id="s-pan" type="text" placeholder="AAMCT9717A"></div>
+            <div class="form-group"><label>CIN</label><input id="s-cin" type="text" placeholder="U74909PN2026PTC253784"></div>
+            <div class="form-group"><label>State</label>
               <select id="s-state">
                 <option value="Maharashtra">Maharashtra</option>
                 <option value="Other">Other State</option>
               </select>
             </div>
+            <div class="form-group"><label>Phone</label><input id="s-phone" type="text" placeholder="+91 XXXXX XXXXX"></div>
+            <div class="form-group"><label>Email</label><input id="s-email" type="email" placeholder="info@element.in"></div>
           </div>
-          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--border);">&#128179; Billing &amp; Bank Details</div>
+          <div class="form-grid" style="margin-bottom:20px;">
+            <div class="form-group"><label>Invoice Prefix</label><input id="s-prefix" type="text" placeholder="ECS"></div>
+            <div class="form-group"><label>Financial Year</label><input id="s-fy" type="text" placeholder="26-27"></div>
+            <div class="form-group"><label>Bank Name</label><input id="s-bankName" type="text" placeholder="HDFC Bank"></div>
+            <div class="form-group"><label>Account No</label><input id="s-accNo" type="text" placeholder="50200119162065"></div>
+            <div class="form-group"><label>IFSC Code</label><input id="s-ifsc" type="text" placeholder="HDFC0011725"></div>
+            <div class="form-group"><label>Branch</label><input id="s-branch" type="text" placeholder="Bibvewadi, Pune"></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()" style="padding:10px 28px;">&#10003; Save Settings</button>
+          <button class="btn btn-secondary" onclick="seedSettingsUI()" style="padding:10px 20px;margin-left:10px;">&#8635; Reset to Defaults</button>
         </div>
       </div>
 
@@ -1277,8 +1289,18 @@ function setTodayDates() {
 async function apiGet(action, data) {
   let url = WEBAPP_URL + '?action=' + action + '&firm=' + currentFirm;
   if (data) url += '&data=' + encodeURIComponent(JSON.stringify(data));
-  const res = await fetch(url);
-  return res.json();
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    // Handle both raw array and {status, data:[]} envelope
+    if (Array.isArray(json)) return json;
+    if (json && Array.isArray(json.data)) return json.data;
+    if (json && json.status === 'ok') return json.result || json.data || json;
+    return json;
+  } catch(e) {
+    console.error('apiGet error:', action, e);
+    return null;
+  }
 }
 async function apiPost(action, payload) {
   const fd = new FormData();
@@ -1331,70 +1353,73 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // ============================================================
 // SETTINGS
 // ============================================================
-async function loadSettings() {
+async async function loadSettings() {
   try {
     const data = await apiGet('getSettings');
     if (data && data.companyName) {
-      ['companyName','address','gstin','pan','cin','phone','email','prefix','bankName','accNo','ifsc','branch'].forEach(k => {
+      ['companyName','address','gstin','pan','cin','state','phone','email','prefix','fy','bankName','accNo','ifsc','branch'].forEach(k => {
         const el = document.getElementById('s-' + k);
         if (el && data[k]) el.value = data[k];
       });
       // Update firmConfig from settings
-      if (data.companyName) firmConfig.name = data.companyName;
-      if (data.accNo) firmConfig.accNo = data.accNo;
-      if (data.ifsc) firmConfig.ifsc = data.ifsc;
-      if (data.branch) firmConfig.branch = data.branch;
-      if (data.bankName) firmConfig.bankName = data.bankName;
+      if (data.companyName) FC.name = data.companyName;
+      if (data.accNo) FC.accNo = data.accNo;
+      if (data.ifsc) FC.ifsc = data.ifsc;
+      if (data.branch) FC.branch = data.branch;
+      if (data.bankName) FC.bankName = data.bankName;
+      if (data.prefix) FC.invoicePrefix = data.prefix;
+      if (data.fy) FC.fy = data.fy;
     } else {
       // Seed defaults from firmConfig
-      document.getElementById('s-companyName').value = firmConfig.name;
-      document.getElementById('s-address').value = firmConfig.address;
-      document.getElementById('s-gstin').value = firmConfig.gstin;
-      document.getElementById('s-pan').value = firmConfig.pan;
-      document.getElementById('s-cin').value = firmConfig.cin;
-      document.getElementById('s-bankName').value = firmConfig.bankName;
-      document.getElementById('s-accNo').value = firmConfig.accNo;
-      document.getElementById('s-ifsc').value = firmConfig.ifsc;
-      document.getElementById('s-branch').value = firmConfig.branch;
-      document.getElementById('s-prefix').value = firmConfig.invoicePrefix;
+      seedSettingsUI();
     }
   } catch (e) {
     // offline — use defaults
-    document.getElementById('s-companyName').value = firmConfig.name;
-    document.getElementById('s-address').value = firmConfig.address;
-    document.getElementById('s-gstin').value = firmConfig.gstin;
-    document.getElementById('s-pan').value = firmConfig.pan;
-    document.getElementById('s-cin').value = firmConfig.cin;
-    document.getElementById('s-bankName').value = firmConfig.bankName;
-    document.getElementById('s-accNo').value = firmConfig.accNo;
-    document.getElementById('s-ifsc').value = firmConfig.ifsc;
-    document.getElementById('s-branch').value = firmConfig.branch;
-    document.getElementById('s-prefix').value = firmConfig.invoicePrefix;
+    seedSettingsUI();
   }
 }
 async function saveSettings() {
+  const g = id => document.getElementById(id) ? document.getElementById(id).value : '';
   const payload = {
-    companyName: document.getElementById('s-companyName').value,
-    address: document.getElementById('s-address').value,
-    gstin: document.getElementById('s-gstin').value,
-    pan: document.getElementById('s-pan').value,
-    cin: document.getElementById('s-cin').value,
-    phone: document.getElementById('s-phone').value,
-    email: document.getElementById('s-email').value,
-    prefix: document.getElementById('s-prefix').value,
-    bankName: document.getElementById('s-bankName').value,
-    accNo: document.getElementById('s-accNo').value,
-    ifsc: document.getElementById('s-ifsc').value,
-    branch: document.getElementById('s-branch').value,
+    companyName: g('s-companyName'), address: g('s-address'),
+    gstin: g('s-gstin'), pan: g('s-pan'), cin: g('s-cin'),
+    state: g('s-state'), phone: g('s-phone'), email: g('s-email'),
+    prefix: g('s-prefix'), fy: g('s-fy') || FC.fy,
+    bankName: g('s-bankName'), accNo: g('s-accNo'),
+    ifsc: g('s-ifsc'), branch: g('s-branch'),
   };
   await apiPost('saveSettings', payload);
-  // Update live firmConfig
-  Object.assign(firmConfig, {
-    name: payload.companyName, accNo: payload.accNo,
-    ifsc: payload.ifsc, branch: payload.branch,
-    bankName: payload.bankName, invoicePrefix: payload.prefix
+  Object.assign(FC, {
+    name: payload.companyName || FC.name,
+    accNo: payload.accNo || FC.accNo,
+    ifsc: payload.ifsc || FC.ifsc,
+    branch: payload.branch || FC.branch,
+    bankName: payload.bankName || FC.bankName,
+    invoicePrefix: payload.prefix || FC.invoicePrefix,
+    fy: payload.fy || FC.fy,
+    gstin: payload.gstin || FC.gstin,
+    pan: payload.pan || FC.pan,
+    cin: payload.cin || FC.cin,
   });
-  toast('Settings saved', 'success');
+  toast('Settings saved — active on next invoice', 'success');
+}
+
+function seedSettingsUI() {
+  const se = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  se('s-companyName', FC.name);
+  se('s-address', FC.address);
+  se('s-gstin', FC.gstin);
+  se('s-pan', FC.pan);
+  se('s-cin', FC.cin);
+  se('s-state', FC.state || 'Maharashtra');
+  se('s-phone', FC.phone || '');
+  se('s-email', FC.email || '');
+  se('s-prefix', FC.invoicePrefix);
+  se('s-fy', FC.fy);
+  se('s-bankName', FC.bankName);
+  se('s-accNo', FC.accNo);
+  se('s-ifsc', FC.ifsc);
+  se('s-branch', FC.branch);
 }
 
 // ============================================================
@@ -1507,7 +1532,7 @@ function renderInvoices() {
   invBody.innerHTML = inv.length ? inv.map(i => `
     <tr>
       <td><strong>${i.invoiceNo}</strong></td>
-      <td>${i.date}</td>
+      <td>${fmtDate(i.date)}</td>
       <td>${i.clientName || '—'}</td>
       <td><span class="badge badge-blue">${i.type || 'Invoice'}</span></td>
       <td>${fmt(i.taxable)}</td>
