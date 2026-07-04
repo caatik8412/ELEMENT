@@ -240,7 +240,9 @@
 
   /* PRINT */
   @media print {
-    .sidebar, .top-bar, .no-print, #toast { display: none !important; }
+    .sidebar, .top-bar, .no-print, #toast,
+    .module, .filter-bar, .tab-nav, .module-header { display: none !important; }
+    #invoicePrintArea { display: block !important; }
     .main-wrap { margin-left: 0 !important; }
     .content { padding: 0 !important; }
     body { background: #fff !important; }
@@ -305,7 +307,6 @@
       <select class="firm-selector" id="firmSelector" onchange="onFirmChange()" style="font-weight:600;">
         <option value="TEEPL">Office Manager v1</option>
       </select>
-      <div class="app-name">OFFICE MANAGER v1</div>
     </div>
     <div class="nav-group">
       <div class="nav-section">Billing</div>
@@ -1296,7 +1297,8 @@ function showModule(id) {
     dashboard: 'Dashboard', billing: 'Billing', purchases: 'Purchases',
     outstanding: 'Outstanding Receivables', gstr2a: 'GSTR-2A Matching',
     gstr3b: 'Estimated GSTR-3B', clients: 'Clients', reports: 'Reports',
-    vault: 'Document Vault', settings: 'Settings'
+    employees: 'Employee Master', pfesi: 'PF & ESI Working',
+    duedates: 'Compliance Due Dates', vault: 'Document Vault', settings: 'Settings'
   };
   document.getElementById('topBarTitle').textContent = titles[id] || id;
   // highlight nav
@@ -1489,7 +1491,11 @@ async function deleteClient(id) {
 async function loadInvoices() {
   try {
     const data = await apiGet('getInvoices');
-    allInvoices = data || [];
+    // Normalize dates from Sheet (may come as full Date strings)
+    allInvoices = (data || []).map(inv => ({
+      ...inv,
+      date: normDate(inv.date)
+    }));
     renderInvoices();
   } catch (e) { allInvoices = []; }
 }
@@ -1873,7 +1879,7 @@ function renderInvoicePrint(inv) {
 async function loadPurchases() {
   try {
     const data = await apiGet('getPurchases');
-    allPurchases = data || [];
+    allPurchases = (data || []).map(p => ({ ...p, date: normDate(p.date) }));
     renderPurchases(allPurchases);
   } catch (e) { allPurchases = []; }
 }
@@ -1955,7 +1961,7 @@ async function deletePurchase(id) {
 async function loadOutstanding() {
   try {
     const data = await apiGet('getOutstanding');
-    allOutstanding = data || [];
+    allOutstanding = (data || []).map(o => ({ ...o, date: normDate(o.date) }));
     renderOutstanding(allOutstanding);
   } catch (e) { allOutstanding = []; }
 }
@@ -2015,7 +2021,7 @@ async function savePayment() {
 async function loadGSTR2A() {
   try {
     const data = await apiGet('getGSTR2A');
-    allGSTR2A = data || [];
+    allGSTR2A = (data || []).map(r => ({ ...r, date: normDate(r.date) }));
     renderGSTR2A(allGSTR2A);
   } catch (e) { allGSTR2A = []; }
 }
@@ -2871,9 +2877,38 @@ function downloadFile(filename, content, mimeType) {
 // ─── Indian Date & Month Helpers ───────────────────────────
 function fmtDate(d) {
   if (!d) return '—';
-  const p = String(d).split('-');
-  if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
-  return d;
+  const s = String(d).trim();
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y,m,dy] = s.split('-');
+    return dy + '/' + m + '/' + y;
+  }
+  // JS Date string or ISO string — parse and reformat
+  try {
+    const dt = new Date(s);
+    if (!isNaN(dt)) {
+      const dy = String(dt.getDate()).padStart(2,'0');
+      const m  = String(dt.getMonth()+1).padStart(2,'0');
+      const y  = dt.getFullYear();
+      return dy + '/' + m + '/' + y;
+    }
+  } catch(e) {}
+  return s;
+}
+// Normalize any date string to YYYY-MM-DD
+function normDate(d) {
+  if (!d) return '';
+  const s = String(d).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;  // already correct
+  try {
+    const dt = new Date(s);
+    if (!isNaN(dt)) {
+      return dt.getFullYear() + '-' +
+             String(dt.getMonth()+1).padStart(2,'0') + '-' +
+             String(dt.getDate()).padStart(2,'0');
+    }
+  } catch(e) {}
+  return s;
 }
 const MONTHS_IN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function monthIN(m) { return MONTHS_IN[(parseInt(m)||1)-1] || ''; }
