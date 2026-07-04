@@ -288,6 +288,10 @@
     <input type="password" id="loginPass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" />
     <button onclick="doLogin()">Sign In</button>
     <div id="loginError">Invalid credentials. Please try again.</div>
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #F1F5F9;text-align:center;">
+      <span style="font-size:0.7rem;color:#94A3B8;">Powered by </span>
+      <strong style="font-size:0.72rem;color:#C2410C;letter-spacing:0.02em;">Bhayani Business Solutions</strong>
+    </div>
   </div>
 </div>
 
@@ -324,6 +328,7 @@
       <div class="nav-item" onclick="showModule('settings')"><span class="icon">⚙️</span> Settings</div>
     </div>
     <div class="sidebar-footer">
+      <div style="font-size:0.63rem;color:rgba(255,255,255,0.2);margin-bottom:7px;line-height:1.5;">Powered by<br><strong style="color:rgba(239,115,58,0.6);font-size:0.68rem;">Bhayani Business Solutions</strong></div>
       <button class="logout-btn" onclick="doLogout()">⇢ Sign Out</button>
     </div>
   </div>
@@ -570,7 +575,7 @@
           <table>
             <thead><tr>
               <th>Emp ID</th><th>Name</th><th>Designation</th><th>Department</th>
-              <th>DOJ</th><th>Salary (₹)</th><th>UAN</th><th>ESIC No</th>
+              <th>DOJ</th><th>CTC (₹)</th><th>UAN</th><th>ESIC No</th>
               <th>Phone</th><th class="no-print">Actions</th>
             </tr></thead>
             <tbody id="empTableBody"></tbody>
@@ -622,16 +627,22 @@
                 <input type="number" id="pf-present" value="30" min="0" max="31" oninput="calcPFESI()">
               </div>
               <div class="form-group">
-                <label>Gross Salary (₹)</label>
+                <label>CTC (₹)</label>
                 <input type="number" id="pf-gross" min="0" step="0.01" oninput="calcPFESI()">
               </div>
             </div>
 
             <!-- PF RESULT -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+            <div><div style="font-size:0.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Basic Salary</div><div style="font-weight:700;font-size:0.95rem;" id="r-basic">&#8377;0.00</div><div style="font-size:0.67rem;color:var(--text-muted);">50% CTC or &#8377;8K min</div></div>
+            <div><div style="font-size:0.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">HRA</div><div style="font-weight:700;font-size:0.95rem;" id="r-hra">&#8377;0.00</div><div style="font-size:0.67rem;color:var(--text-muted);">40% of Basic</div></div>
+            <div><div style="font-size:0.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Other Allow.</div><div style="font-weight:700;font-size:0.95rem;" id="r-allowance">&#8377;0.00</div><div style="font-size:0.67rem;color:var(--text-muted);">Balance</div></div>
+            <div><div style="font-size:0.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Gross (ex. ER)</div><div style="font-weight:700;font-size:0.95rem;" id="r-grossex">&#8377;0.00</div><div style="font-size:0.67rem;color:var(--text-muted);">CTC - ER PF - EDLI</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
               <div>
                 <div class="pf-section-head">PF WORKING</div>
-                <div class="pf-result-row"><span class="lbl">Proportional Gross</span><span class="val" id="r-propgross">₹0.00</span></div>
+                <div class="pf-result-row"><span class="lbl">Prop. Gross</span><span class="val" id="r-propgross">₹0.00</span></div>
                 <div class="pf-result-row"><span class="lbl">PF Wages (capped ₹15,000)</span><span class="val" id="r-pfwages">₹0.00</span></div>
                 <div class="pf-result-row"><span class="lbl">Employee PF @ 12%</span><span class="val" id="r-emppf">₹0.00</span></div>
                 <div class="pf-result-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px;"><span class="lbl" style="font-weight:600;color:var(--text);">Employer Contribution</span></div>
@@ -644,7 +655,7 @@
               <div>
                 <div class="pf-section-head">ESI WORKING</div>
                 <div id="esi-eligible-msg" style="padding:8px;font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;"></div>
-                <div class="pf-result-row"><span class="lbl">Gross (for ESI)</span><span class="val" id="r-esigross">₹0.00</span></div>
+                <div class="pf-result-row"><span class="lbl">Gross (for ESI) [CTC basis]</span><span class="val" id="r-esigross">₹0.00</span></div>
                 <div class="pf-result-row"><span class="lbl">Employee ESI @ 0.75%</span><span class="val" id="r-empesi">₹0.00</span></div>
                 <div class="pf-result-row"><span class="lbl">Employer ESI @ 3.25%</span><span class="val" id="r-emplresi">₹0.00</span></div>
                 <div class="pf-total-row"><span>Total ESI Challan</span><span id="r-esichallan">₹0.00</span></div>
@@ -657,7 +668,7 @@
 
                 <div style="margin-top:20px;">
                   <div class="pf-section-head">NET SALARY</div>
-                  <div class="pf-result-row"><span class="lbl">Proportional Gross</span><span class="val" id="r-netgross">₹0.00</span></div>
+                  <div class="pf-result-row"><span class="lbl">Prop. Gross</span><span class="val" id="r-netgross">₹0.00</span></div>
                   <div class="pf-result-row"><span class="lbl">Less: Emp PF (12%)</span><span class="val" style="color:var(--danger);" id="r-less-pf">₹0.00</span></div>
                   <div class="pf-result-row"><span class="lbl">Less: Emp ESI (0.75%)</span><span class="val" style="color:var(--danger);" id="r-less-esi">₹0.00</span></div>
                   <div class="pf-total-row" style="color:var(--success);"><span>Net Take-Home</span><span id="r-takehome">₹0.00</span></div>
@@ -692,7 +703,7 @@
           <div class="table-wrap">
             <table>
               <thead><tr>
-                <th>Month/Year</th><th>Emp ID</th><th>Name</th><th>Gross</th>
+                <th>Month/Year</th><th>Emp ID</th><th>Name</th><th>Gross (CTC)</th>
                 <th>PF Wages</th><th>Emp PF</th><th>EPF</th><th>EPS</th>
                 <th>Total PF</th><th>ESI Eligible</th><th>Emp ESI</th><th>Total ESI</th>
                 <th>Net Pay</th><th class="no-print">Actions</th>
@@ -1048,7 +1059,7 @@
           <div class="form-group"><label>Date of Joining *</label><input id="e-doj" type="date"></div>
           <div class="form-group"><label>Department</label><input id="e-dept" type="text" placeholder="Accounts, Operations…"></div>
           <div class="form-group"><label>Designation</label><input id="e-desig" type="text"></div>
-          <div class="form-group"><label>Monthly Gross Salary (₹) *</label><input id="e-salary" type="number" step="0.01" min="0"></div>
+          <div class="form-group"><label>Monthly CTC (₹) *</label><input id="e-salary" type="number" step="0.01" min="0"></div>
           <div class="form-group"><label>Employment Type</label>
             <select id="e-emptype"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Intern</option></select>
           </div>
@@ -2332,7 +2343,7 @@ function renderEmployees(list) {
       <td>${e.desig || '—'}</td>
       <td>${e.dept || '—'}</td>
       <td>${e.doj || '—'}</td>
-      <td>₹${(parseFloat(e.salary) || 0).toLocaleString('en-IN')}</td>
+      <td>₹${(parseFloat(e.salary) || 0).toLocaleString('en-IN')} <small style='color:var(--text-muted);font-size:0.68rem;'>(CTC)</small></td>
       <td>${e.uan || '—'}</td>
       <td>${e.esicno || '—'}</td>
       <td>${e.mobile || '—'}</td>
@@ -2465,56 +2476,72 @@ async function deleteEmployee(id) {
 // ============================================================
 function calcPFESI() {
   const totalDays = parseInt(document.getElementById('pf-totaldays').value) || 30;
-  const present = parseInt(document.getElementById('pf-present').value) || 0;
-  const gross = parseFloat(document.getElementById('pf-gross').value) || 0;
+  const present   = parseInt(document.getElementById('pf-present').value)   || 0;
+  const ctc       = parseFloat(document.getElementById('pf-gross').value)   || 0;
 
-  // Proportional gross
-  const propGross = (gross / totalDays) * present;
+  // ── CTC Breakdown ──────────────────────────────────────────
+  // Basic: 50% of CTC, minimum ₹8,000
+  const basic      = Math.max(Math.round(ctc * 0.50), 8000);
+  const hra        = Math.round(basic * 0.40);
+  // Employer PF cost sitting inside CTC (approx: 12% of PF wages + EDLI 0.5% + Admin 1%)
+  const pfWagesForER = Math.min(ctc, 15000);
+  const erPFCost   = Math.round(pfWagesForER * 0.135);  // 12% + 0.5% + 1% = 13.5%
+  const grossExER  = ctc - erPFCost;                    // Employee's gross (take-home basis)
+  const allowance  = Math.max(0, Math.round(grossExER - basic - hra));
+  // Update breakdown UI
+  const el = id => document.getElementById(id);
+  if (el('r-basic')) {
+    el('r-basic').textContent      = fmt(basic);
+    el('r-hra').textContent        = fmt(hra);
+    el('r-allowance').textContent  = fmt(allowance);
+    el('r-grossex').textContent    = fmt(grossExER);
+  }
 
-  // PF wages capped at 15000
-  const pfWages = Math.min(propGross, 15000);
+  // ── PF / ESI working (proportional on grossExER) ──────────
+  const propGross = (grossExER / totalDays) * present;
+  const pfWages   = Math.min(propGross, 15000);
 
   // Employee PF 12%
-  const empPF = Math.round(pfWages * 0.12);
-
-  // Employer split: 12% total
-  // EPF = 3.67%, EPS = 8.33%
-  const eps = Math.round(pfWages * 0.0833);
-  const epf = Math.round(pfWages * 0.12) - eps;
-  const edli = Math.round(pfWages * 0.005);
-  const admin = Math.round(pfWages * 0.01);
+  const empPF  = Math.round(pfWages * 0.12);
+  // Employer split
+  const eps    = Math.round(pfWages * 0.0833);
+  const epf    = Math.round(pfWages * 0.12) - eps;
+  const edli   = Math.round(pfWages * 0.005);
+  const admin  = Math.round(pfWages * 0.01);
   const totalPF = empPF + epf + eps + edli + admin;
 
-  // ESI — applies if gross <= 21000
+  // ESI — applies if propGross <= 21000
   const esiEligible = propGross <= 21000;
-  const empESI = esiEligible ? Math.round(propGross * 0.0075) : 0;
-  const emplrESI = esiEligible ? Math.round(propGross * 0.0325) : 0;
-  const totalESI = empESI + emplrESI;
+  const empESI      = esiEligible ? Math.round(propGross * 0.0075) : 0;
+  const emplrESI    = esiEligible ? Math.round(propGross * 0.0325) : 0;
+  const totalESI    = empESI + emplrESI;
 
   // Net take-home
   const netPay = propGross - empPF - empESI;
 
-  // Update UI
-  document.getElementById('r-propgross').textContent = fmt(propGross);
-  document.getElementById('r-pfwages').textContent = fmt(pfWages) + (pfWages < propGross ? ' (capped)' : '');
-  document.getElementById('r-emppf').textContent = fmt(empPF);
-  document.getElementById('r-epf').textContent = fmt(epf);
-  document.getElementById('r-eps').textContent = fmt(eps);
-  document.getElementById('r-edli').textContent = fmt(edli);
-  document.getElementById('r-admin').textContent = fmt(admin);
-  document.getElementById('r-pfchallan').textContent = fmt(totalPF);
-  document.getElementById('r-esigross').textContent = fmt(propGross);
-  document.getElementById('r-empesi').textContent = fmt(empESI);
-  document.getElementById('r-emplresi').textContent = fmt(emplrESI);
-  document.getElementById('r-esichallan').textContent = fmt(totalESI);
-  document.getElementById('r-netgross').textContent = fmt(propGross);
-  document.getElementById('r-less-pf').textContent = '–' + fmt(empPF);
-  document.getElementById('r-less-esi').textContent = '–' + fmt(empESI);
-  document.getElementById('r-takehome').textContent = fmt(netPay);
-  document.getElementById('esi-eligible-msg').textContent = esiEligible ? 'Gross ≤ ₹21,000 — ESI applicable.' : '';
-  document.getElementById('esi-ineligible-box').style.display = esiEligible ? 'none' : 'block';
+  // ── Update PF/ESI UI ──────────────────────────────────────
+  el('r-propgross').textContent  = fmt(propGross);
+  el('r-pfwages').textContent    = fmt(pfWages) + (pfWages < propGross ? ' (capped)' : '');
+  el('r-emppf').textContent      = fmt(empPF);
+  el('r-epf').textContent        = fmt(epf);
+  el('r-eps').textContent        = fmt(eps);
+  el('r-edli').textContent       = fmt(edli);
+  el('r-admin').textContent      = fmt(admin);
+  el('r-pfchallan').textContent  = fmt(totalPF);
+  el('r-esigross').textContent   = fmt(propGross);
+  el('r-empesi').textContent     = fmt(empESI);
+  el('r-emplresi').textContent   = fmt(emplrESI);
+  el('r-esichallan').textContent = fmt(totalESI);
+  el('r-netgross').textContent   = fmt(propGross);
+  el('r-less-pf').textContent    = '\u2013' + fmt(empPF);
+  el('r-less-esi').textContent   = '\u2013' + fmt(empESI);
+  el('r-takehome').textContent   = fmt(netPay);
+  if (el('esi-eligible-msg')) el('esi-eligible-msg').textContent = esiEligible ? 'Gross \u2264 \u20B921,000 \u2014 ESI applicable.' : '';
+  el('esi-ineligible-box').style.display = esiEligible ? 'none' : 'block';
 
-  return { propGross, pfWages, empPF, epf, eps, edli, admin, totalPF, esiEligible, empESI, emplrESI, totalESI, netPay };
+  return { propGross, pfWages, empPF, epf, eps, edli, admin, totalPF,
+           esiEligible, empESI, emplrESI, totalESI, netPay,
+           basic, hra, allowance, grossExER, ctc };
 }
 
 async function savePFEntry() {
