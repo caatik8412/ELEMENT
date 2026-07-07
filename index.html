@@ -125,6 +125,17 @@ tbody tr:hover{background:#F8FAFC;}
 .li-table input:focus,.li-table select:focus{border-color:var(--blue);}
 .li-table input[readonly]{background:#F8FAFC;}
 
+/* ── RECEIPT INVOICE LIST ── */
+.rcpt-inv-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;gap:10px;}
+.rcpt-inv-row:last-child{border-bottom:none;}
+.rcpt-inv-row:hover{background:#F8FAFC;}
+.rcpt-inv-row.selected{background:#EFF6FF;border-left:3px solid var(--blue);}
+.rcpt-inv-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy);cursor:pointer;flex-shrink:0;}
+.rcpt-inv-info{flex:1;}
+.rcpt-inv-info .inv-ref{font-weight:700;font-size:0.88rem;}
+.rcpt-inv-info .inv-meta{font-size:0.75rem;color:var(--muted);}
+.rcpt-inv-bal{text-align:right;font-weight:700;color:var(--danger);font-size:0.92rem;}
+
 /* ── TOAST ── */
 #toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:8px;font-size:0.88rem;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:300px;}
 #toast.show{display:block;animation:slideUp 0.22s ease;}
@@ -153,25 +164,35 @@ tbody tr:hover{background:#F8FAFC;}
   .inv-head{border-bottom:1px solid #000;padding:10px 14px;text-align:center;}
   .inv-head h1{font-size:13pt;font-weight:900;}
   .inv-head p{font-size:8.5pt;margin:2px 0;}
-  .inv-lbl{text-align:center;padding:5px;background:#f0f0f0;border-bottom:1px solid #000;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
+  .inv-lbl{text-align:center;padding:5px;border-bottom:1px solid #000;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;border-top:1px solid #000;}
   .inv-meta{display:flex;border-bottom:1px solid #000;}
   .inv-meta-col{flex:1;padding:8px 12px;font-size:8.5pt;}
   .inv-meta-col:first-child{border-right:1px solid #000;}
   .inv-meta-col p{margin:2px 0;}
   .inv-items{flex:1;}
   .inv-items table{width:100%;border-collapse:collapse;}
-  .inv-items th,.inv-items td{border:1px solid #ccc;padding:5px 6px;font-size:9pt;}
-  .inv-items th{background:#f0f0f0;font-weight:700;border-color:#000;}
+  .inv-items th,.inv-items td{border:1px solid #000;padding:5px 6px;font-size:9pt;}
+  .inv-items th{font-weight:700;border:1px solid #000;}
   .inv-bottom{margin-top:auto;}
   .inv-totals{display:flex;border-top:2px solid #000;}
   .inv-totals-left{flex:1;padding:8px 12px;font-size:8.5pt;border-right:1px solid #000;}
   .inv-totals-right{width:260pt;}
   .inv-totals-right table{width:100%;border-collapse:collapse;}
-  .inv-totals-right td{padding:4px 8px;font-size:9pt;border:1px solid #ccc;}
-  .inv-totals-right tr:last-child td{border:2px solid #000;font-weight:700;font-size:10.5pt;background:#f0f0f0;}
+  .inv-totals-right td{padding:4px 8px;font-size:9pt;border:1px solid #000;}
+  .inv-totals-right tr:last-child td{border:2px solid #000;font-weight:700;font-size:10.5pt;}
   .inv-bank{padding:7px 12px;font-size:8.5pt;border-top:1px solid #000;}
   .inv-bank p{margin:2px 0;}
   .inv-footer{border-top:1px solid #000;padding:8px 12px;display:flex;justify-content:space-between;font-size:8.5pt;}
+  /* Receipt print */
+  .rcpt-wrap{font-family:Arial,sans-serif;font-size:10.5pt;color:#000;border:2px solid #000;width:100%;padding:0;}
+  .rcpt-head{border-bottom:1px solid #000;padding:10px 14px;text-align:center;}
+  .rcpt-head h1{font-size:13pt;font-weight:900;}
+  .rcpt-head p{font-size:8.5pt;margin:2px 0;}
+  .rcpt-lbl{text-align:center;padding:5px;border-bottom:1px solid #000;border-top:1px solid #000;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
+  .rcpt-body{padding:14px 16px;font-size:9.5pt;line-height:2;}
+  .rcpt-body table{width:100%;border-collapse:collapse;margin-top:10px;}
+  .rcpt-body td{padding:5px 8px;border:1px solid #000;font-size:9pt;}
+  .rcpt-footer{border-top:1px solid #000;padding:10px 14px;display:flex;justify-content:space-between;font-size:8.5pt;}
 }
 
 @media(max-width:700px){
@@ -401,25 +422,33 @@ tbody tr:hover{background:#F8FAFC;}
   <div class="modal-foot">
     <button class="btn btn-secondary" onclick="closeModal('invModal')">Cancel</button>
     <button class="btn btn-secondary" onclick="printCurrentInvoice()">🖨 Print</button>
-    <button class="btn btn-primary" id="inv-save-btn" onclick="saveInvoice()">Save Invoice</button>
+    <button class="btn btn-primary" id="inv-save-btn" onclick="saveInvoiceWithSigChoice()">Save Invoice</button>
   </div>
 </div>
 </div>
 
-<!-- Payment Modal -->
-<div class="overlay" id="payModal">
-<div class="modal modal-sm">
-  <div class="modal-head"><h3>Record Payment</h3><button onclick="closeModal('payModal')">✕</button></div>
+<!-- Receipt Modal -->
+<div class="overlay" id="receiptModal">
+<div class="modal">
+  <div class="modal-head"><h3>Issue Receipt</h3><button onclick="closeModal('receiptModal')">✕</button></div>
   <div class="modal-body">
-    <div class="fgrp" style="margin-bottom:12px;"><label>Invoice</label><input id="pay-inv" readonly></div>
-    <div class="fgrp" style="margin-bottom:12px;"><label>Client</label><input id="pay-client" readonly></div>
-    <div class="fgrp" style="margin-bottom:12px;"><label>Balance Due</label><input id="pay-bal" readonly></div>
-    <div class="fgrp" style="margin-bottom:12px;"><label>Amount Received (₹)</label><input id="pay-amt" type="number" step="0.01" placeholder="Enter amount"></div>
-    <div class="fgrp"><label>Payment Date</label><input id="pay-date" type="date"></div>
+    <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Pending Invoices — <span id="rcpt-client-name" style="color:var(--navy);"></span></div>
+    <div id="rcpt-invoice-list" style="margin-bottom:16px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+    <div class="form-grid" style="margin-bottom:0;">
+      <div class="fgrp"><label>Receipt No</label><input id="rcpt-no" readonly></div>
+      <div class="fgrp"><label>Receipt Date</label><input id="rcpt-date" type="date"></div>
+      <div class="fgrp"><label>Amount Received (₹) *</label><input id="rcpt-amt" type="number" step="0.01" placeholder="0.00" oninput="onRcptAmtChange()"></div>
+      <div class="fgrp"><label>Payment Mode</label><select id="rcpt-mode"><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cheque</option><option>Cash</option><option>IMPS</option></select></div>
+      <div class="fgrp col-span"><label>Reference / UTR / Cheque No</label><input id="rcpt-ref" type="text" placeholder="Optional"></div>
+      <div class="fgrp col-span"><label>Narration</label><input id="rcpt-narration" type="text" placeholder="e.g. Against Invoice TEEPL/26-27/001"></div>
+    </div>
+    <div style="margin-top:14px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;padding:10px 14px;font-size:0.84rem;" id="rcpt-summary">
+      Select an invoice and enter amount above.
+    </div>
   </div>
   <div class="modal-foot">
-    <button class="btn btn-secondary" onclick="closeModal('payModal')">Cancel</button>
-    <button class="btn btn-success" onclick="recordPayment()">✓ Record Payment</button>
+    <button class="btn btn-secondary" onclick="closeModal('receiptModal')">Cancel</button>
+    <button class="btn btn-success" id="rcpt-save-btn" onclick="saveReceipt()">✓ Save & Print Receipt</button>
   </div>
 </div>
 </div>
@@ -449,6 +478,59 @@ tbody tr:hover{background:#F8FAFC;}
 </div>
 
 <!-- Print Area -->
+
+<!-- Ledger Modal -->
+<div class="overlay" id="ledgerModal">
+<div class="modal modal-lg">
+  <div class="modal-head"><h3>Client Ledger — <span id="ledger-client-name"></span></h3><button onclick="closeModal('ledgerModal')">✕</button></div>
+  <div class="modal-body" style="padding:0;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:2px solid var(--border);">
+      <div style="padding:14px 20px;border-right:1px solid var(--border);text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Total Billed</div>
+        <div style="font-size:1.2rem;font-weight:700;" id="ledger-billed">₹0.00</div>
+      </div>
+      <div style="padding:14px 20px;border-right:1px solid var(--border);text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Total Received</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--success);" id="ledger-recd">₹0.00</div>
+      </div>
+      <div style="padding:14px 20px;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Balance Due</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--danger);" id="ledger-bal">₹0.00</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Description</th><th>Debit (Invoice)</th><th>Credit (Receipt)</th><th>Balance</th></tr></thead>
+        <tbody id="ledger-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-secondary" onclick="closeModal('ledgerModal')">Close</button>
+    <button class="btn btn-primary" onclick="printLedger()">🖨 Print Statement</button>
+  </div>
+</div>
+</div>
+
+<!-- Signature Choice Modal -->
+<div class="overlay" id="sigModal">
+<div class="modal modal-sm">
+  <div class="modal-head"><h3>Invoice Ready</h3><button onclick="closeModal('sigModal')">✕</button></div>
+  <div class="modal-body" style="text-align:center;padding:28px 24px;">
+    <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px;" id="sig-inv-no"></div>
+    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:24px;">How would you like to print this invoice?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <button class="btn btn-primary" style="padding:14px;font-size:0.88rem;line-height:1.4;" onclick="printWithSig(true)">
+        ✍️ With Signature Line<br><small style="font-weight:400;opacity:0.8;">Receiver & Authorised Signatory</small>
+      </button>
+      <button class="btn btn-secondary" style="padding:14px;font-size:0.88rem;line-height:1.4;" onclick="printWithSig(false)">
+        🖥️ System Generated<br><small style="font-weight:400;opacity:0.8;">No signature required</small>
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
 <div id="printArea" style="display:none;"></div>
 <div id="toast"></div>
 
@@ -576,7 +658,7 @@ async function initApp() {
   sv('rpt-from', fyStart.toISOString().split('T')[0]);
   sv('rpt-to', today);
   await loadSettings();
-  await Promise.all([loadClients(), loadInvoices()]);
+  await Promise.all([loadClients(), loadInvoices(), loadReceipts()]);
   loadDashboard();
 }
 
@@ -665,7 +747,7 @@ function renderClients() {
       <td>${c.gstin||'—'}</td><td>${c.pan||'—'}</td>
       <td>${c.state||'—'}</td><td>${c.city||'—'}</td>
       <td>${c.phone||'—'}</td><td>${balCell}</td>
-      <td><button class="btn-icon" onclick="editClient('${c.id}')" title="Edit">✏️</button></td>
+      <td><button class="btn-icon" onclick="openLedger('${c.id}')" title="Ledger" style="color:var(--blue);">📋</button> <button class="btn-icon" onclick="editClient('${c.id}')" title="Edit">✏️</button></td>
     </tr>`;
   }).join('');
 }
@@ -757,7 +839,7 @@ function renderInvoiceTable() {
     <td style="white-space:nowrap;">
       <button class="btn-icon" onclick="printById('${i.id}')" title="Print">🖨</button>
       <button class="btn-icon" onclick="editInvoice('${i.id}')" title="Edit">✏️</button>
-      ${i.payStatus!=='Paid'?`<button class="btn btn-success btn-sm" onclick="openPayModal('${i.id}')">Pay</button>`:''}
+      ${i.payStatus!=='Paid'?`<button class="btn btn-success btn-sm" onclick="openReceiptModal('${i.id}')">Receipt</button>`:''}
       <button class="btn-icon" onclick="deleteInvoice('${i.id}')" title="Delete" style="color:var(--danger);">🗑</button>
     </td>
   </tr>`).join('');
@@ -985,7 +1067,7 @@ function renderOutstanding() {
       <div class="os-amt">
         <div class="amount ${o.status==='Paid'?'paid':''}">${fmt(o.balance)}</div>
         <div class="days">${days}d &nbsp; ${statusBadge(o.status)}</div>
-        ${o.status!=='Paid'?`<button class="btn btn-success btn-sm" style="margin-top:6px;" onclick="openPayModal('${o.invoiceId}')">Pay</button>`:''}
+        ${o.status!=='Paid'?`<button class="btn btn-success btn-sm" style="margin-top:6px;" onclick="openReceiptModal('${o.invoiceId}')">Receipt</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -1063,9 +1145,15 @@ function exportCSV() {
 
 // ── PRINT ───────────────────────────────────────────────────
 function printCurrentInvoice() { renderPrintArea(getInvoiceData()); setTimeout(()=>window.print(),300); }
-function printById(id) { const inv=allInvoices.find(i=>i.id===id); if(inv){renderPrintArea(inv);setTimeout(()=>window.print(),300);} }
+function printById(id) {
+  const inv = allInvoices.find(i=>i.id===id);
+  if (!inv) return;
+  pendingPrintData = inv;
+  $('sig-inv-no').textContent = inv.invoiceNo + ' — ' + inv.clientName;
+  openModal('sigModal');
+}
 
-function renderPrintArea(inv) {
+function renderPrintArea(inv, withSig=true) {
   const isIGST = inv.isIGST || inv.pos==='Other';
   const label  = inv.type==='Proforma'?'PROFORMA INVOICE':inv.type==='Quotation'?'QUOTATION':'TAX INVOICE';
   const items  = inv.items||[];
@@ -1133,12 +1221,274 @@ function renderPrintArea(inv) {
         </div>
       </div>
       <div class="inv-footer">
-        <div><p>Receiver's Signature: ___________________</p><p style="margin-top:16px;">Date: _______________</p></div>
-        <div style="text-align:right;"><p>For, <strong>${FIRM.name}</strong></p><p style="margin-top:28px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
+        ${withSig
+          ? `<div><p>Receiver's Signature: ___________________</p><p style="margin-top:16px;">Date: _______________</p></div><div style="text-align:right;"><p>For, <strong>${FIRM.name}</strong></p><p style="margin-top:28px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>`
+          : `<div style="width:100%;text-align:center;font-size:8pt;color:#444;padding:6px 0;font-style:italic;">This is a system generated invoice and does not require a physical signature.</div>`
+        }
       </div>
     </div>
   </div>`;
 }
+
+// ── RECEIPT ─────────────────────────────────────────────────
+let currentReceiptData = null;
+let pendingPrintData   = null;
+let pendingPrintSig    = true;
+
+async function openReceiptModal(invId) {
+  // Find client from invoice
+  const inv = invId ? allInvoices.find(i => i.id===invId) : null;
+  const clientId = inv ? inv.clientId : null;
+
+  // Get pending invoices for this client
+  const pending = allOutstanding.filter(o =>
+    o.status !== 'Paid' &&
+    (!clientId || o.clientId === clientId)
+  );
+
+  const clientName = inv ? inv.clientName : 'All Clients';
+  $('rcpt-client-name').textContent = clientName;
+
+  // Build invoice list
+  const list = $('rcpt-invoice-list');
+  if (!pending.length) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;color:var(--muted);font-size:0.84rem;">No pending invoices for this client.</div>';
+  } else {
+    list.innerHTML = pending.map(o => `
+      <div class="rcpt-inv-row ${invId===o.invoiceId?'selected':''}" onclick="toggleRcptInv(this,'${o.invoiceId}')">
+        <input type="checkbox" ${invId===o.invoiceId?'checked':''} onclick="event.stopPropagation();toggleRcptInv(this.closest('.rcpt-inv-row'),'${o.invoiceId}')">
+        <div class="rcpt-inv-info">
+          <div class="inv-ref">${o.invoiceNo}</div>
+          <div class="inv-meta">Date: ${fmtDate(o.date)} &nbsp;|&nbsp; Invoice Amt: ${fmt(o.invoiceAmt)}</div>
+        </div>
+        <div class="rcpt-inv-bal">${fmt(o.balance)}</div>
+      </div>`).join('');
+  }
+
+  // Get next receipt number
+  try {
+    const r = await apiGet('getNextNo', { type: 'Receipt' });
+    sv('rcpt-no', r.nextNo || 'TEEPL/R/26-27/001');
+  } catch(e) { sv('rcpt-no', 'TEEPL/R/26-27/001'); }
+
+  sv('rcpt-date', new Date().toISOString().split('T')[0]);
+  sv('rcpt-amt', '');
+  sv('rcpt-mode', 'NEFT');
+  sv('rcpt-ref', '');
+  sv('rcpt-narration', inv ? 'Against Invoice ' + inv.invoiceNo : '');
+  $('rcpt-summary').textContent = 'Select invoices and enter amount above.';
+  $('rcpt-save-btn').disabled = false;
+  openModal('receiptModal');
+  onRcptAmtChange();
+}
+
+function toggleRcptInv(row, invId) {
+  const cb = row.querySelector('input[type=checkbox]');
+  cb.checked = !cb.checked;
+  row.classList.toggle('selected', cb.checked);
+  onRcptAmtChange();
+}
+
+function getSelectedInvoices() {
+  const rows = document.querySelectorAll('.rcpt-inv-row');
+  const sel = [];
+  rows.forEach(row => {
+    const cb = row.querySelector('input[type=checkbox]');
+    if (cb && cb.checked) {
+      const invId = row.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1];
+      if (invId) {
+        const os = allOutstanding.find(o => o.invoiceId===invId);
+        if (os) sel.push(os);
+      }
+    }
+  });
+  return sel;
+}
+
+function onRcptAmtChange() {
+  const sel   = getSelectedInvoices();
+  const amt   = parseFloat($('rcpt-amt').value) || 0;
+  const total = sel.reduce((s,o) => s+o.balance, 0);
+  const sum   = $('rcpt-summary');
+  if (!sel.length) { sum.textContent = 'Select at least one invoice.'; sum.style.background='#FEF9C3'; return; }
+  sum.style.background = '#F0FDF4';
+  sum.innerHTML = `<strong>${sel.length} invoice(s) selected</strong> — Total Balance: <strong>${fmt(total)}</strong><br>
+    Amount entering: <strong style="color:var(--navy)">${fmt(amt)}</strong>
+    ${amt>0&&amt<total?`<span style="color:var(--warning);"> — Partial payment (₹${fmt(total-amt)} will remain)</span>`:''}
+    ${amt>=total&&total>0?`<span style="color:var(--success);"> — Fully clears selected invoices ✓</span>`:''}`;
+}
+
+async function saveReceipt() {
+  const sel = getSelectedInvoices();
+  if (!sel.length) { toast('Select at least one invoice','err'); return; }
+  const amt = parseFloat($('rcpt-amt').value);
+  if (!amt || amt<=0) { toast('Enter a valid amount','err'); return; }
+  $('rcpt-save-btn').disabled = true;
+
+  const rcptNo   = gv('rcpt-no');
+  const rcptDate = gv('rcpt-date');
+  const mode     = gv('rcpt-mode');
+  const ref      = gv('rcpt-ref');
+  const narration= gv('rcpt-narration');
+
+  // Distribute amount across selected invoices (FIFO)
+  let remaining = amt;
+  const payments = [];
+  for (const os of sel) {
+    if (remaining <= 0) break;
+    const paying = Math.min(remaining, os.balance);
+    payments.push({ invoiceId: os.invoiceId, invoiceNo: os.invoiceNo, amount: paying });
+    remaining -= paying;
+  }
+
+  // Save each payment
+  for (const p of payments) {
+    await apiPost('recordPayment', { invoiceId:p.invoiceId, amount:p.amount, date:rcptDate, mode, ref, rcptNo });
+  }
+
+  // Save receipt record
+  const firstInv = allInvoices.find(i => i.id===sel[0].invoiceId);
+  await apiPost('saveReceipt', {
+    id: Date.now().toString(), rcptNo, date: rcptDate,
+    clientId: sel[0].clientId, clientName: sel[0].clientName,
+    amount: amt, mode, ref, narration,
+    invoices: payments.map(p=>p.invoiceNo).join(', '),
+  });
+
+  // Build receipt data for printing
+  currentReceiptData = {
+    rcptNo, date: rcptDate, mode, ref, narration, amount: amt,
+    clientName: sel[0].clientName,
+    clientId:   sel[0].clientId,
+    invoices:   payments,
+    amtWords:   numWords(amt),
+  };
+
+  closeModal('receiptModal');
+  toast('Receipt saved', 'ok');
+  setTimeout(() => loadInvoices(), 900);
+
+  // Print receipt
+  renderReceiptPrint(currentReceiptData);
+  setTimeout(() => window.print(), 500);
+}
+
+function renderReceiptPrint(r) {
+  const invLines = r.invoices.map(p =>
+    `<tr><td>${p.invoiceNo}</td><td style="text-align:right">${fmt(p.amount)}</td></tr>`
+  ).join('');
+  $('printArea').style.display = 'block';
+  $('printArea').innerHTML = `
+  <div class="rcpt-wrap">
+    <div class="rcpt-head">
+      <h1>${FIRM.name}</h1>
+      <p>${FIRM.addr}</p>
+      <p>GSTIN: ${FIRM.gstin} &nbsp;|&nbsp; PAN: ${FIRM.pan}</p>
+    </div>
+    <div class="rcpt-lbl">RECEIPT VOUCHER</div>
+    <div class="rcpt-body">
+      <table style="margin-bottom:10px;">
+        <tr><td style="width:40%;font-weight:700;">Receipt No</td><td>${r.rcptNo}</td></tr>
+        <tr><td style="font-weight:700;">Date</td><td>${fmtDate(r.date)}</td></tr>
+        <tr><td style="font-weight:700;">Received From</td><td><strong>${r.clientName}</strong></td></tr>
+        <tr><td style="font-weight:700;">Amount (₹)</td><td><strong style="font-size:11pt;">₹${(r.amount||0).toLocaleString('en-IN')}</strong></td></tr>
+        <tr><td style="font-weight:700;">Amount in Words</td><td><em>${r.amtWords}</em></td></tr>
+        <tr><td style="font-weight:700;">Payment Mode</td><td>${r.mode}${r.ref?' — Ref: '+r.ref:''}</td></tr>
+        ${r.narration?`<tr><td style="font-weight:700;">Narration</td><td>${r.narration}</td></tr>`:''}
+      </table>
+      <div style="font-weight:700;margin:10px 0 4px;font-size:9pt;">Against Invoices:</div>
+      <table>
+        <tr><td style="font-weight:700;background:#f9f9f9;">Invoice No</td><td style="font-weight:700;text-align:right;background:#f9f9f9;">Amount Applied</td></tr>
+        ${invLines}
+        <tr><td style="font-weight:700;border-top:2px solid #000;">TOTAL RECEIVED</td><td style="font-weight:700;text-align:right;border-top:2px solid #000;">₹${(r.amount||0).toLocaleString('en-IN')}</td></tr>
+      </table>
+    </div>
+    <div class="rcpt-footer">
+      <div><p>Received by: ___________________</p></div>
+      <div style="text-align:right;"><p>For, <strong>${FIRM.name}</strong></p><p style="margin-top:24px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
+    </div>
+  </div>`;
+}
+
+// ── SIGNATURE CHOICE ─────────────────────────────────────────
+async function saveInvoiceWithSigChoice() {
+  const data = getInvoiceData();
+  if (!data.clientId) { toast('Please select a client','err'); return; }
+  if (!data.items.length || data.total===0) { toast('Add at least one line item','err'); return; }
+  $('inv-save-btn').disabled = true;
+  await apiPost('saveInvoice', data);
+  pendingPrintData = data;
+  closeModal('invModal');
+  toast('Invoice saved', 'ok');
+  setTimeout(() => loadInvoices(), 900);
+  // Show signature choice
+  $('sig-inv-no').textContent = data.invoiceNo + ' — ' + data.clientName;
+  openModal('sigModal');
+}
+
+function printWithSig(withSig) {
+  closeModal('sigModal');
+  if (pendingPrintData) {
+    renderPrintArea(pendingPrintData, withSig);
+    setTimeout(() => window.print(), 300);
+  }
+}
+
+// ── LEDGER ───────────────────────────────────────────────────
+function openLedger(clientId) {
+  const client = allClients.find(c => c.id===clientId);
+  $('ledger-client-name').textContent = client ? client.name : clientId;
+
+  const invs  = allInvoices.filter(i => i.clientId===clientId && (!i.type||i.type==='Invoice'));
+  const os    = allOutstanding.filter(o => o.clientId===clientId);
+  const rcpts = allReceipts.filter(r => r.clientId===clientId);
+
+  const totalBilled = invs.reduce((s,i) => s+i.total, 0);
+  const totalRecd   = os.reduce((s,o) => s+(parseFloat(o.received)||0), 0);
+  const totalBal    = os.reduce((s,o) => s+(parseFloat(o.balance)||0), 0);
+
+  $('ledger-billed').textContent = fmt(totalBilled);
+  $('ledger-recd').textContent   = fmt(totalRecd);
+  $('ledger-bal').textContent    = fmt(totalBal);
+
+  // Build ledger rows — merge invoices + receipts, sort by date
+  const rows = [];
+  invs.forEach(i => rows.push({ date:i.date, type:'Invoice', ref:i.invoiceNo, desc:i.notes||i.type||'Invoice', debit:i.total, credit:0 }));
+  rcpts.forEach(r => rows.push({ date:r.date, type:'Receipt', ref:r.rcptNo, desc:(r.mode||'')+(r.ref?' — '+r.ref:''), debit:0, credit:r.amount }));
+  rows.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  let running = 0;
+  const tb = $('ledger-tbody');
+  if (!rows.length) { tb.innerHTML='<tr><td colspan="7" class="no-data">No transactions found.</td></tr>'; }
+  else {
+    tb.innerHTML = rows.map(r => {
+      running += (parseFloat(r.debit)||0) - (parseFloat(r.credit)||0);
+      const balStyle = running>0?'color:var(--danger)':running<0?'color:var(--success)':'';
+      return `<tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><span class="badge ${r.type==='Invoice'?'badge-blue':'badge-green'}">${r.type}</span></td>
+        <td><strong>${r.ref}</strong></td>
+        <td>${r.desc||'—'}</td>
+        <td style="text-align:right;">${r.debit?fmt(r.debit):'—'}</td>
+        <td style="text-align:right;color:var(--success);">${r.credit?fmt(r.credit):'—'}</td>
+        <td style="text-align:right;font-weight:700;${balStyle}">${fmt(Math.abs(running))} ${running>0?'Dr':running<0?'Cr':''}</td>
+      </tr>`;
+    }).join('');
+  }
+  openModal('ledgerModal');
+}
+
+function printLedger() {
+  window.print(); // Will print ledger table — add print CSS for ledger if needed
+}
+
+// ── RECEIPTS STATE ───────────────────────────────────────────
+let allReceipts = [];
+async function loadReceipts() {
+  const d = await apiGet('getReceipts');
+  allReceipts = (d||[]).map(r => ({ ...r, amount: parseFloat(r.amount)||0 }));
+}
+
 </script>
 </body>
 </html>
