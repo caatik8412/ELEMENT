@@ -240,32 +240,47 @@
 
   /* PRINT */
   @media print {
-    .sidebar, .top-bar, .no-print, #toast,
-    .module, .filter-bar, .tab-nav, .module-header { display: none !important; }
-    #invoicePrintArea { display: block !important; }
-    .main-wrap { margin-left: 0 !important; }
-    .content { padding: 0 !important; }
-    body { background: #fff !important; }
+    /* Hide absolutely everything except the invoice print area */
+    * { visibility: hidden; }
+    #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
+    #invoicePrintArea {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important;
+      width: 100% !important;
+      margin: 0 !important; padding: 0 !important;
+    }
+    @page { margin: 8mm; size: A4 portrait; }
 
-    /* INVOICE PRINT */
+    /* INVOICE PRINT STYLES */
     .invoice-print-area {
-      font-family: Arial, sans-serif; font-size: 11pt; color: #000;
-      border: 2px solid #000; max-width: 210mm; margin: 0 auto; padding: 0;
+      font-family: Arial, sans-serif; font-size: 10.5pt; color: #000;
+      border: 2px solid #000;
+      width: 100%; margin: 0; padding: 0;
+      display: flex; flex-direction: column;
+      min-height: calc(297mm - 16mm);
     }
     .inv-header { border-bottom: 1px solid #000; padding: 10px 14px; text-align: center; }
-    .inv-header h1 { font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; }
-    .inv-header p { font-size: 9pt; margin: 2px 0; }
+    .inv-header h1 { font-size: 13pt; font-weight: 900; letter-spacing: 0.3px; }
+    .inv-header p { font-size: 8.5pt; margin: 2px 0; }
+    .inv-label { text-align: center; padding: 5px; background: #f0f0f0; border-bottom: 1px solid #000; font-weight: 700; font-size: 10.5pt; letter-spacing: 1.5px; }
     .inv-meta { display: flex; border-bottom: 1px solid #000; }
     .inv-meta-col { flex: 1; padding: 8px 12px; }
     .inv-meta-col:first-child { border-right: 1px solid #000; }
-    .inv-meta-col p { font-size: 9pt; margin: 2px 0; }
+    .inv-meta-col p { font-size: 8.5pt; margin: 2px 0; }
+    .inv-items-wrap { flex: 1; }
     .inv-items-table { width: 100%; border-collapse: collapse; }
-    .inv-items-table th, .inv-items-table td { border: 1px solid #000; padding: 5px 7px; font-size: 9.5pt; }
-    .inv-items-table th { background: #f0f0f0; font-weight: 700; }
-    .inv-totals { width: 50%; margin-left: 50%; }
-    .inv-totals td { padding: 4px 7px; font-size: 9.5pt; border: 1px solid #000; }
-    .inv-bank { border-top: 1px solid #000; padding: 8px 12px; font-size: 9pt; }
-    .inv-footer { border-top: 1px solid #000; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 9pt; }
+    .inv-items-table th, .inv-items-table td { border: 1px solid #ccc; padding: 5px 7px; font-size: 9pt; }
+    .inv-items-table th { background: #f0f0f0; font-weight: 700; border-color: #000; }
+    .inv-items-table tbody tr:last-child td { border-bottom: 1px solid #000; }
+    .inv-totals-wrap { margin-top: auto; border-top: 2px solid #000; }
+    .inv-totals { width: 50%; margin-left: 50%; border-collapse: collapse; }
+    .inv-totals td { padding: 4px 8px; font-size: 9pt; border: 1px solid #ccc; }
+    .inv-totals tr:last-child td { border: 2px solid #000; font-weight: 700; font-size: 10.5pt; background: #f0f0f0; }
+    .inv-amtwords { padding: 6px 12px; font-size: 8.5pt; border-top: 1px solid #ccc; font-style: italic; }
+    .inv-bank { padding: 7px 12px; font-size: 8.5pt; border-top: 1px solid #000; }
+    .inv-bank p { margin: 2px 0; }
+    .inv-footer { border-top: 1px solid #000; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 8.5pt; margin-top: auto; }
+    .inv-footer-right { text-align: right; }
   }
 
   .pf-calc-card{background:var(--card-bg);border-radius:10px;padding:22px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
@@ -1810,93 +1825,106 @@ function printInvoiceById(id) {
   setTimeout(() => window.print(), 300);
 }
 function renderInvoicePrint(inv) {
-  const fc = firmConfig;
-  const isIGST = inv.isIGST || inv.pos === 'Other';
-  const label = inv.type === 'Proforma' ? 'PROFORMA INVOICE' : inv.type === 'Quotation' ? 'QUOTATION' : 'TAX INVOICE';
-  const items = inv.items || [];
-  let itemRows = items.map((it, i) => `
-    <tr>
-      <td style="text-align:center">${i + 1}</td>
-      <td>${it.desc || ''}</td>
-      <td>${it.sac || ''}</td>
-      <td style="text-align:center">${it.qty || 1}</td>
+  const isIGST = inv.pos === 'Other' || inv.isIGST;
+  const label  = inv.type === 'Proforma' ? 'PROFORMA INVOICE' : inv.type === 'Quotation' ? 'QUOTATION' : 'TAX INVOICE';
+  const items  = inv.items || [];
+  const gstCols = isIGST ? '<th>IGST%</th><th>IGST Amt</th>' : '<th>GST%</th><th>CGST</th><th>SGST</th>';
+
+  const itemRows = items.map((it, i) => {
+    const taxable = parseFloat(it.taxable) || (parseFloat(it.qty||1) * parseFloat(it.rate||0));
+    const gstAmt  = parseFloat(it.gstAmt) || 0;
+    const gstCells = isIGST
+      ? `<td style="text-align:center">${it.gst}%</td><td style="text-align:right">${fmt(gstAmt)}</td>`
+      : `<td style="text-align:center">${it.gst}%</td><td style="text-align:right">${fmt(gstAmt/2)}</td><td style="text-align:right">${fmt(gstAmt/2)}</td>`;
+    return `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${it.desc||''}</td>
+      <td>${it.sac||''}</td>
+      <td style="text-align:center">${it.qty||1}</td>
       <td style="text-align:right">${fmt(it.rate)}</td>
-      <td style="text-align:right">${fmt(it.taxable || it.qty * it.rate)}</td>
-      <td style="text-align:center">${it.gst}%</td>
-      ${isIGST
-        ? `<td style="text-align:right">${fmt(it.gstAmt || 0)}</td>`
-        : `<td style="text-align:right">${fmt((it.gstAmt || 0) / 2)}</td><td style="text-align:right">${fmt((it.gstAmt || 0) / 2)}</td>`}
-      <td style="text-align:right"><strong>${fmt((it.taxable || it.qty * it.rate) + (it.gstAmt || 0))}</strong></td>
-    </tr>`).join('');
-  const gstHead = isIGST
-    ? '<th>IGST</th>'
-    : '<th>CGST</th><th>SGST</th>';
-  const html = `
+      <td style="text-align:right">${fmt(taxable)}</td>
+      ${gstCells}
+      <td style="text-align:right"><strong>${fmt(taxable + gstAmt)}</strong></td>
+    </tr>`;
+  }).join('');
+
+  const totalsRows = isIGST ? `
+    <tr><td>Taxable</td><td style="text-align:right">${fmt(inv.taxable)}</td></tr>
+    <tr><td>IGST</td><td style="text-align:right">${fmt(inv.igst)}</td></tr>` : `
+    <tr><td>Taxable</td><td style="text-align:right">${fmt(inv.taxable)}</td></tr>
+    <tr><td>CGST</td><td style="text-align:right">${fmt(inv.cgst)}</td></tr>
+    <tr><td>SGST</td><td style="text-align:right">${fmt(inv.sgst)}</td></tr>`;
+
+  const billToLines = [
+    `<p style="font-weight:700;font-size:10.5pt;">${inv.clientName||''}</p>`,
+    inv.clientAddress ? `<p>${inv.clientAddress}</p>` : '',
+    (inv.clientCity || inv.clientState) ? `<p>${[inv.clientCity, inv.clientState].filter(Boolean).join(', ')}</p>` : '',
+    inv.clientPhone ? `<p>Ph: ${inv.clientPhone}</p>` : '',
+    inv.clientGstin ? `<p><strong>GSTIN:</strong> ${inv.clientGstin}</p>` : '',
+    inv.clientPan   ? `<p>PAN: ${inv.clientPan}</p>`   : '',
+  ].filter(Boolean).join('');
+
+  const printHtml = `
   <div class="invoice-print-area">
     <div class="inv-header">
-      <h1>${fc.name}</h1>
-      <p>${fc.address}</p>
-      <p>GSTIN: ${fc.gstin} &nbsp;|&nbsp; CIN: ${fc.cin} &nbsp;|&nbsp; PAN: ${fc.pan}</p>
+      <h1>${FC.name}</h1>
+      <p>${FC.address}</p>
+      <p>GSTIN: ${FC.gstin} &nbsp;|&nbsp; CIN: ${FC.cin} &nbsp;|&nbsp; PAN: ${FC.pan}</p>
     </div>
-    <div style="text-align:center;padding:6px;background:#f0f0f0;border-bottom:1px solid #000;font-weight:700;font-size:11pt;letter-spacing:1px;">
-      ${label}
-    </div>
+    <div class="inv-label">${label}</div>
     <div class="inv-meta">
       <div class="inv-meta-col">
         <p><strong>Invoice No:</strong> ${inv.invoiceNo}</p>
         <p><strong>Date:</strong> ${fmtDate(inv.date)}</p>
-        <p><strong>Place of Supply:</strong> ${inv.pos || 'Maharashtra'}</p>
+        <p><strong>Place of Supply:</strong> ${inv.pos||'Maharashtra'}</p>
       </div>
       <div class="inv-meta-col">
         <p><strong>Bill To:</strong></p>
-        <p><strong>${inv.clientName || ''}</strong></p>
-        <p>${inv.clientAddress || ''}</p>
-        ${inv.clientCity || inv.clientState ? `<p>${[inv.clientCity, inv.clientState].filter(Boolean).join(', ')}</p>` : ''}
-        ${inv.clientPhone ? `<p>Ph: ${inv.clientPhone}</p>` : ''}
-        ${inv.clientGstin ? `<p><strong>GSTIN:</strong> ${inv.clientGstin}</p>` : ''}
-        ${inv.clientPan ? `<p>PAN: ${inv.clientPan}</p>` : ''}
+        ${billToLines}
       </div>
     </div>
-    <table class="inv-items-table">
-      <thead>
-        <tr>
-          <th>#</th><th>Description</th><th>SAC</th><th>Qty</th>
-          <th>Rate</th><th>Taxable</th><th>GST%</th>${gstHead}<th>Amount</th>
-        </tr>
-      </thead>
-      <tbody>${itemRows}</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="${isIGST ? 7 : 8}" style="text-align:right;font-weight:700;">Taxable Total</td>
-          <td style="text-align:right;font-weight:700;">${fmt(inv.taxable)}</td>
-        </tr>
-        ${isIGST
-          ? `<tr><td colspan="7" style="text-align:right;">IGST</td><td style="text-align:right;">${fmt(inv.igst)}</td></tr>`
-          : `<tr><td colspan="8" style="text-align:right;">CGST</td><td style="text-align:right;">${fmt(inv.cgst)}</td></tr>
-             <tr><td colspan="8" style="text-align:right;">SGST</td><td style="text-align:right;">${fmt(inv.sgst)}</td></tr>`}
-        <tr><td colspan="${isIGST ? 7 : 8}" style="text-align:right;">Round Off</td><td style="text-align:right;">${(inv.roundOff || 0).toFixed(2)}</td></tr>
-        <tr style="background:#f0f0f0;">
-          <td colspan="${isIGST ? 7 : 8}" style="text-align:right;font-weight:700;font-size:11pt;">TOTAL</td>
-          <td style="text-align:right;font-weight:700;font-size:11pt;">₹${(inv.total || 0).toLocaleString('en-IN')}</td>
-        </tr>
-      </tfoot>
-    </table>
-    <div class="inv-bank">
-      <p><strong>Amount in Words:</strong> ${inv.amtWords || ''}</p>
-      <p style="margin-top:6px;"><strong>Bank Details:</strong> ${fc.bankName} &nbsp;|&nbsp; A/c: ${fc.accNo} &nbsp;|&nbsp; IFSC: ${fc.ifsc} &nbsp;|&nbsp; Branch: ${fc.branch}</p>
-      <p style="margin-top:4px;font-size:8.5pt;color:#555;">Terms: Payment by A/c Payee cheque / NEFT only. Subject to Pune jurisdiction. Interest @18% p.a. after 30 days.</p>
+    <div class="inv-items-wrap">
+      <table class="inv-items-table">
+        <thead>
+          <tr>
+            <th style="width:4%">#</th>
+            <th style="width:36%">Description</th>
+            <th style="width:8%">SAC</th>
+            <th style="width:5%">Qty</th>
+            <th style="width:10%">Rate</th>
+            <th style="width:10%">Taxable</th>
+            ${gstCols}
+            <th style="width:11%">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
     </div>
-    <div class="inv-footer">
-      <div><p style="font-size:8.5pt;">Receiver's Signature: ___________________</p></div>
-      <div style="text-align:right;">
-        <p>For, <strong>${fc.name}</strong></p>
-        <br><p>Authorised Signatory</p>
+    <div class="inv-totals-wrap">
+      <table class="inv-totals">
+        ${totalsRows}
+        <tr><td>Round Off</td><td style="text-align:right">${(inv.roundOff||0)>=0?'+':''}${parseFloat(inv.roundOff||0).toFixed(2)}</td></tr>
+        <tr><td><strong>TOTAL</strong></td><td style="text-align:right"><strong>&#8377;${(inv.total||0).toLocaleString('en-IN')}</strong></td></tr>
+      </table>
+      <div class="inv-amtwords"><strong>Amount in Words:</strong> ${inv.amtWords || (numToWords(inv.total||0) + ' Only')}</div>
+      <div class="inv-bank">
+        <p><strong>Bank:</strong> ${FC.bankName} &nbsp;|&nbsp; <strong>A/c:</strong> ${FC.accNo} &nbsp;|&nbsp; <strong>IFSC:</strong> ${FC.ifsc} &nbsp;|&nbsp; <strong>Branch:</strong> ${FC.branch}</p>
+        <p style="margin-top:4px;font-size:8pt;color:#444;">Payment by A/c Payee Cheque / NEFT / RTGS only. Subject to Pune jurisdiction. Interest @18% p.a. on overdue amounts.</p>
+      </div>
+      <div class="inv-footer">
+        <div><p>Receiver's Signature: ___________________</p><p style="margin-top:16px;">Date: _______________</p></div>
+        <div class="inv-footer-right">
+          <p>For, <strong>${FC.name}</strong></p>
+          <p style="margin-top:28px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p>
+        </div>
       </div>
     </div>
   </div>`;
-  document.getElementById('invoicePrintArea').innerHTML = html;
+
+  document.getElementById('invoicePrintArea').innerHTML = printHtml;
   document.getElementById('invoicePrintArea').style.display = 'block';
 }
+
 
 // ============================================================
 // PURCHASES
