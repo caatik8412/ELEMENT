@@ -1274,16 +1274,43 @@ function onFirmChange() {
 }
 
 function populateYearSelectors() {
+  const y   = new Date().getFullYear();
+  const now = new Date();
+  // GSTR-3B year
   const yr = document.getElementById('g3bYear');
-  const y = new Date().getFullYear();
-  for (let i = y - 1; i <= y + 1; i++) {
-    const o = document.createElement('option');
-    o.value = i; o.textContent = i;
-    if (i === y) o.selected = true;
-    yr.appendChild(o);
+  if (yr && !yr.options.length) {
+    for (let i = y-1; i <= y+1; i++) {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = i;
+      if (i === y) o.selected = true;
+      yr.appendChild(o);
+    }
   }
-  // Set current month
-  document.getElementById('g3bMonth').value = String(new Date().getMonth() + 1).padStart(2, '0');
+  document.getElementById('g3bMonth').value = String(now.getMonth()+1).padStart(2,'0');
+  // PF year selectors
+  ['pf-year','pfh-year'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const isFilter = id === 'pfh-year';
+    if (!sel.options.length || (isFilter && sel.options.length === 1)) {
+      if (isFilter) sel.innerHTML = '<option value="">All Years</option>';
+      for (let i = y-2; i <= y+1; i++) {
+        const o = document.createElement('option');
+        o.value = i; o.textContent = i;
+        if (i === y) o.selected = true;
+        sel.appendChild(o);
+      }
+    }
+  });
+  // PF month default
+  const pfm = document.getElementById('pf-month');
+  if (pfm) pfm.value = String(now.getMonth()+1).padStart(2,'0');
+  // PF days
+  const td = new Date(y, now.getMonth()+1, 0).getDate();
+  const tdays = document.getElementById('pf-totaldays');
+  const pdays = document.getElementById('pf-present');
+  if (tdays) tdays.value = td;
+  if (pdays) pdays.value = td;
 }
 
 function setTodayDates() {
@@ -1305,12 +1332,19 @@ async function apiGet(action, data) {
   let url = WEBAPP_URL + '?action=' + action + '&firm=' + currentFirm;
   if (data) url += '&data=' + encodeURIComponent(JSON.stringify(data));
   try {
-    const res = await fetch(url);
-    const json = await res.json();
+    const res  = await fetch(url);
+    const text = await res.text();
+    // Apps Script sometimes wraps in HTML on auth errors
+    if (text.trim().startsWith('<')) {
+      console.error('apiGet HTML response (auth/deploy issue):', action, text.slice(0,200));
+      return null;
+    }
+    const json = JSON.parse(text);
     // Handle both raw array and {status, data:[]} envelope
     if (Array.isArray(json)) return json;
     if (json && Array.isArray(json.data)) return json.data;
     if (json && json.status === 'ok') return json.result || json.data || json;
+    if (json && json.error) { console.error('apiGet server error:', action, json.error); return null; }
     return json;
   } catch(e) {
     console.error('apiGet error:', action, e);
@@ -1530,12 +1564,16 @@ async function deleteClient(id) {
 // ============================================================
 async function loadInvoices() {
   try {
-    const data = await apiGet('getInvoices');
-    // Normalize dates from Sheet (may come as full Date strings)
+    const raw = await apiGet('getInvoices');
+    console.log('loadInvoices raw:', raw);
+    // Handle flat object from sheet (single invoice returns object not array)
+    let data = raw;
+    if (raw && !Array.isArray(raw) && typeof raw === 'object' && raw.id) data = [raw];
     allInvoices = (data || []).map(inv => ({
       ...inv,
       date: normDate(inv.date)
     }));
+    console.log('allInvoices:', allInvoices.length, allInvoices);
     renderInvoices();
   } catch (e) { allInvoices = []; }
 }
@@ -1560,7 +1598,7 @@ function renderInvoices() {
         <button class="btn btn-success btn-sm" onclick="openPayment('${i.id}')">Pay</button>
         <button class="btn btn-danger btn-sm" onclick="deleteInvoice('${i.id}')">Del</button>
       </td>
-    </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">No invoices yet.</td></tr>';
+    </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">No invoices yet. If you have saved invoices, check browser Console (F12) for errors.</td></tr>';
   
   document.getElementById('proformaTableBody').innerHTML = pro.length ? pro.map(i => `
     <tr>
