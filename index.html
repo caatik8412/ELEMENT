@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Element Billing</title>
+<title>Element Office Manager</title>
 <style>
 :root{
-  --navy:#1F3864;--blue:#2E75B6;--blue-light:#5B9BD5;
-  --bg:#F0F4F8;--card:#fff;--text:#1E293B;--muted:#64748B;
-  --border:#E2E8F0;--danger:#EF4444;--success:#22C55E;--warning:#F59E0B;
+  --navy:#1F3864;--blue:#2E75B6;--blue-lt:#5B9BD5;--bg:#F0F4F8;
+  --card:#fff;--text:#1E293B;--muted:#64748B;--border:#E2E8F0;
+  --danger:#EF4444;--success:#22C55E;--warning:#F59E0B;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -17,152 +17,166 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 #loginScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;}
 .login-card{background:#fff;border-radius:14px;padding:44px 42px;width:380px;box-shadow:0 16px 48px rgba(0,0,0,0.45);border-top:4px solid var(--blue);}
 .login-card .co-tag{font-size:0.68rem;font-weight:700;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;}
-.login-card h2{font-size:1.35rem;font-weight:800;color:var(--navy);line-height:1.2;margin-bottom:4px;}
+.login-card h2{font-size:1.35rem;font-weight:800;color:var(--navy);margin-bottom:4px;}
 .login-card .sub{font-size:0.83rem;color:var(--muted);margin-bottom:28px;}
-.login-card input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:0.95rem;margin-bottom:13px;outline:none;transition:border 0.15s;}
+.login-card input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:0.95rem;margin-bottom:13px;outline:none;transition:border .15s;}
 .login-card input:focus{border-color:var(--blue);}
-.login-card .btn-login{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:0.97rem;font-weight:700;cursor:pointer;}
+.login-card .btn-login{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:.97rem;font-weight:700;cursor:pointer;}
 .login-card .btn-login:hover{background:var(--blue);}
-.login-err{color:var(--danger);font-size:0.8rem;margin-top:8px;display:none;}
-.powered{margin-top:22px;padding-top:14px;border-top:1px solid #F1F5F9;text-align:center;font-size:0.72rem;color:#94A3B8;}
+.login-err{color:var(--danger);font-size:.8rem;margin-top:8px;display:none;}
+.powered{margin-top:22px;padding-top:14px;border-top:1px solid #F1F5F9;text-align:center;font-size:.72rem;color:#94A3B8;}
 .powered strong{color:#C2410C;}
 
-/* LAYOUT */
+/* TOPBAR */
 #app{display:none;min-height:100vh;}
-.topbar{background:var(--navy);color:#fff;display:flex;align-items:center;padding:0 20px;height:52px;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
-.topbar .logo{font-size:0.82rem;font-weight:700;letter-spacing:0.03em;}
-.topbar .logo span{opacity:0.45;font-weight:400;font-size:0.74rem;}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
-.topbar-right .firm-tag{font-size:0.72rem;background:rgba(255,255,255,0.1);padding:4px 10px;border-radius:20px;color:rgba(255,255,255,0.75);}
-.topbar-right button{background:none;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);font-size:0.78rem;padding:5px 12px;border-radius:5px;cursor:pointer;}
-.topbar-right button:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.topbar{background:var(--navy);color:#fff;display:flex;align-items:center;padding:0 18px;height:52px;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.topbar .logo{font-size:.82rem;font-weight:800;letter-spacing:.05em;white-space:nowrap;}
+.topbar .logo span{opacity:.45;font-weight:400;}
+.topbar-actions{display:flex;gap:6px;margin-left:16px;}
+.topbar-actions .btn-top{padding:5px 13px;border-radius:5px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.topbar-actions .btn-top:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.7);}
+.topbar-actions .btn-top.green{border-color:#4ADE80;color:#4ADE80;}
+.topbar-actions .btn-top.green:hover{background:rgba(74,222,128,.15);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.firm-tag{font-size:.72rem;background:rgba(255,255,255,.1);padding:4px 10px;border-radius:20px;color:rgba(255,255,255,.75);}
+.btn-signout{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);font-size:.75rem;padding:4px 11px;border-radius:5px;cursor:pointer;}
+.btn-signout:hover{background:rgba(255,255,255,.1);color:#fff;}
 
-/* MAIN TABS */
-.main-tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 20px;overflow-x:auto;}
-.main-tab{padding:13px 18px;font-size:0.875rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all 0.15s;}
-.main-tab:hover{color:var(--navy);}
-.main-tab.active{color:var(--navy);border-bottom-color:var(--navy);}
-
-/* SUB TABS */
-.sub-tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg);border-radius:8px;padding:4px;width:fit-content;}
-.sub-tab{padding:7px 18px;font-size:0.84rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-radius:6px;transition:all 0.15s;}
-.sub-tab.active{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
-
-.tab-panel{display:none;padding:22px 20px;}
+/* TABS */
+.tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 18px;}
+.tab-btn{padding:12px 18px;font-size:.875rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab-btn:hover{color:var(--navy);}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);}
+.tab-panel{display:none;padding:22px 18px;}
 .tab-panel.active{display:block;}
 
-/* CARDS */
-.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
-.stat{background:var(--card);border-radius:10px;padding:15px 18px;border-left:4px solid var(--blue);box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+/* RECORDS SUB-TABS */
+.rec-tabs{display:flex;gap:0;margin-bottom:18px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--border);}
+.rec-tab{flex:1;padding:10px;font-size:.84rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-right:1px solid var(--border);transition:all .15s;text-align:center;}
+.rec-tab:last-child{border-right:none;}
+.rec-tab:hover{background:#F8FAFC;color:var(--navy);}
+.rec-tab.active{background:var(--navy);color:#fff;}
+.rec-panel{display:none;}
+.rec-panel.active{display:block;}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.stat{background:var(--card);border-radius:10px;padding:14px 16px;border-left:4px solid var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .stat.green{border-left-color:var(--success);}
 .stat.red{border-left-color:var(--danger);}
 .stat.orange{border-left-color:var(--warning);}
-.stat.purple{border-left-color:#7C3AED;}
-.stat .lbl{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:5px;}
-.stat .val{font-size:1.35rem;font-weight:700;}
-.card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;margin-bottom:18px;}
-.card-hdr{background:var(--navy);color:#fff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-.card-hdr h3{font-size:0.88rem;font-weight:700;}
+.stat.purple{border-left-color:#8B5CF6;}
+.stat .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px;}
+.stat .val{font-size:1.3rem;font-weight:700;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;margin-bottom:16px;}
+.card-hdr,.card-header{background:var(--navy);color:#fff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-hdr h3,.card-header h3{font-size:.88rem;font-weight:700;}
 .card-body{padding:16px;}
 
 /* TABLES */
 .tbl-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
-thead th{background:var(--navy);color:#fff;padding:9px 11px;text-align:left;font-weight:600;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+thead th{background:var(--navy);color:#fff;padding:9px 11px;text-align:left;font-weight:600;font-size:.73rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
 tbody tr{border-bottom:1px solid var(--border);}
 tbody tr:last-child{border-bottom:none;}
 tbody td{padding:8px 11px;vertical-align:middle;}
 tbody tr:hover{background:#F8FAFC;}
-.no-data{text-align:center;color:var(--muted);padding:28px;font-size:0.86rem;}
+.no-data{text-align:center;color:var(--muted);padding:28px;font-size:.86rem;}
 
 /* BUTTONS */
-.btn{padding:8px 15px;border-radius:6px;border:none;cursor:pointer;font-size:0.84rem;font-weight:600;transition:all 0.15s;display:inline-flex;align-items:center;gap:5px;}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:.83rem;font-weight:600;transition:all .15s;}
 .btn-primary{background:var(--navy);color:#fff;}.btn-primary:hover{background:var(--blue);}
 .btn-blue{background:var(--blue);color:#fff;}.btn-blue:hover{background:var(--navy);}
 .btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{background:var(--border);}
+.btn-success{background:var(--success);color:#fff;}
 .btn-danger{background:var(--danger);color:#fff;}
-.btn-success{background:var(--success);color:#fff;}.btn-success:hover{background:#16a34a;}
-.btn-warning{background:var(--warning);color:#fff;}
-.btn-sm{padding:4px 10px;font-size:0.76rem;}
-.btn-icon{background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:0.95rem;}
+.btn-sm{padding:4px 9px;font-size:.74rem;}
+.btn-icon{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:.92rem;}
 .btn-icon:hover{background:var(--border);}
 
 /* BADGES */
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:700;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;}
 .badge-green{background:#DCFCE7;color:#166534;}
 .badge-red{background:#FEE2E2;color:#991B1B;}
 .badge-yellow{background:#FEF9C3;color:#854D0E;}
 .badge-blue{background:#DBEAFE;color:#1E40AF;}
 .badge-gray{background:#F1F5F9;color:#475569;}
-.badge-purple{background:#F3E8FF;color:#6B21A8;}
+.badge-itc-yes{background:#DCFCE7;color:#166534;}
+.badge-itc-no{background:#FEE2E2;color:#991B1B;}
+.badge-itc-block{background:#FEF3C7;color:#92400E;}
 
 /* MODALS */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:center;justify-content:center;padding:14px;}
 .overlay.open{display:flex;}
-.modal{background:#fff;border-radius:12px;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.3);}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.3);}
 .modal-lg{max-width:920px;}
-.modal-sm{max-width:440px;}
-.modal-hd{background:var(--navy);color:#fff;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:1;}
-.modal-hd h3{font-size:0.93rem;font-weight:700;}
-.modal-hd button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;}
-.modal-bd{padding:20px;}
-.modal-ft{padding:13px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:#FAFAFA;border-radius:0 0 12px 12px;}
+.modal-sm{max-width:420px;}
+.modal-head{background:var(--navy);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:1;}
+.modal-head h3{font-size:.93rem;font-weight:700;}
+.modal-head button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;}
+.modal-body{padding:20px;}
+.modal-foot{padding:13px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:#FAFAFA;border-radius:0 0 12px 12px;}
 
 /* FORMS */
-.fg{display:flex;flex-direction:column;gap:4px;}
-.fg label{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;}
-.fg input,.fg select,.fg textarea{padding:9px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem;outline:none;color:var(--text);font-family:inherit;transition:border 0.15s;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
-.fg input[readonly]{background:#F8FAFC;color:var(--muted);}
-.fg textarea{resize:vertical;min-height:52px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-grid.g3{grid-template-columns:1fr 1fr 1fr;}
 .col-span{grid-column:1/-1;}
-
-/* FILTER BAR */
-.fbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-.fbar input,.fbar select{padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:0.82rem;outline:none;}
-.fbar input:focus,.fbar select:focus{border-color:var(--blue);}
+.fgrp{display:flex;flex-direction:column;gap:4px;}
+.fgrp label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.fgrp input,.fgrp select,.fgrp textarea{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.88rem;outline:none;color:var(--text);font-family:inherit;transition:border .15s;}
+.fgrp input:focus,.fgrp select:focus,.fgrp textarea:focus{border-color:var(--blue);}
+.fgrp input[readonly]{background:#F8FAFC;color:var(--muted);}
+.fgrp textarea{resize:vertical;min-height:52px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.fg select,.fg input{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.88rem;outline:none;font-family:inherit;}
+.fg select:focus,.fg input:focus{border-color:var(--blue);}
 
 /* LINE ITEMS */
-.li-tbl{width:100%;border-collapse:collapse;font-size:0.81rem;margin:8px 0;}
-.li-tbl th{background:#F1F5F9;padding:6px 5px;text-align:left;font-size:0.71rem;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;}
-.li-tbl td{padding:4px 3px;border-bottom:1px solid var(--border);}
-.li-tbl input,.li-tbl select{width:100%;padding:5px 7px;border:1.5px solid var(--border);border-radius:4px;font-size:0.8rem;outline:none;}
-.li-tbl input:focus,.li-tbl select:focus{border-color:var(--blue);}
-.li-tbl input[readonly]{background:#F8FAFC;}
+.li-table{width:100%;border-collapse:collapse;font-size:.81rem;margin:8px 0;}
+.li-table th{background:#F1F5F9;padding:6px 5px;text-align:left;font-size:.7rem;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;}
+.li-table td{padding:3px 2px;border-bottom:1px solid var(--border);}
+.li-table input,.li-table select{width:100%;padding:4px 6px;border:1.5px solid var(--border);border-radius:4px;font-size:.8rem;outline:none;}
+.li-table input:focus,.li-table select:focus{border-color:var(--blue);}
+.li-table input[readonly]{background:#F8FAFC;}
+
+/* FILTERS */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.fbar input,.fbar select{padding:6px 9px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;outline:none;}
+.fbar input:focus,.fbar select:focus{border-color:var(--blue);}
 
 /* RECEIPT INVOICE LIST */
-.rcpt-inv-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;gap:10px;}
+.rcpt-inv-row{display:flex;align-items:center;padding:9px 13px;border-bottom:1px solid var(--border);cursor:pointer;gap:10px;transition:background .1s;}
 .rcpt-inv-row:last-child{border-bottom:none;}
 .rcpt-inv-row:hover{background:#F8FAFC;}
 .rcpt-inv-row.selected{background:#EFF6FF;border-left:3px solid var(--blue);}
 .rcpt-inv-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--navy);cursor:pointer;flex-shrink:0;}
 .rcpt-inv-info{flex:1;}
-.rcpt-inv-info .inv-ref{font-weight:700;font-size:0.87rem;}
-.rcpt-inv-info .inv-meta{font-size:0.74rem;color:var(--muted);}
-.rcpt-inv-bal{text-align:right;font-weight:700;color:var(--danger);font-size:0.9rem;}
+.rcpt-inv-info .inv-ref{font-weight:700;font-size:.87rem;}
+.rcpt-inv-info .inv-meta{font-size:.74rem;color:var(--muted);}
+.rcpt-inv-bal{text-align:right;font-weight:700;color:var(--danger);font-size:.9rem;}
 
-/* GENERATE SCREEN */
-.gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px;margin:0 auto;padding-top:10px;}
-.gen-card{background:var(--card);border-radius:12px;padding:28px 24px;text-align:center;border:2px solid var(--border);cursor:pointer;transition:all 0.18s;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
-.gen-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(37,99,235,0.12);transform:translateY(-2px);}
-.gen-card .icon{font-size:2.4rem;margin-bottom:12px;}
-.gen-card h3{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px;}
-.gen-card p{font-size:0.8rem;color:var(--muted);line-height:1.5;}
-
-/* REPORT */
-.report-box{background:var(--card);border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:16px;}
-.report-box h4{font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border);}
-.disclaimer{background:#FEF9C3;border:1px solid #FDE68A;border-radius:7px;padding:10px 14px;font-size:0.78rem;color:#854D0E;margin-top:12px;line-height:1.6;}
+/* REPORTS */
+.report-filters{display:flex;gap:14px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+.report-filters .fgrp,.report-filters .fg{min-width:120px;}
+.report-section{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden;}
+.report-section-head{background:var(--navy);color:#fff;padding:9px 15px;font-size:.8rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between;}
+.report-total-row td{font-weight:700;border-top:2px solid var(--navy)!important;background:#F0F4F8;}
+.disclaimer{background:#FEF9C3;border:1px solid #FDE68A;border-radius:8px;padding:11px 15px;font-size:.78rem;color:#854D0E;margin-bottom:14px;line-height:1.6;}
 .disclaimer strong{color:#92400E;}
 
 /* TOAST */
-#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:8px;font-size:0.87rem;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:300px;}
-#toast.show{display:block;animation:slideUp 0.2s ease;}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:8px;font-size:.86rem;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:280px;}
+#toast.show{display:block;animation:slideUp .2s ease;}
 #toast.ok{background:#166534;}
 #toast.err{background:#991B1B;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* DASHBOARD */
+.db-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:720px){.db-grid{grid-template-columns:1fr;}}
 
 /* PRINT */
 @media print{
@@ -174,7 +188,7 @@ tbody tr:hover{background:#F8FAFC;}
   .inv-head{border-bottom:1px solid #000;padding:10px 14px;text-align:center;}
   .inv-head h1{font-size:13pt;font-weight:900;}
   .inv-head p{font-size:8.5pt;margin:2px 0;}
-  .inv-lbl{text-align:center;padding:5px;border:1px solid #000;border-left:none;border-right:none;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
+  .inv-lbl{text-align:center;padding:5px;border-bottom:1px solid #000;border-top:1px solid #000;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
   .inv-meta{display:flex;border-bottom:1px solid #000;}
   .inv-meta-col{flex:1;padding:8px 12px;font-size:8.5pt;}
   .inv-meta-col:first-child{border-right:1px solid #000;}
@@ -190,25 +204,21 @@ tbody tr:hover{background:#F8FAFC;}
   .inv-totals-right table{width:100%;border-collapse:collapse;}
   .inv-totals-right td{padding:4px 8px;font-size:9pt;border:1px solid #000;}
   .inv-totals-right tr:last-child td{border:2px solid #000;font-weight:700;font-size:10.5pt;}
-  .inv-bank{padding:7px 12px;font-size:8.5pt;border-top:1px solid #000;}
-  .inv-bank p{margin:2px 0;}
   .inv-footer{border-top:1px solid #000;padding:8px 12px;display:flex;justify-content:space-between;font-size:8.5pt;}
   .rcpt-wrap{font-family:Arial,sans-serif;font-size:10.5pt;color:#000;border:2px solid #000;width:100%;}
   .rcpt-head{border-bottom:1px solid #000;padding:10px 14px;text-align:center;}
   .rcpt-head h1{font-size:13pt;font-weight:900;}
   .rcpt-head p{font-size:8.5pt;margin:2px 0;}
-  .rcpt-lbl{text-align:center;padding:5px;border:1px solid #000;border-left:none;border-right:none;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
+  .rcpt-lbl{text-align:center;padding:5px;border-bottom:1px solid #000;border-top:1px solid #000;font-weight:700;font-size:10.5pt;letter-spacing:1.5px;}
   .rcpt-body{padding:14px 16px;font-size:9.5pt;line-height:2;}
-  .rcpt-body table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .rcpt-body table{width:100%;border-collapse:collapse;margin-top:10px;}
   .rcpt-body td{padding:5px 8px;border:1px solid #000;font-size:9pt;}
   .rcpt-footer{border-top:1px solid #000;padding:10px 14px;display:flex;justify-content:space-between;font-size:8.5pt;}
 }
-
-@media(max-width:700px){
+@media(max-width:600px){
   .form-grid,.form-grid.g3{grid-template-columns:1fr;}
   .stat-row{grid-template-columns:1fr 1fr;}
-  .gen-grid{grid-template-columns:1fr;}
-  .main-tab{padding:11px 12px;font-size:0.8rem;}
+  .topbar-actions .btn-top span{display:none;}
 }
 </style>
 </head>
@@ -218,10 +228,10 @@ tbody tr:hover{background:#F8FAFC;}
 <div id="loginScreen">
   <div class="login-card">
     <div class="co-tag">The Element Environment Pvt Ltd</div>
-    <h2>Element Billing</h2>
+    <h2>Element Office Manager</h2>
     <div class="sub">Sign in to continue</div>
-    <input type="text" id="lu" placeholder="Username" autocomplete="off"/>
-    <input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input type="text" id="lu" placeholder="Username" autocomplete="off">
+    <input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn-login" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="lerr">Invalid credentials.</div>
     <div class="powered">Powered by <strong>Bhayani Business Solutions</strong></div>
@@ -230,250 +240,220 @@ tbody tr:hover{background:#F8FAFC;}
 
 <!-- APP -->
 <div id="app">
+  <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo">ELEMENT <span>Billing v2</span></div>
+    <div class="logo">ELEMENT <span>Office Manager v1</span></div>
+    <div class="topbar-actions">
+      <button class="btn-top" onclick="openInv('Invoice')">+ Invoice</button>
+      <button class="btn-top green" onclick="openReceiptModal(null)">+ Receipt</button>
+      <button class="btn-top" onclick="openPurchaseModal()">+ Purchase</button>
+      <button class="btn-top" onclick="openPaymentModal(null)">+ Payment</button>
+    </div>
     <div class="topbar-right">
       <span class="firm-tag">The Element Environment Pvt Ltd</span>
-      <button onclick="doLogout()">Sign Out</button>
-    </div>
-  </div>
-  <div class="main-tabs">
-    <button class="main-tab active" onclick="switchTab('generate')">⚡ Generate</button>
-    <button class="main-tab" onclick="switchTab('sales')">📄 Sales</button>
-    <button class="main-tab" onclick="switchTab('purchases')">🛒 Purchases</button>
-    <button class="main-tab" onclick="switchTab('reports')">📊 Reports</button>
-    <button class="main-tab" onclick="switchTab('clients')">👥 Clients</button>
-    <button class="main-tab" onclick="switchTab('settings')">⚙ Settings</button>
-  </div>
-
-  <!-- ═══ GENERATE ═══ -->
-  <div class="tab-panel active" id="tp-generate">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-size:1.1rem;font-weight:700;color:var(--navy);">What would you like to generate?</div>
-      <div style="font-size:0.82rem;color:var(--muted);margin-top:4px;">Select an action to get started</div>
-    </div>
-    <div class="gen-grid">
-      <div class="gen-card" onclick="openInv('Invoice')">
-        <div class="icon">🧾</div>
-        <h3>Tax Invoice</h3>
-        <p>Generate a GST tax invoice for services rendered to a client.</p>
-      </div>
-      <div class="gen-card" onclick="openInv('Proforma')">
-        <div class="icon">📋</div>
-        <h3>Proforma Invoice</h3>
-        <p>Issue a proforma or advance request before the actual invoice.</p>
-      </div>
-      <div class="gen-card" onclick="openInv('Quotation')">
-        <div class="icon">💬</div>
-        <h3>Quotation</h3>
-        <p>Send a cost estimate or quotation to a prospective client.</p>
-      </div>
-      <div class="gen-card" onclick="openReceiptModal(null)">
-        <div class="icon">🧾</div>
-        <h3>Receipt Voucher</h3>
-        <p>Issue a receipt when payment is received from a client.</p>
-      </div>
-    </div>
-    <!-- Dashboard stats -->
-    <div class="stat-row" style="margin-top:28px;">
-      <div class="stat"><div class="lbl">Sales This Month</div><div class="val" id="ds-sales">₹ —</div></div>
-      <div class="stat green"><div class="lbl">Received This Month</div><div class="val" id="ds-recd">₹ —</div></div>
-      <div class="stat red"><div class="lbl">Outstanding</div><div class="val" id="ds-os">₹ —</div></div>
-      <div class="stat purple"><div class="lbl">Purchases This Month</div><div class="val" id="ds-pur">₹ —</div></div>
-      <div class="stat orange"><div class="lbl">Payable (Purchases)</div><div class="val" id="ds-payable">₹ —</div></div>
+      <button class="btn-signout" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
 
-  <!-- ═══ SALES ═══ -->
-  <div class="tab-panel" id="tp-sales">
-    <div class="sub-tabs">
-      <button class="sub-tab active" onclick="switchSalesTab('invoices')">All Invoices</button>
-      <button class="sub-tab" onclick="switchSalesTab('receipts')">All Receipts / Receivable</button>
+  <!-- MAIN TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('records')">Records</button>
+    <button class="tab-btn" onclick="switchTab('clients')">Clients</button>
+    <button class="tab-btn" onclick="switchTab('reports')">Reports</button>
+    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="tab-panel active" id="tp-dashboard">
+    <div class="stat-row">
+      <div class="stat"><div class="lbl">This Month Sales</div><div class="val" id="ds-sales">₹ —</div></div>
+      <div class="stat green"><div class="lbl">This Month Received</div><div class="val" id="ds-recd">₹ —</div></div>
+      <div class="stat red"><div class="lbl">Total Outstanding</div><div class="val" id="ds-os">₹ —</div></div>
+      <div class="stat orange"><div class="lbl">Est. GST Payable</div><div class="val" id="ds-gst">₹ —</div></div>
+      <div class="stat purple"><div class="lbl">This Month Purchases</div><div class="val" id="ds-pur">₹ —</div></div>
+    </div>
+    <div class="db-grid">
+      <div class="card">
+        <div class="card-hdr"><h3>Recent Invoices</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;cursor:pointer;" onclick="switchTab('records')">View All →</button></div>
+        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
+          <table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody id="db-invoices"><tr><td colspan="5" class="no-data">Loading…</td></tr></tbody></table>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h3>Outstanding Receivables</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;cursor:pointer;" onclick="switchTab('clients')">View All →</button></div>
+        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
+          <table><thead><tr><th>Client</th><th>Invoice</th><th>Balance</th><th>Age</th><th></th></tr></thead>
+          <tbody id="db-os"><tr><td colspan="5" class="no-data">Loading…</td></tr></tbody></table>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RECORDS ═══ -->
+  <div class="tab-panel" id="tp-records">
+    <div class="rec-tabs">
+      <button class="rec-tab active" onclick="switchRecordsTab('invoices')">📄 Invoices</button>
+      <button class="rec-tab" onclick="switchRecordsTab('receipts')">💰 Receipts</button>
+      <button class="rec-tab" onclick="switchRecordsTab('purchases')">📦 Purchases</button>
+      <button class="rec-tab" onclick="switchRecordsTab('payments')">💸 Payments</button>
     </div>
 
     <!-- Invoices -->
-    <div id="sales-invoices">
-      <div class="stat-row" style="grid-template-columns:repeat(4,1fr);max-width:700px;">
-        <div class="stat"><div class="lbl">Total Invoiced</div><div class="val" id="si-total">₹ —</div></div>
-        <div class="stat green"><div class="lbl">Received</div><div class="val" id="si-recd">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Outstanding</div><div class="val" id="si-os">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">Invoices</div><div class="val" id="si-count">—</div></div>
+    <div class="rec-panel active" id="rp-invoices">
+      <div class="fbar">
+        <input type="text" id="inv-filter-search" placeholder="Invoice / Client…" oninput="renderInvoiceTable()" style="width:200px;">
+        <input type="month" id="inv-filter-month" onchange="renderInvoiceTable()">
+        <select id="inv-filter-status" onchange="renderInvoiceTable()"><option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option></select>
+        <select id="inv-filter-type" onchange="renderInvoiceTable()"><option value="">All Types</option><option value="Invoice">Invoice</option><option value="Proforma">Proforma</option><option value="Quotation">Quotation</option></select>
+        <button class="btn btn-secondary btn-sm" onclick="openInv('Proforma')">+ Proforma</button>
+        <button class="btn btn-secondary btn-sm" onclick="openInv('Quotation')">+ Quotation</button>
       </div>
-      <div class="card">
-        <div class="card-hdr">
-          <h3>Invoice Register</h3>
-          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
-            <select id="inv-f-status" onchange="renderInvoiceTable()" style="font-size:0.77rem;padding:4px 8px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;">
-              <option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option>
-            </select>
-            <input type="month" id="inv-f-month" onchange="renderInvoiceTable()" style="font-size:0.77rem;padding:4px 8px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;color-scheme:dark;">
-            <input type="text" id="inv-f-q" placeholder="Search…" oninput="renderInvoiceTable()" style="font-size:0.77rem;padding:4px 8px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;width:130px;">
-            <button class="btn btn-blue btn-sm" onclick="openInv('Invoice')">+ Invoice</button>
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;">
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Type</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="invoice-tbody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body" style="padding:0;"><div class="tbl-wrap">
+        <table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Type</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="invoice-tbody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody></table>
+      </div></div></div>
     </div>
 
     <!-- Receipts -->
-    <div id="sales-receipts" style="display:none;">
-      <div class="stat-row" style="grid-template-columns:repeat(3,1fr);max-width:520px;">
-        <div class="stat green"><div class="lbl">Total Received</div><div class="val" id="sr-total">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Total Outstanding</div><div class="val" id="sr-os">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">Receipts Count</div><div class="val" id="sr-count">—</div></div>
-      </div>
+    <div class="rec-panel" id="rp-receipts">
       <div class="fbar">
-        <input type="text" id="rcpt-f-q" placeholder="Search client / receipt…" oninput="renderReceiptTable()" style="width:220px;">
-        <input type="month" id="rcpt-f-month" onchange="renderReceiptTable()">
+        <input type="text" id="rcpt-filter-search" placeholder="Client / Receipt No…" oninput="renderReceiptsTable()" style="width:200px;">
+        <input type="month" id="rcpt-filter-month" onchange="renderReceiptsTable()">
       </div>
-      <div class="card">
-        <div class="card-hdr"><h3>Receipt Register</h3><button class="btn btn-success btn-sm" onclick="openReceiptModal(null)">+ Receipt</button></div>
-        <div class="card-body" style="padding:0;">
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Receipt No</th><th>Date</th><th>Client</th><th>Against Invoice(s)</th><th>Mode</th><th>Ref</th><th>Amount</th><th>Actions</th></tr></thead>
-            <tbody id="receipt-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-      <!-- Outstanding Receivable -->
-      <div class="card">
-        <div class="card-hdr"><h3>Outstanding Receivable</h3></div>
-        <div class="card-body" style="padding:0;">
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Invoice Amt</th><th>Received</th><th>Balance</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="os-tbody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ PURCHASES ═══ -->
-  <div class="tab-panel" id="tp-purchases">
-    <div class="sub-tabs">
-      <button class="sub-tab active" onclick="switchPurTab('purchases')">All Purchases</button>
-      <button class="sub-tab" onclick="switchPurTab('payments')">All Payments</button>
+      <div class="card"><div class="card-body" style="padding:0;"><div class="tbl-wrap">
+        <table><thead><tr><th>Receipt No</th><th>Date</th><th>Client</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Against</th><th>Actions</th></tr></thead>
+        <tbody id="receipt-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
+      </div></div></div>
     </div>
 
-    <!-- All Purchases -->
-    <div id="pur-purchases">
-      <div class="stat-row" style="grid-template-columns:repeat(4,1fr);max-width:700px;">
-        <div class="stat purple"><div class="lbl">Total Purchases</div><div class="val" id="pp-total">₹ —</div></div>
-        <div class="stat green"><div class="lbl">Paid</div><div class="val" id="pp-paid">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Payable</div><div class="val" id="pp-payable">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">ITC Available</div><div class="val" id="pp-itc">₹ —</div></div>
-      </div>
+    <!-- Purchases -->
+    <div class="rec-panel" id="rp-purchases">
       <div class="fbar">
-        <input type="text" id="pur-f-q" placeholder="Vendor / Invoice…" oninput="renderPurchaseTable()" style="width:200px;">
-        <input type="month" id="pur-f-month" onchange="renderPurchaseTable()">
-        <select id="pur-f-status" onchange="renderPurchaseTable()"><option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option></select>
+        <input type="text" id="pur-filter-search" placeholder="Vendor / Bill No…" oninput="renderPurchasesTable()" style="width:200px;">
+        <input type="month" id="pur-filter-month" onchange="renderPurchasesTable()">
+        <select id="pur-filter-status" onchange="renderPurchasesTable()"><option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option></select>
       </div>
-      <div class="card">
-        <div class="card-hdr"><h3>Purchase Register</h3><button class="btn btn-blue btn-sm" onclick="openPurchaseModal()">+ Enter Purchase</button></div>
-        <div class="card-body" style="padding:0;">
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Date</th><th>Vendor</th><th>GSTIN</th><th>Invoice No</th><th>Category</th><th>Taxable</th><th>GST%</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>ITC</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="pur-tbody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body" style="padding:0;"><div class="tbl-wrap">
+        <table><thead><tr><th>Date</th><th>Vendor</th><th>GSTIN</th><th>Bill No</th><th>Category</th><th>Taxable</th><th>GST%</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>ITC</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="pur-tbody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody></table>
+      </div></div></div>
     </div>
 
-    <!-- All Payments (Purchase) -->
-    <div id="pur-payments" style="display:none;">
-      <div class="stat-row" style="grid-template-columns:repeat(3,1fr);max-width:520px;">
-        <div class="stat green"><div class="lbl">Total Paid</div><div class="val" id="pm-total">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Still Payable</div><div class="val" id="pm-payable">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">Payments Count</div><div class="val" id="pm-count">—</div></div>
-      </div>
+    <!-- Payments -->
+    <div class="rec-panel" id="rp-payments">
       <div class="fbar">
-        <input type="text" id="pm-f-q" placeholder="Vendor / ref…" oninput="renderPaymentTable()" style="width:220px;">
-        <input type="month" id="pm-f-month" onchange="renderPaymentTable()">
+        <input type="text" id="pay-filter-search" placeholder="Vendor / Ref…" oninput="renderPaymentsTable()" style="width:200px;">
+        <input type="month" id="pay-filter-month" onchange="renderPaymentsTable()">
       </div>
-      <div class="card">
-        <div class="card-hdr"><h3>Payment Register</h3><button class="btn btn-blue btn-sm" onclick="openPaymentModal()">+ Enter Payment</button></div>
-        <div class="card-body" style="padding:0;">
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Date</th><th>Vendor</th><th>Against Invoice(s)</th><th>Mode</th><th>Ref</th><th>Amount</th><th>Actions</th></tr></thead>
-            <tbody id="payment-tbody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body" style="padding:0;"><div class="tbl-wrap">
+        <table><thead><tr><th>Pay No</th><th>Date</th><th>Vendor</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Against Bills</th><th>Actions</th></tr></thead>
+        <tbody id="payment-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
+      </div></div></div>
     </div>
-  </div>
-
-  <!-- ═══ REPORTS ═══ -->
-  <div class="tab-panel" id="tp-reports">
-    <div style="display:grid;grid-template-columns:auto auto auto 1fr;gap:12px;align-items:end;margin-bottom:20px;max-width:600px;">
-      <div class="fg"><label>Month</label><select id="rpt-month"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
-      <div class="fg"><label>Year</label><select id="rpt-year"></select></div>
-      <div style="display:flex;gap:8px;padding-bottom:1px;">
-        <button class="btn btn-primary" onclick="loadGSTR1()">GSTR-1</button>
-        <button class="btn btn-blue" onclick="loadGSTR3B()">GSTR-3B</button>
-        <button class="btn btn-secondary" onclick="exportReportCSV()">⬇ CSV</button>
-      </div>
-    </div>
-    <div id="report-output"></div>
   </div>
 
   <!-- ═══ CLIENTS ═══ -->
   <div class="tab-panel" id="tp-clients">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-      <div style="font-size:1.05rem;font-weight:700;">Client Master</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:1.05rem;font-weight:700;">Client Master</div>
+        <div id="cl-os-summary" style="font-size:.76rem;color:var(--muted);margin-top:2px;"></div>
+      </div>
       <button class="btn btn-blue" onclick="openClientModal()">+ Add Client</button>
     </div>
     <div class="fbar">
-      <input type="text" id="cl-f-q" placeholder="Name / GSTIN / PAN…" oninput="renderClients()" style="width:250px;">
-      <select id="cl-f-state" onchange="renderClients()"><option value="">All States</option><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option><option>Other</option></select>
+      <input type="text" id="cl-search" placeholder="Search name / GSTIN / PAN…" oninput="renderClients()" style="width:240px;">
+      <select id="cl-state" onchange="renderClients()">
+        <option value="">All States</option><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option><option>Other</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.83rem;cursor:pointer;padding:6px 12px;background:#FEE2E2;border-radius:6px;font-weight:600;color:#991B1B;">
+        <input type="checkbox" id="cl-os-only" onchange="renderClients()" style="accent-color:#991B1B;width:14px;height:14px;">
+        Outstanding Only
+      </label>
     </div>
-    <div class="card">
-      <div class="card-body" style="padding:0;">
-        <div class="tbl-wrap">
-          <table><thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>State</th><th>City</th><th>Phone</th><th>Outstanding</th><th>Actions</th></tr></thead>
-          <tbody id="client-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
+    <div class="card"><div class="card-body" style="padding:0;"><div class="tbl-wrap">
+      <table><thead><tr><th>Name</th><th>GSTIN</th><th>State</th><th>City</th><th>Phone</th><th>Outstanding</th><th>Actions</th></tr></thead>
+      <tbody id="client-tbody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody></table>
+    </div></div></div>
+  </div>
+
+  <!-- ═══ REPORTS ═══ -->
+  <div class="tab-panel" id="tp-reports">
+    <div class="rec-tabs" style="max-width:300px;">
+      <button class="rec-tab active" onclick="switchReportView('gstr1')">GSTR-1</button>
+      <button class="rec-tab" onclick="switchReportView('gstr3b')">Est. GSTR-3B</button>
+    </div>
+
+    <!-- GSTR-1 -->
+    <div class="rec-panel active" id="rp-rep-gstr1">
+      <div class="report-filters">
+        <div class="fg"><label>Month</label><select id="g1-month">
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select></div>
+        <div class="fg"><label>Year</label><select id="g1-year"></select></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn btn-primary" onclick="loadGSTR1()">Load Report</button>
+          <button class="btn btn-secondary" onclick="exportGSTR1CSV()">⬇ CSV</button>
         </div>
       </div>
+      <div id="gstr1-result"></div>
+    </div>
+
+    <!-- GSTR-3B -->
+    <div class="rec-panel" id="rp-rep-gstr3b">
+      <div class="report-filters">
+        <div class="fg"><label>Month</label><select id="g3-month">
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select></div>
+        <div class="fg"><label>Year</label><select id="g3-year"></select></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn btn-primary" onclick="loadGSTR3B()">Load Report</button>
+          <button class="btn btn-secondary" onclick="exportGSTR3BCSV()">⬇ CSV</button>
+        </div>
+      </div>
+      <div id="gstr3b-result"></div>
     </div>
   </div>
 
   <!-- ═══ SETTINGS ═══ -->
   <div class="tab-panel" id="tp-settings">
-    <div style="font-size:1.05rem;font-weight:700;margin-bottom:18px;">Company &amp; Billing Settings</div>
-    <div class="card" style="max-width:640px;">
+    <div style="font-size:1.05rem;font-weight:700;margin-bottom:16px;">Company &amp; Billing Settings</div>
+    <div class="card" style="max-width:620px;">
       <div class="card-hdr"><h3>🏢 Company Details</h3></div>
       <div class="card-body">
         <div class="form-grid" style="margin-bottom:14px;">
-          <div class="fg col-span"><label>Company Name</label><input id="s-name" type="text"></div>
-          <div class="fg col-span"><label>Address</label><textarea id="s-addr" rows="2"></textarea></div>
-          <div class="fg"><label>GSTIN</label><input id="s-gstin"></div>
-          <div class="fg"><label>PAN</label><input id="s-pan"></div>
-          <div class="fg"><label>CIN</label><input id="s-cin"></div>
-          <div class="fg"><label>State</label><select id="s-state"><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option><option>Other</option></select></div>
+          <div class="fgrp col-span"><label>Company Name</label><input id="s-name" type="text"></div>
+          <div class="fgrp col-span"><label>Address</label><textarea id="s-addr" rows="2"></textarea></div>
+          <div class="fgrp"><label>GSTIN</label><input id="s-gstin" type="text"></div>
+          <div class="fgrp"><label>PAN</label><input id="s-pan" type="text"></div>
+          <div class="fgrp"><label>CIN</label><input id="s-cin" type="text"></div>
+          <div class="fgrp"><label>State</label><select id="s-state"><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option></select></div>
         </div>
-        <div style="font-size:0.77rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:16px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--border);">💳 Bank &amp; Billing</div>
+        <div style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border);">💳 Bank &amp; Billing</div>
         <div class="form-grid" style="margin-bottom:14px;">
-          <div class="fg"><label>Invoice Prefix</label><input id="s-prefix"></div>
-          <div class="fg"><label>Financial Year</label><input id="s-fy"></div>
-          <div class="fg"><label>Bank Name</label><input id="s-bank"></div>
-          <div class="fg"><label>Account No</label><input id="s-acc"></div>
-          <div class="fg"><label>IFSC</label><input id="s-ifsc"></div>
-          <div class="fg"><label>Branch</label><input id="s-branch"></div>
+          <div class="fgrp"><label>Invoice Prefix</label><input id="s-prefix" type="text"></div>
+          <div class="fgrp"><label>Financial Year</label><input id="s-fy" type="text"></div>
+          <div class="fgrp"><label>Bank Name</label><input id="s-bank" type="text"></div>
+          <div class="fgrp"><label>Account No</label><input id="s-acc" type="text"></div>
+          <div class="fgrp"><label>IFSC Code</label><input id="s-ifsc" type="text"></div>
+          <div class="fgrp"><label>Branch</label><input id="s-branch" type="text"></div>
         </div>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-primary" onclick="saveSettings()">✓ Save Settings</button>
-          <button class="btn btn-secondary" onclick="fillSettingsDefaults()">↺ Reset</button>
+          <button class="btn btn-secondary" onclick="fillSettingsDefaults()">↺ Reset Defaults</button>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<!-- ═══ MODALS ═══ -->
 
 <!-- Invoice Modal -->
 <div class="overlay" id="invModal">
@@ -752,7 +732,9 @@ tbody tr:hover{background:#F8FAFC;}
 
 <div id="printArea" style="display:none;"></div>
 <div id="toast"></div>
+
 <script>
+
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwegDzWTVEqwbL_djTx-9oKZ-MYa3v0BKdFCGT5TznSj023bWEr1kjGkVxbxJ8i90NFIg/exec';
 const AUTH = { user: 'ELEMENT', pass: 'ELEMENT@250326' };
 const FIRM = {
@@ -763,8 +745,11 @@ const FIRM = {
   ifsc:'HDFC0011725', branch:'Bibvewadi, Pune', prefix:'TEEPL', fy:'26-27',
 };
 
+// Hide print area after print
+window.addEventListener('afterprint',()=>{const pa=document.getElementById('printArea');if(pa){pa.style.display='none';pa.innerHTML='';}});
+
 let allClients=[], allInvoices=[], allOutstanding=[], allReceipts=[], allPurchases=[], allPurchasePayments=[];
-let editInvId=null, editClientId=null, editPurId=null;
+let editInvId=null, editClientId=null;
 let pendingPrintData=null, currentReceiptData=null;
 let lastReport=null;
 
@@ -821,50 +806,16 @@ function doLogin(){
 function doLogout(){$('app').style.display='none';$('loginScreen').style.display='flex';sv('lu','');sv('lp','');}
 
 // INIT
-async function initApp(){
+async function initApp() {
   fillSettingsDefaults();
-  const today=new Date().toISOString().split('T')[0];
-  sv('i-date',today);sv('pur-date',today);sv('rcpt-date',today);sv('purpay-date',today);
-  const now=new Date();
-  sv('rpt-month',String(now.getMonth()+1).padStart(2,'0'));
-  // populate year selector
-  const yrSel=$('rpt-year');
-  if(yrSel&&!yrSel.options.length){for(let i=now.getFullYear()-1;i<=now.getFullYear()+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===now.getFullYear())o.selected=true;yrSel.appendChild(o);}}
+  const today = new Date().toISOString().split('T')[0];
+  sv('i-date', today); sv('pur-date', today);
+  if($('rcpt-date')) sv('rcpt-date', today);
+  if($('pay-date'))  sv('pay-date',  today);
   await loadSettings();
-  await Promise.all([loadClients(),loadInvoices(),loadPurchases(),loadReceipts()]);
-  updateDashboard();
-}
-
-// TABS
-function switchTab(id){
-  document.querySelectorAll('.main-tab').forEach((b,i)=>b.classList.toggle('active',['generate','sales','purchases','reports','clients','settings'][i]===id));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  $('tp-'+id).classList.add('active');
-  if(id==='clients')renderClients();
-  if(id==='settings')fillSettingsDefaults();
-}
-function switchSalesTab(tab){
-  document.querySelectorAll('#tp-sales .sub-tab').forEach((b,i)=>b.classList.toggle('active',['invoices','receipts'][i]===tab));
-  $('sales-invoices').style.display=tab==='invoices'?'block':'none';
-  $('sales-receipts').style.display=tab==='receipts'?'block':'none';
-  if(tab==='receipts'){renderReceiptTable();renderOutstandingTable();}
-}
-function switchPurTab(tab){
-  document.querySelectorAll('#tp-purchases .sub-tab').forEach((b,i)=>b.classList.toggle('active',['purchases','payments'][i]===tab));
-  $('pur-purchases').style.display=tab==='purchases'?'block':'none';
-  $('pur-payments').style.display=tab==='payments'?'block':'none';
-  if(tab==='payments')renderPaymentTable();
-}
-function openModal(id){$(id).classList.add('open');}
-function closeModal(id){$(id).classList.remove('open');}
-document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
-
-// SETTINGS
-function fillSettingsDefaults(){
-  sv('s-name',FIRM.name);sv('s-addr',FIRM.addr);sv('s-gstin',FIRM.gstin);
-  sv('s-pan',FIRM.pan);sv('s-cin',FIRM.cin);sv('s-state',FIRM.state);
-  sv('s-prefix',FIRM.prefix);sv('s-fy',FIRM.fy);sv('s-bank',FIRM.bank);
-  sv('s-acc',FIRM.acc);sv('s-ifsc',FIRM.ifsc);sv('s-branch',FIRM.branch);
+  await Promise.all([loadClients(), loadInvoices(), loadReceipts(), loadPurchases()]);
+  initYearSelectors();
+  loadDashboard();
 }
 async function loadSettings(){
   const d=await apiGet('getSettings');
@@ -1063,7 +1014,7 @@ function renderPurchaseTable(){
   tb.innerHTML=list.slice().reverse().map(p=>`<tr><td>${fmtDate(p.date)}</td><td><strong>${p.vendor}</strong></td><td>${p.gstin||'\u2014'}</td><td>${p.invNo||'\u2014'}</td><td>${p.category||'\u2014'}</td><td>${fmt(p.taxable)}</td><td>${p.gstRate||0}%</td><td>${fmt(p.cgst)}</td><td>${fmt(p.sgst)}</td><td>${fmt(p.igst)}</td><td><strong>${fmt(p.total)}</strong></td><td><span class="badge ${p.itc==='Yes'?'badge-green':p.itc==='Partial'?'badge-yellow':'badge-red'}">${p.itc||'No'}</span></td><td>${statusBadge(p.status)}</td><td><button class="btn btn-success btn-sm" onclick="openPaymentModal('${p.id}')">Pay</button> <button class="btn-icon" onclick="deletePurchase('${p.id}')" style="color:var(--danger);">\uD83D\uDDD1</button></td></tr>`).join('');
 }
 function openPurchaseModal(id){
-  editPurId=id||null;$('pur-modal-title').textContent=id?'Edit Purchase':'Enter Purchase / Inward Service';
+  $('pur-modal-title').textContent=id?'Edit Purchase':'Enter Purchase / Inward Service';
   if(!id){['pur-vendor','pur-gstin','pur-invno','pur-remarks','pur-taxable','pur-cgst','pur-sgst','pur-igst','pur-total'].forEach(i=>sv(i,''));sv('pur-date',new Date().toISOString().split('T')[0]);sv('pur-gstrate','18');sv('pur-pos','Maharashtra');sv('pur-itc','Yes');sv('pur-status','Unpaid');sv('pur-cat','Professional Fees');}
   $('pur-save-btn').disabled=false;openModal('purchaseModal');
 }
@@ -1073,12 +1024,37 @@ function calcPurGST(){
   sv('pur-cgst',isIGST?'0.00':(g/2).toFixed(2));sv('pur-sgst',isIGST?'0.00':(g/2).toFixed(2));sv('pur-igst',isIGST?g.toFixed(2):'0.00');sv('pur-total',(t+g).toFixed(2));
 }
 async function savePurchase(){
-  const vendor=gv('pur-vendor').trim();if(!vendor){toast('Vendor required','err');return;}
-  const taxable=parseFloat(gv('pur-taxable'))||0;if(!taxable){toast('Enter taxable value','err');return;}
+  const vendor=gv('pur-vendor').trim();
+  if(!vendor){toast('Vendor name required','err');return;}
+  const taxable=parseFloat(gv('pur-taxable'))||0;
+  if(!taxable){toast('Enter taxable value','err');return;}
   $('pur-save-btn').disabled=true;
-  const isIGST=gv('pur-pos')!=='Maharashtra',r=parseFloat(gv('pur-gstrate'))||0,g=taxable*r/100;
-  const payload={id:editPurId||Date.now().toString(),date:gv('pur-date'),vendor,gstin:gv('pur-gstin'),invNo:gv('pur-invno'),category:gv('pur-cat'),gstRate:r,taxable,cgst:isIGST?0:g/2,sgst:isIGST?0:g/2,igst:isIGST?g:0,total:taxable+g,itc:gv('pur-itc'),status:gv('pur-status'),remarks:gv('pur-remarks')};
-  await apiPost('savePurchase',payload);closeModal('purchaseModal');toast('Purchase saved','ok');setTimeout(()=>loadPurchases(),900);
+  const isIGST=gv('pur-pos')!=='Maharashtra';
+  const r=parseFloat(gv('pur-gstrate'))||0, g=taxable*r/100;
+  const payload={
+    id: Date.now().toString(),
+    date:     gv('pur-date'),
+    vendor,
+    gstin:    gv('pur-gstin'),
+    billno:   gv('pur-billno'),
+    category: gv('pur-category'),
+    pos:      gv('pur-pos'),
+    gstrate:  r,
+    taxable,
+    cgst:     isIGST ? 0 : g/2,
+    sgst:     isIGST ? 0 : g/2,
+    igst:     isIGST ? g : 0,
+    total:    taxable+g,
+    itc:      gv('pur-itc'),
+    status:   gv('pur-status'),
+    narration:gv('pur-narration'),
+    received: 0,
+    balance:  taxable+g,
+  };
+  await apiPost('savePurchase', payload);
+  closeModal('purchaseModal');
+  toast('Purchase saved','ok');
+  setTimeout(()=>loadPurchases(), 900);
 }
 async function deletePurchase(id){if(!confirm('Delete?'))return;await apiPost('deletePurchase',{id});toast('Deleted');setTimeout(()=>loadPurchases(),900);}
 
@@ -1288,30 +1264,46 @@ function switchReportView(view) {
 
 // ── OVERRIDE switchTab for new structure ─────────────────────
 function switchTab(id) {
-  const tabIds = ['sales','purchases','reports','clients','settings'];
+  const tabIds = ['dashboard','records','clients','reports','settings'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabIds[i]===id));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   $('tp-'+id).classList.add('active');
+  if (id==='dashboard') loadDashboard();
+  if (id==='records')   { switchRecordsTab(currentRecordsTab||'invoices'); }
   if (id==='clients')   renderClients();
+  if (id==='reports')   switchReportView(currentReportTab||'gstr1');
   if (id==='settings')  loadSettingsUI();
-  if (id==='purchases') { renderPurchasesTable(); renderPaymentsTable(); }
-  if (id==='sales')     { renderInvoiceTable(); renderReceiptsTable(); updateSalesStats(); }
+}
+
+let currentRecordsTab = 'invoices';
+let currentReportTab  = 'gstr1';
+
+function switchRecordsTab(tab) {
+  currentRecordsTab = tab;
+  const tabs = ['invoices','receipts','purchases','payments'];
+  document.querySelectorAll('#tp-records .rec-tab').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('#tp-records .rec-panel').forEach(p=>p.classList.remove('active'));
+  $('rp-'+tab).classList.add('active');
+  if (tab==='invoices')  renderInvoiceTable();
+  if (tab==='receipts')  renderReceiptsTable();
+  if (tab==='purchases') renderPurchasesTable();
+  if (tab==='payments')  renderPaymentsTable();
 }
 
 // ── SALES STATS ──────────────────────────────────────────────
 function updateSalesStats() {
   const mo = new Date().toISOString().slice(0,7);
   const moInv = allInvoices.filter(i=>(!i.type||i.type==='Invoice')&&(i.date||'').startsWith(mo));
-  $('s-sales-mo').textContent = fmt(moInv.reduce((s,i)=>s+i.total,0));
-  $('s-gst-mo').textContent   = fmt(moInv.reduce((s,i)=>s+i.totalGST,0));
+  $('ds-sales').textContent = fmt(moInv.reduce((s,i)=>s+i.total,0));
+  $('ds-gst').textContent   = fmt(moInv.reduce((s,i)=>s+i.totalGST,0));
   const osUnpaid = allOutstanding.filter(o=>o.status!=='Paid');
-  $('s-os-total').textContent  = fmt(osUnpaid.reduce((s,o)=>s+o.balance,0));
+  $('ds-os').textContent  = fmt(osUnpaid.reduce((s,o)=>s+o.balance,0));
   const totalRecd = allOutstanding.reduce((s,o)=>s+(parseFloat(o.received)||0),0);
-  $('s-recd-total').textContent = fmt(totalRecd);
+  $('ds-recd').textContent = fmt(totalRecd);
   // Receipt stats
   const moRcpts = allReceipts.filter(r=>(r.date||'').startsWith(mo));
-  if ($('r-mo')) $('r-mo').textContent = fmt(moRcpts.reduce((s,r)=>s+r.amount,0));
-  if ($('r-count')) $('r-count').textContent = allReceipts.length;
+  if ($('ds-rcpt-mo')) $('ds-rcpt-mo').textContent = fmt(moRcpts.reduce((s,r)=>s+r.amount,0));
+  if ($('ds-rcpt-cnt')) $('ds-rcpt-cnt').textContent = allReceipts.length;
 }
 
 // ── RECEIPTS TABLE ───────────────────────────────────────────
@@ -1321,7 +1313,7 @@ function renderReceiptsTable() {
     (!mo||(r.date||'').startsWith(mo)) &&
     (!q||(r.clientName+r.rcptNo).toLowerCase().includes(q))
   ).slice().reverse();
-  const tb = $('receipts-tbody');
+  const tb = $('receipt-tbody');
   if (!tb) return;
   if (!list.length){tb.innerHTML='<tr><td colspan="8" class="no-data">No receipts yet.</td></tr>';return;}
   tb.innerHTML = list.map(r=>`<tr>
@@ -1369,13 +1361,13 @@ async function loadPurchases() {
 function updatePurchaseStats() {
   const mo = new Date().toISOString().slice(0,7);
   const moP = allPurchases.filter(p=>(p.date||'').startsWith(mo));
-  if ($('p-mo')) $('p-mo').textContent = fmt(moP.reduce((s,p)=>s+p.total,0));
+  if ($('ds-pur')) $('ds-pur').textContent = fmt(moP.reduce((s,p)=>s+p.total,0));
   const itc = allPurchases.filter(p=>p.itc==='Eligible').reduce((s,p)=>s+(p.cgst+p.sgst+p.igst),0);
-  if ($('p-itc')) $('p-itc').textContent = fmt(itc);
+  if ($('ds-itc')) $('ds-itc').textContent = fmt(itc);
   const payable = allPurchases.filter(p=>p.status!=='Paid').reduce((s,p)=>s+p.balance,0);
-  if ($('p-payable')) $('p-payable').textContent = fmt(payable);
+  if ($('ds-payable')) $('ds-payable').textContent = fmt(payable);
   const paid = allPurchases.reduce((s,p)=>s+(parseFloat(p.received)||0),0);
-  if ($('p-paid')) $('p-paid').textContent = fmt(paid);
+  if ($('ds-paid')) $('ds-paid').textContent = fmt(paid);
 }
 
 function renderPurchasesTable() {
@@ -1384,7 +1376,7 @@ function renderPurchasesTable() {
     (!st||p.status===st)&&(!mo||(p.date||'').startsWith(mo))&&
     (!q||(p.vendor+p.billno).toLowerCase().includes(q))
   ).slice().reverse();
-  const tb=$('purchases-tbody');
+  const tb=$('pur-tbody');
   if (!tb) return;
   if (!list.length){tb.innerHTML='<tr><td colspan="14" class="no-data">No purchases yet.</td></tr>';return;}
   const itcBadge = v => v==='Eligible'?'badge-itc-yes':v==='Ineligible'?'badge-itc-no':'badge-itc-block';
@@ -1414,7 +1406,7 @@ function renderPaymentsTable() {
   const list=allPurchasePayments.filter(p=>
     (!mo||(p.date||'').startsWith(mo))&&(!q||(p.vendor+p.payNo).toLowerCase().includes(q))
   ).slice().reverse();
-  const tb=$('payments-tbody');
+  const tb=$('payment-tbody');
   if (!tb) return;
   if (!list.length){tb.innerHTML='<tr><td colspan="8" class="no-data">No payments yet.</td></tr>';return;}
   tb.innerHTML=list.map(p=>`<tr>
@@ -1451,13 +1443,16 @@ function openPurchaseModal(id) {
     sv('pur-status',p.status||'Unpaid'); sv('pur-narration',p.narration||'');
     calcPurchaseGST();
   } else {
-    ['pur-vendor','pur-gstin','pur-billno','pur-taxable','pur-narration'].forEach(id=>sv(id,''));
-    sv('pur-date',new Date().toISOString().split('T')[0]);
-    sv('pur-category','Professional Fees'); sv('pur-pos','Maharashtra');
-    sv('pur-gstrate','18'); sv('pur-itc','Eligible'); sv('pur-status','Unpaid');
+    ['pur-vendor','pur-gstin','pur-billno','pur-taxable','pur-narration'].forEach(id => { const el=$(id); if(el) el.value=''; });
+    sv('pur-date', new Date().toISOString().split('T')[0]);
+    sv('pur-category','Professional Fees');
+    sv('pur-pos','Maharashtra');
+    sv('pur-gstrate','18');
+    sv('pur-itc','Eligible');
+    sv('pur-status','Unpaid');
     calcPurchaseGST();
   }
-  $('pur-save-btn').disabled=false;
+  $('pur-save-btn').disabled = false;
   openModal('purchaseModal');
 }
 
@@ -1721,227 +1716,57 @@ function loadGSTR3B() {
 }
 
 // ── YEAR SELECTOR INIT ───────────────────────────────────────
+function loadDashboard() {
+  const now = new Date();
+  const mo  = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const salesInv = allInvoices.filter(i=>(!i.type||i.type==='Invoice')&&(i.date||'').startsWith(mo));
+  const osUnpaid = allOutstanding.filter(o=>o.status!=='Paid');
+  const recdM    = allReceipts.filter(r=>(r.date||'').startsWith(mo)).reduce((s,r)=>s+r.amount,0);
+  const purM     = allPurchases.filter(p=>(p.date||'').startsWith(mo)).reduce((s,p)=>s+p.total,0);
+  const set = (id,v) => { const el=$(id); if(el) el.textContent=v; };
+  set('ds-sales', fmt(salesInv.reduce((s,i)=>s+i.total,0)));
+  set('ds-recd',  fmt(recdM));
+  set('ds-os',    fmt(osUnpaid.reduce((s,o)=>s+o.balance,0)));
+  set('ds-gst',   fmt(salesInv.reduce((s,i)=>s+i.totalGST,0)));
+  set('ds-pur',   fmt(purM));
+  // Recent invoices
+  const dbi = $('db-invoices');
+  if (dbi) {
+    const recent = [...allInvoices].reverse().slice(0,7);
+    dbi.innerHTML = recent.length
+      ? recent.map(i=>`<tr><td><strong>${i.invoiceNo}</strong></td><td>${fmtDate(i.date)}</td><td>${i.clientName||'—'}</td><td>${fmt(i.total)}</td><td>${statusBadge(i.payStatus)}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="no-data">No invoices yet.</td></tr>';
+  }
+  // Outstanding
+  const dbo = $('db-os');
+  if (dbo) {
+    const today = new Date();
+    const topOS = osUnpaid.sort((a,b)=>b.balance-a.balance).slice(0,7);
+    dbo.innerHTML = topOS.length
+      ? topOS.map(o=>{
+          const days=o.date?Math.floor((today-new Date(o.date))/86400000):0;
+          const cls=days>30?'color:var(--danger)':'color:var(--warning)';
+          return `<tr><td>${o.clientName||'—'}</td><td>${o.invoiceNo}</td><td style="font-weight:700;${cls}">${fmt(o.balance)}</td><td>${days}d</td><td><button class="btn btn-success btn-sm" onclick="openReceiptModal('${o.invoiceId}')">Receipt</button></td></tr>`;
+        }).join('')
+      : '<tr><td colspan="5" class="no-data" style="color:var(--success);">✓ All clear!</td></tr>';
+  }
+}
+
 function initYearSelectors() {
-  const y=new Date().getFullYear(), m=new Date().getMonth()+1;
-  ['g1-year','g3-year'].forEach(id=>{
-    const sel=$(id); if(!sel)return; sel.innerHTML='';
-    for(let i=y-1;i<=y+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===y)o.selected=true;sel.appendChild(o);}
+  const y = new Date().getFullYear();
+  const m = new Date().getMonth()+1;
+  const moStr = String(m).padStart(2,'0');
+  ['g1-year','g3-year'].forEach(id => {
+    const sel=$(id); if(!sel) return; sel.innerHTML='';
+    for(let i=y-2;i<=y+1;i++){
+      const o=document.createElement('option');
+      o.value=i; o.textContent=i;
+      if(i===y) o.selected=true;
+      sel.appendChild(o);
+    }
   });
-  const moStr=String(m).padStart(2,'0');
   ['g1-month','g3-month'].forEach(id=>{const el=$(id);if(el)el.value=moStr;});
 }
-
-// ── OVERRIDE initApp ─────────────────────────────────────────
-const _origInitApp = initApp;
-async function initApp() {
-  fillSettingsDefaults();
-  const today=new Date().toISOString().split('T')[0];
-  sv('pay-date',today);
-  sv('pur-date',today);
-  await loadSettings();
-  await Promise.all([loadClients(), loadInvoices(), loadReceipts(), loadPurchases()]);
-  updateSalesStats();
-  updatePurchaseStats();
-  initYearSelectors();
-}
-
 </script>
-</body>
-</html  <!-- SALES TAB -->
-  <div class="tab-panel active" id="tp-sales">
-    <div class="sub-nav">
-      <button class="sub-btn active" onclick="switchSalesView('invoices')">📄 All Invoices</button>
-      <button class="sub-btn" onclick="switchSalesView('receipts')">💰 All Receipts</button>
-      <div style="margin-left:auto;display:flex;gap:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="openInv('Proforma')">+ Proforma</button>
-        <button class="btn btn-secondary btn-sm" onclick="openInv('Quotation')">+ Quotation</button>
-        <button class="btn btn-blue" onclick="openInv('Invoice')">+ Invoice</button>
-        <button class="btn btn-success btn-sm" onclick="openReceiptModal(null)">+ Receipt</button>
-      </div>
-    </div>
-
-    <!-- All Invoices -->
-    <div class="sub-panel active" id="sp-invoices">
-      <div class="stat-row">
-        <div class="stat"><div class="lbl">This Month Sales</div><div class="val" id="s-sales-mo">₹ —</div></div>
-        <div class="stat green"><div class="lbl">Total Received</div><div class="val" id="s-recd-total">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Outstanding</div><div class="val" id="s-os-total">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">This Month GST</div><div class="val" id="s-gst-mo">₹ —</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <h3>Invoice Register</h3>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <select id="inv-filter-status" onchange="renderInvoiceTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-              <option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option>
-            </select>
-            <input type="month" id="inv-filter-month" onchange="renderInvoiceTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-            <input type="text" id="inv-filter-search" placeholder="Search…" oninput="renderInvoiceTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;width:130px;">
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
-          <table><thead><tr><th>Invoice No</th><th>Date</th><th>Client</th><th>Type</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="invoice-tbody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody></table>
-        </div></div>
-      </div>
-    </div>
-
-    <!-- All Receipts -->
-    <div class="sub-panel" id="sp-receipts">
-      <div class="stat-row">
-        <div class="stat green"><div class="lbl">This Month Received</div><div class="val" id="r-mo">₹ —</div></div>
-        <div class="stat"><div class="lbl">Total Receipts</div><div class="val" id="r-count">—</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <h3>Receipt Register</h3>
-          <div style="display:flex;gap:8px;">
-            <input type="month" id="rcpt-filter-month" onchange="renderReceiptsTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-            <input type="text" id="rcpt-filter-search" placeholder="Search…" oninput="renderReceiptsTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;width:130px;">
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
-          <table><thead><tr><th>Receipt No</th><th>Date</th><th>Client</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Against Invoices</th><th>Actions</th></tr></thead>
-          <tbody id="receipts-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
-        </div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PURCHASES TAB -->
-  <div class="tab-panel" id="tp-purchases">
-    <div class="sub-nav">
-      <button class="sub-btn active" onclick="switchPurchaseView('purchases')">📦 All Purchases</button>
-      <button class="sub-btn" onclick="switchPurchaseView('payments')">💸 All Payments</button>
-      <div style="margin-left:auto;display:flex;gap:8px;">
-        <button class="btn btn-blue" onclick="openPurchaseModal()">+ Purchase / Inward</button>
-        <button class="btn btn-success btn-sm" onclick="openPaymentModal(null)">+ Payment</button>
-      </div>
-    </div>
-
-    <!-- All Purchases -->
-    <div class="sub-panel active" id="sp-purchases">
-      <div class="stat-row">
-        <div class="stat"><div class="lbl">This Month Purchases</div><div class="val" id="p-mo">₹ —</div></div>
-        <div class="stat orange"><div class="lbl">ITC Available</div><div class="val" id="p-itc">₹ —</div></div>
-        <div class="stat red"><div class="lbl">Payable</div><div class="val" id="p-payable">₹ —</div></div>
-        <div class="stat green"><div class="lbl">Paid</div><div class="val" id="p-paid">₹ —</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <h3>Purchase Register</h3>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <select id="pur-filter-status" onchange="renderPurchasesTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-              <option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option>
-            </select>
-            <input type="month" id="pur-filter-month" onchange="renderPurchasesTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-            <input type="text" id="pur-filter-search" placeholder="Vendor / Invoice…" oninput="renderPurchasesTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;width:140px;">
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
-          <table><thead><tr><th>Date</th><th>Vendor</th><th>Vendor GSTIN</th><th>Bill No</th><th>Category</th><th>Taxable</th><th>GST%</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>ITC</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="purchases-tbody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody></table>
-        </div></div>
-      </div>
-    </div>
-
-    <!-- All Payments -->
-    <div class="sub-panel" id="sp-payments">
-      <div class="card">
-        <div class="card-header">
-          <h3>Payment Register</h3>
-          <div style="display:flex;gap:8px;">
-            <input type="month" id="pay-filter-month" onchange="renderPaymentsTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;color-scheme:dark;">
-            <input type="text" id="pay-filter-search" placeholder="Search…" oninput="renderPaymentsTable()" style="font-size:0.78rem;padding:4px 8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;width:130px;">
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;"><div class="tbl-wrap">
-          <table><thead><tr><th>Payment No</th><th>Date</th><th>Vendor</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Against Bills</th><th>Actions</th></tr></thead>
-          <tbody id="payments-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
-        </div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- REPORTS TAB -->
-  <div class="tab-panel" id="tp-reports">
-    <div class="sub-nav">
-      <button class="sub-btn active" onclick="switchReportView('gstr1')">GSTR-1</button>
-      <button class="sub-btn" onclick="switchReportView('gstr3b')">Est. GSTR-3B</button>
-    </div>
-
-    <!-- GSTR-1 -->
-    <div class="sub-panel active" id="sp-gstr1">
-      <div class="report-filters">
-        <div class="fgrp"><label>Month</label><select id="g1-month"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
-        <div class="fgrp"><label>Year</label><select id="g1-year"></select></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="loadGSTR1()">Load Report</button></div>
-      </div>
-      <div id="gstr1-result"></div>
-    </div>
-
-    <!-- GSTR-3B -->
-    <div class="sub-panel" id="sp-gstr3b">
-      <div class="report-filters">
-        <div class="fgrp"><label>Month</label><select id="g3-month"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
-        <div class="fgrp"><label>Year</label><select id="g3-year"></select></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="loadGSTR3B()">Load Report</button></div>
-      </div>
-      <div id="gstr3b-result"></div>
-    </div>
-  </div>
-
-  <!-- CLIENTS TAB -->
-  <div class="tab-panel" id="tp-clients">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-      <div style="font-size:1.05rem;font-weight:700;">Client Master</div>
-      <button class="btn btn-blue" onclick="openClientModal()">+ Add Client</button>
-    </div>
-    <div class="fbar">
-      <input type="text" id="cl-search" placeholder="Search name / GSTIN / PAN…" oninput="renderClients()" style="width:260px;">
-      <select id="cl-state" onchange="renderClients()"><option value="">All States</option><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option><option>Other</option></select>
-    </div>
-    <div class="card">
-      <div class="card-body" style="padding:0;"><div class="tbl-wrap">
-        <table><thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>State</th><th>City</th><th>Phone</th><th>Outstanding</th><th>Actions</th></tr></thead>
-        <tbody id="client-tbody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody></table>
-      </div></div>
-    </div>
-  </div>
-
-  <!-- SETTINGS TAB -->
-  <div class="tab-panel" id="tp-settings">
-    <div style="font-size:1.05rem;font-weight:700;margin-bottom:18px;">Company &amp; Billing Settings</div>
-    <div class="card" style="max-width:640px;">
-      <div class="card-header"><h3>🏢 Company Details</h3></div>
-      <div class="card-body">
-        <div class="form-grid" style="margin-bottom:16px;">
-          <div class="fgrp col-span"><label>Company Name</label><input id="s-name" type="text"></div>
-          <div class="fgrp col-span"><label>Address</label><textarea id="s-addr" rows="2"></textarea></div>
-          <div class="fgrp"><label>GSTIN</label><input id="s-gstin" type="text"></div>
-          <div class="fgrp"><label>PAN</label><input id="s-pan" type="text"></div>
-          <div class="fgrp"><label>CIN</label><input id="s-cin" type="text"></div>
-          <div class="fgrp"><label>State</label><select id="s-state"><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Delhi</option><option>Other</option></select></div>
-        </div>
-        <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:18px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border);">💳 Bank &amp; Billing</div>
-        <div class="form-grid" style="margin-bottom:16px;">
-          <div class="fgrp"><label>Invoice Prefix</label><input id="s-prefix" type="text"></div>
-          <div class="fgrp"><label>Financial Year</label><input id="s-fy" type="text"></div>
-          <div class="fgrp"><label>Bank Name</label><input id="s-bank" type="text"></div>
-          <div class="fgrp"><label>Account No</label><input id="s-acc" type="text"></div>
-          <div class="fgrp"><label>IFSC Code</label><input id="s-ifsc" type="text"></div>
-          <div class="fgrp"><label>Branch</label><input id="s-branch" type="text"></div>
-        </div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary" onclick="saveSettings()">✓ Save Settings</button>
-          <button class="btn btn-secondary" onclick="fillSettingsDefaults()">↺ Reset Defaults</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<div id="printArea" style="display:none;"></div>
-<div id="toast"></div>
-
 </body>
 </html>
