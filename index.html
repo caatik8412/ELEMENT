@@ -236,6 +236,15 @@
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.success { background: var(--success); }
   .toast.error { background: var(--danger); }
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  }
+  .s-scheduled  { background: #DBEAFE; color: #1E40AF; }
+  .s-completed  { background: #DCFCE7; color: #166534; }
+  .s-cancelled  { background: #FEE2E2; color: #991B1B; }
+  .s-rescheduled{ background: #FEF3C7; color: #92400E; }
+  .meeting-card.cancelled { opacity: 0.55; }
 </style>
 </head>
 <body>
@@ -328,7 +337,7 @@
           <table>
             <thead>
               <tr>
-                <th>Date</th><th>Time</th><th>Title</th><th>With</th><th>Location</th><th>Notes</th>
+                <th>Date</th><th>Time</th><th>Title</th><th>With</th><th>Location</th><th>Status</th><th>Notes / Reason</th><th></th>
               </tr>
             </thead>
             <tbody id="all-tbody">
@@ -367,7 +376,7 @@
 <!-- ADD MEETING MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3>Add Meeting</h3>
+    <h3 id="modal-title">Add Meeting</h3>
     <div class="form-two">
       <div class="form-row"><label>Date</label><input type="date" id="m-date"/></div>
       <div class="form-row"><label>Time</label><input type="time" id="m-time"/></div>
@@ -376,6 +385,19 @@
     <div class="form-row"><label>With</label><input type="text" id="m-with" placeholder="Person or organisation"/></div>
     <div class="form-row"><label>Location</label><input type="text" id="m-loc" placeholder="Office / Zoom / Site"/></div>
     <div class="form-row"><label>Notes</label><textarea id="m-notes" placeholder="Any additional notes..."></textarea></div>
+    <div class="form-row" id="m-status-row" style="display:none;">
+      <label>Status</label>
+      <select id="m-status">
+        <option value="Scheduled">Scheduled</option>
+        <option value="Completed">Completed</option>
+        <option value="Rescheduled">Rescheduled</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="form-row" id="m-cancel-row" style="display:none;">
+      <label>Reason for Cancellation <span style="color:var(--danger);">*</span></label>
+      <textarea id="m-cancel" placeholder="Mandatory — state reason for cancellation..."></textarea>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveMeeting()">Save Meeting</button>
@@ -390,6 +412,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwegDzWTVEqwbL_djTx-
 const CREDS = { user: 'ELEMENT', pass: 'ELEMENT@250326' };
 const PAGES = ['dashboard','accounts','hr','tasks'];
 let meetings = [];
+let editMeetingId = null;
 
 // LOGIN
 function doLogin() {
@@ -431,7 +454,7 @@ function showPage(name) {
   document.getElementById('topbar-title').textContent = titles[name];
 }
 
-// MEETINGS
+// MEETINGS — LOAD
 function loadMeetings() {
   fetch(SCRIPT_URL + '?action=getMeetings')
     .then(r => r.json())
@@ -448,14 +471,20 @@ function weekEndStr() {
   return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 }
 
+// MEETINGS — RENDER
 function renderMeetings() {
   const today = todayStr();
   const weekEnd = weekEndStr();
-  const sorted = [...meetings].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
-  const asc = m => (m.date+m.time);
+  const sorted = [...meetings].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+  const asc = m => m.date+m.time;
 
-  const todayItems = meetings.filter(m => m.date===today).sort((a,b)=>asc(a).localeCompare(asc(b)));
-  const weekItems  = meetings.filter(m => m.date>today && m.date<=weekEnd).sort((a,b)=>asc(a).localeCompare(asc(b)));
+  const todayItems = meetings
+    .filter(m => m.date===today && m.status!=='Cancelled')
+    .sort((a,b) => asc(a).localeCompare(asc(b)));
+
+  const weekItems = meetings
+    .filter(m => m.date>today && m.date<=weekEnd && m.status!=='Cancelled')
+    .sort((a,b) => asc(a).localeCompare(asc(b)));
 
   // Today
   document.getElementById('today-list').innerHTML = todayItems.length
@@ -467,7 +496,7 @@ function renderMeetings() {
     ? weekItems.map(m => card(m, true)).join('')
     : '<div class="empty-card">No meetings this week</div>';
 
-  // All table
+  // All table — show everything
   document.getElementById('all-tbody').innerHTML = sorted.length
     ? sorted.map(m => `<tr>
         <td>${fmtDispDate(m.date)}${m.date===today?'<span class="badge-today">Today</span>':''}</td>
@@ -475,58 +504,116 @@ function renderMeetings() {
         <td><strong>${esc(m.title)}</strong></td>
         <td>${esc(m.with||'')}</td>
         <td>${esc(m.location||'')}</td>
-        <td style="color:var(--muted);font-style:italic">${esc(m.notes||'')}</td>
+        <td>${statusBadge(m.status)}</td>
+        <td style="color:var(--muted);font-style:italic;font-size:12px;">${esc(m.cancelReason||m.notes||'')}</td>
+        <td><button onclick="openEditModal('${m.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Edit">✏️</button></td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="empty-card" style="padding:24px">No meetings yet — add your first meeting above.</td></tr>';
+    : '<tr><td colspan="8" class="empty-card" style="padding:24px">No meetings yet — add your first meeting above.</td></tr>';
 }
 
 function card(m, showDate=false) {
-  return `<div class="meeting-card">
+  return `<div class="meeting-card${m.status==='Cancelled'?' cancelled':''}">
     <div class="meeting-time-badge">${fmtTime(m.time)}${showDate?`<small>${fmtDispDate(m.date,true)}</small>`:''}</div>
     <div class="meeting-info">
-      <div class="meeting-title">${esc(m.title)}</div>
+      <div class="meeting-title">${esc(m.title)} ${statusBadge(m.status)}</div>
       ${m.with?`<div class="meeting-meta">👤 ${esc(m.with)}</div>`:''}
       ${m.location?`<div class="meeting-meta">📍 ${esc(m.location)}</div>`:''}
       ${m.notes?`<div class="meeting-notes-text">${esc(m.notes)}</div>`:''}
+      ${m.cancelReason?`<div class="meeting-notes-text" style="color:var(--danger);">❌ ${esc(m.cancelReason)}</div>`:''}
     </div>
+    <button onclick="openEditModal('${m.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;align-self:flex-start;" title="Edit">✏️</button>
   </div>`;
 }
 
-// MODAL
+function statusBadge(s) {
+  const map = {
+    Scheduled:   's-scheduled',
+    Completed:   's-completed',
+    Cancelled:   's-cancelled',
+    Rescheduled: 's-rescheduled',
+  };
+  const label = s || 'Scheduled';
+  return `<span class="status-badge ${map[label]||'s-scheduled'}">${label}</span>`;
+}
+
+// MODAL — ADD
 function openModal() {
+  editMeetingId = null;
+  document.getElementById('modal-title').textContent = 'Add Meeting';
   const d = new Date();
   document.getElementById('m-date').value = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
   document.getElementById('m-time').value = '10:00';
-  ['m-title','m-with','m-loc','m-notes'].forEach(id => document.getElementById(id).value='');
+  ['m-title','m-with','m-loc','m-notes','m-cancel'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('m-status').value = 'Scheduled';
+  document.getElementById('m-status-row').style.display = 'none';
+  document.getElementById('m-cancel-row').style.display = 'none';
   document.getElementById('modal').classList.add('open');
   setTimeout(()=>document.getElementById('m-title').focus(),100);
 }
+
+// MODAL — EDIT
+function openEditModal(id) {
+  const m = meetings.find(x => x.id===id);
+  if(!m) return;
+  editMeetingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Meeting';
+  document.getElementById('m-date').value = m.date || '';
+  document.getElementById('m-time').value = m.time || '';
+  document.getElementById('m-title').value = m.title || '';
+  document.getElementById('m-with').value = m.with || '';
+  document.getElementById('m-loc').value = m.location || '';
+  document.getElementById('m-notes').value = m.notes || '';
+  document.getElementById('m-status').value = m.status || 'Scheduled';
+  document.getElementById('m-cancel').value = m.cancelReason || '';
+  document.getElementById('m-status-row').style.display = 'block';
+  document.getElementById('m-cancel-row').style.display = (m.status==='Cancelled') ? 'block' : 'none';
+  document.getElementById('modal').classList.add('open');
+}
+
+// STATUS CHANGE — show/hide cancel reason
+document.getElementById('m-status').addEventListener('change', function() {
+  document.getElementById('m-cancel-row').style.display = this.value==='Cancelled' ? 'block' : 'none';
+  if(this.value !== 'Cancelled') document.getElementById('m-cancel').value = '';
+});
+
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
 
+// SAVE (add or update)
 async function saveMeeting() {
   const date  = document.getElementById('m-date').value;
   const title = document.getElementById('m-title').value.trim();
+  const status = document.getElementById('m-status').value || 'Scheduled';
+  const cancelReason = document.getElementById('m-cancel').value.trim();
+
   if(!date||!title){ toast('Date and Title are required','error'); return; }
+  if(status==='Cancelled' && !cancelReason){ toast('Reason for cancellation is required','error'); return; }
+
   const btn = document.getElementById('save-btn');
   btn.innerHTML = '<span class="spinner"></span> Saving...';
   btn.disabled = true;
+
   try {
     const fd = new FormData();
+    const action = editMeetingId ? 'updateMeeting' : 'addMeeting';
     fd.append('payload', JSON.stringify({
-      action:   'addMeeting',
+      action,
+      id:       editMeetingId || (Date.now().toString()),
       date,
       time:     document.getElementById('m-time').value,
       title,
       with:     document.getElementById('m-with').value.trim(),
       location: document.getElementById('m-loc').value.trim(),
-      notes:    document.getElementById('m-notes').value.trim()
+      notes:    document.getElementById('m-notes').value.trim(),
+      status,
+      cancelReason: status==='Cancelled' ? cancelReason : ''
     }));
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: fd });
     closeModal();
-    toast('Meeting saved!', 'success');
+    toast(editMeetingId ? 'Meeting updated!' : 'Meeting saved!', 'success');
     setTimeout(() => loadMeetings(), 1500);
-  } catch(e){ toast('Network error. Try again.','error'); }
+  } catch(e) { toast('Network error. Try again.','error'); }
+
   btn.innerHTML = 'Save Meeting';
   btn.disabled = false;
 }
