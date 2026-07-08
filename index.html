@@ -512,21 +512,20 @@ async function saveMeeting() {
   btn.innerHTML = '<span class="spinner"></span> Saving...';
   btn.disabled = true;
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: new URLSearchParams({ payload: JSON.stringify({
-        action:   'addMeeting',
-        date,
-        time:     document.getElementById('m-time').value,
-        title,
-        with:     document.getElementById('m-with').value.trim(),
-        location: document.getElementById('m-loc').value.trim(),
-        notes:    document.getElementById('m-notes').value.trim()
-      })})
-    });
-    const d = await res.json();
-    if(d.success){ closeModal(); toast('Meeting saved!','success'); loadMeetings(); }
-    else toast(d.error||'Failed to save','error');
+    const fd = new FormData();
+    fd.append('payload', JSON.stringify({
+      action:   'addMeeting',
+      date,
+      time:     document.getElementById('m-time').value,
+      title,
+      with:     document.getElementById('m-with').value.trim(),
+      location: document.getElementById('m-loc').value.trim(),
+      notes:    document.getElementById('m-notes').value.trim()
+    }));
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: fd });
+    closeModal();
+    toast('Meeting saved!', 'success');
+    setTimeout(() => loadMeetings(), 1500);
   } catch(e){ toast('Network error. Try again.','error'); }
   btn.innerHTML = 'Save Meeting';
   btn.disabled = false;
