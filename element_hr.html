@@ -558,23 +558,46 @@ function initYrSels(){
   ['sal-month','stat-month','ps-month'].forEach(id=>{const el=$(id);if(el)el.value=m;});
 }
 
-// ── SALARY CALCULATOR ──
+// ── SALARY CALCULATOR (Backward from CTC) ──
+// CTC = Gross + Employer PF + Employer ESIC
+// PF wage ceiling = ₹15,000 → max PF = ₹1,800 (12% × 15,000)
+// HRA = 50% of Basic (Pune is metro from FY 2026-27)
+// Basic minimum = ₹8,000 or 50% of Gross whichever is higher
+// Special Allowance = Gross − Basic − HRA
+// Solve: CTC = Gross + min(Basic,15000)×0.12 + (Gross≤21000 ? Gross×0.0325 : 0)
 function calcSal(ctc, esicApp='Yes', wdays=26){
   const c=parseFloat(ctc)||0;
   if(!c)return null;
-  const basic=Math.max(8000, Math.round(c*0.50));
-  const hra=Math.round(basic*0.40);
-  const gross=c; // gross = ctc before employer contributions
-  const special=Math.max(0, gross - basic - hra);
-  const empPF=Math.round(basic*0.12);
-  const emplPF=Math.round(basic*0.12);
-  const esicApplicable=esicApp==='Yes'&&gross<=21000;
-  const empESIC=esicApplicable?Math.round(gross*0.0075):0;
-  const emplESIC=esicApplicable?Math.round(gross*0.0325):0;
-  const pt=200;
-  const netPay=gross-empPF-empESIC-pt;
-  const totalCTC=gross+emplPF+emplESIC;
-  return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,netPay,totalCTC,esicApplicable,wdays};
+
+  // Iterative backward solve for Gross from CTC
+  // Start with estimate, refine
+  let gross = c; // initial guess
+  for(let i=0;i<20;i++){
+    const basicEst = Math.max(8000, Math.round(gross*0.50));
+    const pfBase   = Math.min(basicEst, 15000);
+    const emplPFEst  = Math.round(pfBase*0.12);
+    const esicApplicableEst = esicApp==='Yes' && gross<=21000;
+    const emplESICEst = esicApplicableEst ? Math.round(gross*0.0325) : 0;
+    const newGross = c - emplPFEst - emplESICEst;
+    if(Math.abs(newGross - gross) < 1){ gross = newGross; break; }
+    gross = newGross;
+  }
+  gross = Math.round(gross);
+
+  // Now compute all components from final gross
+  const basic    = Math.max(8000, Math.round(gross*0.50));
+  const hra      = Math.round(basic*0.50);  // 50% — Pune is metro FY 2026-27
+  const special  = Math.max(0, gross - basic - hra);
+  const pfBase   = Math.min(basic, 15000);  // PF wage ceiling ₹15,000
+  const empPF    = Math.round(pfBase*0.12); // max ₹1,800
+  const emplPF   = Math.round(pfBase*0.12); // max ₹1,800
+  const esicApplicable = esicApp==='Yes' && gross<=21000;
+  const empESIC  = esicApplicable ? Math.round(gross*0.0075) : 0;
+  const emplESIC = esicApplicable ? Math.round(gross*0.0325) : 0;
+  const pt       = 200;
+  const netPay   = gross - empPF - empESIC - pt;
+  const totalCTC = gross + emplPF + emplESIC; // should = ctc
+  return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,netPay,totalCTC,esicApplicable,wdays,pfBase};
 }
 
 function calcSalPreview(){
@@ -588,25 +611,26 @@ function calcSalPreview(){
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
       <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">Earnings</div>
-        <div class="sal-row"><span>Basic</span><span>${fmt(s.basic)}</span></div>
-        <div class="sal-row"><span>HRA</span><span>${fmt(s.hra)}</span></div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">Earnings (Gross: ${fmt(s.gross)})</div>
+        <div class="sal-row"><span>Basic (50% of Gross)</span><span>${fmt(s.basic)}</span></div>
+        <div class="sal-row"><span>HRA (50% of Basic — Pune Metro)</span><span>${fmt(s.hra)}</span></div>
         <div class="sal-row"><span>Special Allowance</span><span>${fmt(s.special)}</span></div>
-        <div class="sal-row"><span style="font-weight:600;">Gross Salary</span><span style="font-weight:600;">${fmt(s.gross)}</span></div>
+        <div class="sal-row" style="font-weight:600;"><span>Gross Salary</span><span>${fmt(s.gross)}</span></div>
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Deductions</div>
-        <div class="sal-row"><span>Employee PF (12%)</span><span>${fmt(s.empPF)}</span></div>
-        <div class="sal-row"><span>Employee ESIC${s.esicApplicable?'':' (N/A)'}</span><span>${fmt(s.empESIC)}</span></div>
-        <div class="sal-row"><span>Prof. Tax</span><span>${fmt(s.pt)}</span></div>
-        <div class="sal-row"><span>Net Pay</span><span style="color:var(--green);font-weight:700;">${fmt(s.netPay)}</span></div>
+        <div class="sal-row"><span>Employee PF (12% on ${fmt(s.pfBase)}, max ₹1,800)</span><span>${fmt(s.empPF)}</span></div>
+        <div class="sal-row"><span>Employee ESIC 0.75%${s.esicApplicable?'':' (N/A — Gross > ₹21,000)'}</span><span>${fmt(s.empESIC)}</span></div>
+        <div class="sal-row"><span>Prof. Tax (Maharashtra)</span><span>${fmt(s.pt)}</span></div>
+        <div class="sal-row" style="font-weight:700;color:var(--green);"><span>Net Pay</span><span>${fmt(s.netPay)}</span></div>
       </div>
     </div>
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:24px;font-size:12.5px;">
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:12.5px;flex-wrap:wrap;">
       <span>Employer PF: <strong>${fmt(s.emplPF)}</strong></span>
       <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
-      <span>Total CTC: <strong style="color:var(--navy);">${fmt(s.totalCTC)}</strong></span>
-    </div>`;
+      <span style="color:var(--navy);font-weight:700;">Total CTC (incl. employer cost): <strong>${fmt(s.totalCTC)}</strong></span>
+    </div>
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">CTC entered: ${fmt(ctc)} → Gross after employer deductions: ${fmt(s.gross)}</div>`;
 }
 
 // ── STATS ──
