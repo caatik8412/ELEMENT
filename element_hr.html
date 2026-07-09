@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Element — HR</title>
+<style>
+:root{
+  --navy:#1F3864;--blue:#2E75B6;--blue-light:#EFF6FF;
+  --bg:#F0F4F8;--card:#fff;--text:#1E293B;--muted:#64748B;
+  --border:#E2E8F0;--red:#DC2626;--green:#16A34A;--amber:#D97706;
+  --purple:#7C3AED;--teal:#0D9488;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s;}
+#splash.hide{opacity:0;pointer-events:none;}
+.sp-spin{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+.sp-title{font-size:20px;font-weight:700;color:#fff;}
+.sp-sub{font-size:13px;color:rgba(255,255,255,.55);}
+.sp-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;}
+.sp-fill{height:100%;width:0;background:#fff;transition:width 3s ease;}
+.sp-pow{font-size:11px;color:rgba(255,255,255,.35);margin-top:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;background:var(--navy);display:none;align-items:center;justify-content:center;z-index:9998;}
+#loginWrap.show{display:flex;}
+.lbox{background:#fff;border-radius:14px;padding:44px 40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:4px solid var(--blue);}
+.lco{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.lbox h2{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.lbox p{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.lbox input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;transition:border .15s;font-family:inherit;}
+.lbox input:focus{border-color:var(--blue);}
+.lbox button{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;}
+.lbox button:hover{background:var(--blue);}
+.lerr{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+.lpow{margin-top:22px;padding-top:14px;border-top:1px solid var(--border);text-align:center;font-size:11px;color:#94A3B8;}
+.lpow b{color:#C2410C;}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+#app.show{display:block;}
+
+/* TOPBAR */
+.topbar{background:var(--navy);height:54px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.tb-logo{font-size:13px;font-weight:800;color:#fff;letter-spacing:.04em;}
+.tb-logo span{opacity:.4;font-weight:400;}
+.tb-sep{width:1px;height:24px;background:rgba(255,255,255,.2);}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.tb-firm{font-size:11.5px;background:rgba(255,255,255,.1);padding:4px 11px;border-radius:20px;color:rgba(255,255,255,.7);}
+.tb-out{background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.6);font-size:12px;padding:4px 12px;border-radius:5px;cursor:pointer;font-family:inherit;}
+.tb-out:hover{background:rgba(255,255,255,.08);color:#fff;}
+.tb-add{padding:6px 16px;border-radius:6px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
+.tb-add:hover{background:rgba(255,255,255,.2);}
+
+/* MAIN TABS */
+.main-tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 20px;}
+.mt{padding:13px 20px;font-size:13.5px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;font-family:inherit;}
+.mt:hover{color:var(--navy);}
+.mt.active{color:var(--navy);border-bottom-color:var(--navy);}
+.tp{display:none;padding:24px 20px;}
+.tp.active{display:block;}
+
+/* CARDS & TABLES */
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:16px;}
+.ch{background:var(--navy);color:#fff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;}
+.ch h3{font-size:13px;font-weight:700;}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--navy);color:#fff;padding:9px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:10px 12px;vertical-align:middle;}
+tbody tr:hover{background:#F8FAFC;}
+.no-data{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.filters input,.filters select{padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none;font-family:inherit;background:#fff;}
+.filters input:focus,.filters select:focus{border-color:var(--blue);}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s;}
+.bn{background:var(--navy);color:#fff;}.bn:hover{background:var(--blue);}
+.bb{background:var(--blue);color:#fff;}.bb:hover{background:var(--navy);}
+.bo{background:#fff;color:var(--navy);border:1.5px solid var(--border);}.bo:hover{border-color:var(--navy);}
+.bg{background:var(--green);color:#fff;}
+.br{background:var(--red);color:#fff;}
+.bam{background:var(--amber);color:#fff;}
+.bsm{padding:4px 10px;font-size:12px;}
+.bi{background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:14px;}
+.bi:hover{background:var(--border);}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.b-active{background:#DCFCE7;color:#166534;}
+.b-resigned{background:#FEE2E2;color:#991B1B;}
+.b-terminated{background:#F3E8FF;color:#6B21A8;}
+.b-probation{background:#FEF3C7;color:#92400E;}
+.b-contract{background:#DBEAFE;color:#1E40AF;}
+.b-ft{background:#DCFCE7;color:#166534;}
+.b-pt{background:#FEF3C7;color:#92400E;}
+
+/* EMPLOYEE AVATAR */
+.emp-avatar{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px;}
+.stat{background:#fff;border-radius:10px;padding:15px 17px;border-left:4px solid var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.stat.g{border-left-color:var(--green);}
+.stat.r{border-left-color:var(--red);}
+.stat.a{border-left-color:var(--amber);}
+.stat.p{border-left-color:var(--purple);}
+.stat.t{border-left-color:var(--teal);}
+.slbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px;}
+.sval{font-size:22px;font-weight:700;}
+
+/* SALARY SHEET */
+.ss-controls{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
+.ss-controls select,.ss-controls input{padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
+.ss-controls select:focus{border-color:var(--blue);}
+.salary-table{min-width:1200px;}
+.salary-table th{font-size:10px;padding:8px 8px;white-space:nowrap;}
+.salary-table td{padding:7px 8px;font-size:12.5px;white-space:nowrap;}
+.salary-table td input{width:60px;padding:4px 6px;border:1.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:inherit;outline:none;}
+.salary-table td input:focus{border-color:var(--blue);}
+.salary-table tr.total-row td{font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);}
+.salary-table tr.total-row{position:sticky;bottom:0;}
+
+/* STATUTORY */
+.sub-tabs{display:flex;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07);border:1px solid var(--border);margin-bottom:18px;max-width:500px;}
+.st{flex:1;padding:10px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-right:1px solid var(--border);transition:all .15s;text-align:center;font-family:inherit;}
+.st:last-child{border-right:none;}
+.st:hover{background:#F8FAFC;color:var(--navy);}
+.st.active{background:var(--navy);color:#fff;}
+.sp{display:none;}
+.sp.active{display:block;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:720px;max-height:94vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.mxl{max-width:900px;}
+.msm{max-width:460px;}
+.mh{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:1;}
+.mh h3{font-size:14px;font-weight:700;}
+.mx{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;}
+.mb{padding:22px;}
+.mf{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:#FAFAFA;border-radius:0 0 12px 12px;position:sticky;bottom:0;}
+
+/* FORM GRID */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;}
+.s2{grid-column:1/-1;}
+.s3{grid-column:1/-1;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13.5px;outline:none;color:var(--text);font-family:inherit;transition:border .15s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
+.fg input[readonly]{background:#F8FAFC;color:var(--muted);}
+.fg textarea{resize:vertical;min-height:56px;}
+
+/* SECTION DIVIDER IN MODAL */
+.msec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin:20px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--blue-light);}
+.msec:first-child{margin-top:0;}
+
+/* SALARY PREVIEW BOX */
+.sal-preview{background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:4px;}
+.sal-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.sal-row:last-child{border-bottom:none;font-weight:700;font-size:14px;color:var(--navy);}
+.sal-row span:first-child{color:var(--muted);}
+
+/* PAYSLIP PRINT */
+@media print{
+  *{visibility:hidden;}
+  #printArea,#printArea *{visibility:visible;}
+  #printArea{position:fixed!important;top:0!important;left:0!important;width:100%!important;}
+  @page{margin:10mm;size:A4;}
+  .payslip{font-family:Arial,sans-serif;font-size:10pt;color:#000;border:1.5px solid #000;}
+  .ps-head{background:#1F3864;color:#fff;padding:12px 16px;text-align:center;}
+  .ps-head h1{font-size:13pt;font-weight:900;margin-bottom:3px;}
+  .ps-head p{font-size:8pt;opacity:.8;}
+  .ps-title{text-align:center;padding:6px;border-bottom:1px solid #000;border-top:1px solid #000;font-weight:700;font-size:11pt;letter-spacing:2px;background:#f5f5f5;}
+  .ps-info{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #000;}
+  .ps-col{padding:10px 14px;}
+  .ps-col:first-child{border-right:1px solid #000;}
+  .ps-row{display:flex;gap:6px;margin-bottom:4px;font-size:9pt;}
+  .ps-row b{min-width:120px;color:#333;}
+  .ps-body{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #000;}
+  .ps-earn{padding:10px 14px;border-right:1px solid #000;}
+  .ps-ded{padding:10px 14px;}
+  .ps-sec-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #ddd;}
+  .ps-item{display:flex;justify-content:space-between;font-size:9pt;padding:3px 0;}
+  .ps-item.total{font-weight:700;border-top:1px solid #000;margin-top:4px;padding-top:4px;}
+  .ps-net{padding:10px 16px;display:flex;justify-content:space-between;align-items:center;}
+  .ps-net-amt{font-size:16pt;font-weight:900;color:#1F3864;}
+  .ps-words{font-size:8.5pt;color:#555;font-style:italic;}
+  .ps-foot{display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid #000;font-size:8.5pt;}
+  .ecr-table{font-family:Arial,sans-serif;font-size:9pt;width:100%;border-collapse:collapse;}
+  .ecr-table th,.ecr-table td{border:1px solid #000;padding:5px 7px;}
+  .ecr-table th{background:#1F3864;color:#fff;font-size:8pt;}
+}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+#toast.show{display:block;animation:fu .2s ease;}
+#toast.ok{background:var(--green);}
+#toast.err{background:var(--red);}
+@keyframes fu{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* PAYSLIP MODAL */
+.ps-modal-earn,.ps-modal-ded{background:#F8FAFC;border-radius:8px;padding:14px;}
+.ps-modal-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.ps-modal-row:last-child{border-bottom:none;font-weight:700;color:var(--navy);}
+.ps-modal-row span:first-child{color:var(--muted);}
+.ps-net-box{background:var(--navy);color:#fff;border-radius:10px;padding:16px 20px;text-align:center;margin-top:14px;}
+.ps-net-box .lbl{font-size:11px;opacity:.65;text-transform:uppercase;letter-spacing:.06em;}
+.ps-net-box .amt{font-size:28px;font-weight:800;margin-top:4px;}
+.ps-net-box .wrd{font-size:11px;opacity:.6;margin-top:4px;font-style:italic;}
+
+@media(max-width:680px){.fg2,.fg3{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}.tb-firm{display:none;}}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="sp-spin"></div>
+  <div class="sp-title">The Element Environment Pvt Ltd</div>
+  <div class="sp-sub">HR Module — Loading…</div>
+  <div class="sp-bar"><div class="sp-fill" id="spFill"></div></div>
+  <div class="sp-pow">Powered by Bhayani Business Solutions</div>
+</div>
+
+<div id="loginWrap">
+  <div class="lbox">
+    <div class="lco">The Element Environment Pvt Ltd</div>
+    <h2>HR Module</h2>
+    <p>Sign in to continue</p>
+    <input type="text" id="lu" placeholder="Username" autocomplete="off">
+    <input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Sign In</button>
+    <div class="lerr" id="lerr">Invalid credentials.</div>
+    <div class="lpow">Powered by <b>Bhayani Business Solutions</b></div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">ELEMENT <span>HR Module v1</span></div>
+    <div class="tb-sep"></div>
+    <button class="tb-add" onclick="openEmpModal()">+ Add Employee</button>
+    <div class="tb-right">
+      <span class="tb-firm">The Element Environment Pvt Ltd</span>
+      <button class="tb-out" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="main-tabs">
+    <button class="mt active" onclick="switchTab('employees')">👥 Employees</button>
+    <button class="mt" onclick="switchTab('salary')">💰 Monthly Salary</button>
+    <button class="mt" onclick="switchTab('statutory')">📋 Statutory</button>
+  </div>
+
+  <!-- EMPLOYEES TAB -->
+  <div class="tp active" id="tp-employees">
+    <div class="stats">
+      <div class="stat"><div class="slbl">Total Employees</div><div class="sval" id="s-total">—</div></div>
+      <div class="stat g"><div class="slbl">Active</div><div class="sval" id="s-active">—</div></div>
+      <div class="stat a"><div class="slbl">On Probation</div><div class="sval" id="s-prob">—</div></div>
+      <div class="stat p"><div class="slbl">Contract</div><div class="sval" id="s-contract">—</div></div>
+      <div class="stat r"><div class="slbl">Resigned / Terminated</div><div class="sval" id="s-inactive">—</div></div>
+      <div class="stat t"><div class="slbl">Total CTC / Month</div><div class="sval" id="s-ctc">—</div></div>
+    </div>
+    <div class="filters">
+      <input type="text" id="eq" placeholder="Search name / designation…" oninput="renderEmployees()" style="min-width:220px;">
+      <select id="e-dept" onchange="renderEmployees()"><option value="">All Departments</option></select>
+      <select id="e-status" onchange="renderEmployees()">
+        <option value="">All Status</option>
+        <option>Active</option><option>Probation</option><option>Contract</option>
+        <option>Resigned</option><option>Terminated</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Employee</th><th>Designation</th><th>Department</th>
+              <th>DOJ</th><th>Gross/Mo</th><th>Net/Mo</th><th>PF</th><th>ESIC</th>
+              <th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="emp-tbody"><tr><td colspan="11" class="no-data">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SALARY TAB -->
+  <div class="tp" id="tp-salary">
+    <div class="ss-controls">
+      <select id="sal-month">
+        <option value="01">January</option><option value="02">February</option>
+        <option value="03">March</option><option value="04">April</option>
+        <option value="05">May</option><option value="06">June</option>
+        <option value="07">July</option><option value="08">August</option>
+        <option value="09">September</option><option value="10">October</option>
+        <option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="sal-year"></select>
+      <button class="btn bn" onclick="loadSalarySheet()">Load Sheet</button>
+      <button class="btn bo" id="sal-save-btn" onclick="saveSalarySheet()" style="display:none;">💾 Save Sheet</button>
+      <button class="btn bo" id="sal-csv-btn" onclick="exportSalaryCSV()" style="display:none;">⬇ Export CSV</button>
+    </div>
+    <div id="salary-sheet-wrap">
+      <div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select month and year, then click Load Sheet.</div>
+    </div>
+  </div>
+
+  <!-- STATUTORY TAB -->
+  <div class="tp" id="tp-statutory">
+    <div class="ss-controls" style="margin-bottom:18px;">
+      <select id="stat-month">
+        <option value="01">January</option><option value="02">February</option>
+        <option value="03">March</option><option value="04">April</option>
+        <option value="05">May</option><option value="06">June</option>
+        <option value="07">July</option><option value="08">August</option>
+        <option value="09">September</option><option value="10">October</option>
+        <option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="stat-year"></select>
+      <button class="btn bn" onclick="loadStatutory()">Load</button>
+      <button class="btn bo" onclick="printStatutory()">🖨 Print</button>
+    </div>
+    <div class="sub-tabs">
+      <button class="st active" onclick="switchStat('pf')">PF / ECR</button>
+      <button class="st" onclick="switchStat('esic')">ESIC</button>
+      <button class="st" onclick="switchStat('pt')">Prof. Tax</button>
+    </div>
+    <div class="sp active" id="sp-pf"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
+    <div class="sp" id="sp-esic"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
+    <div class="sp" id="sp-pt"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
+  </div>
+</div>
+
+<!-- ADD/EDIT EMPLOYEE MODAL -->
+<div class="overlay" id="empModal">
+<div class="modal mxl">
+  <div class="mh"><h3 id="emp-modal-title">Add Employee</h3><button class="mx" onclick="closeModal('empModal')">✕</button></div>
+  <div class="mb">
+
+    <div class="msec">Personal Information</div>
+    <div class="fg3">
+      <div class="fg s2"><label>Full Name *</label><input id="e-name" placeholder="As per Aadhaar"></div>
+      <div class="fg"><label>Date of Birth</label><input id="e-dob" type="date"></div>
+      <div class="fg"><label>Gender</label><select id="e-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="fg"><label>Blood Group</label><select id="e-blood"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+      <div class="fg"><label>Aadhaar No</label><input id="e-aadhaar" maxlength="12" placeholder="12 digits"></div>
+      <div class="fg"><label>PAN</label><input id="e-pan" maxlength="10" placeholder="ABCDE1234F" style="text-transform:uppercase;"></div>
+      <div class="fg s2"><label>Address</label><textarea id="e-addr" rows="2" placeholder="Residential address"></textarea></div>
+      <div class="fg"><label>Personal Phone</label><input id="e-phone" type="tel"></div>
+      <div class="fg"><label>Personal Email</label><input id="e-email" type="email"></div>
+    </div>
+
+    <div class="msec">Employment Details</div>
+    <div class="fg3">
+      <div class="fg"><label>Employee ID</label><input id="e-id-disp" readonly placeholder="Auto-generated"></div>
+      <div class="fg"><label>Date of Joining *</label><input id="e-doj" type="date"></div>
+      <div class="fg"><label>Status *</label><select id="e-empstatus"><option value="Active">Active</option><option value="Probation">Probation</option><option value="Contract">Contract</option><option value="Resigned">Resigned</option><option value="Terminated">Terminated</option></select></div>
+      <div class="fg"><label>Designation *</label><input id="e-desig" placeholder="e.g. Site Engineer"></div>
+      <div class="fg"><label>Department</label><input id="e-dept-inp" placeholder="e.g. Operations"></div>
+      <div class="fg"><label>Employment Type</label><select id="e-emptype"><option value="Full Time">Full Time</option><option value="Part Time">Part Time</option><option value="Contract">Contract</option><option value="Intern">Intern</option></select></div>
+      <div class="fg"><label>Reporting To</label><input id="e-reports" placeholder="Manager name"></div>
+      <div class="fg"><label>Work Location</label><input id="e-location" placeholder="e.g. Pune Office"></div>
+      <div class="fg"><label>Date of Leaving</label><input id="e-dol" type="date"></div>
+    </div>
+
+    <div class="msec">Salary Structure</div>
+    <div class="fg3">
+      <div class="fg"><label>Monthly CTC (₹) *</label><input id="e-ctc" type="number" step="100" placeholder="e.g. 25000" oninput="calcSalPreview()"></div>
+      <div class="fg"><label>Working Days/Month</label><input id="e-wdays" type="number" value="26" min="1" max="31" oninput="calcSalPreview()"></div>
+      <div class="fg"><label>ESIC Applicable</label><select id="e-esic-app" onchange="calcSalPreview()"><option value="Yes">Yes (Gross ≤ ₹21,000)</option><option value="No">No</option></select></div>
+    </div>
+    <div class="sal-preview" id="sal-preview">Enter CTC to see salary breakdown.</div>
+
+    <div class="msec">Bank Details</div>
+    <div class="fg3">
+      <div class="fg"><label>Bank Name</label><input id="e-bank" placeholder="e.g. SBI"></div>
+      <div class="fg"><label>Account No</label><input id="e-accno"></div>
+      <div class="fg"><label>IFSC Code</label><input id="e-ifsc" style="text-transform:uppercase;"></div>
+      <div class="fg"><label>Branch</label><input id="e-branch"></div>
+      <div class="fg"><label>Account Type</label><select id="e-acctype"><option>Savings</option><option>Current</option></select></div>
+    </div>
+
+    <div class="msec">Statutory Details</div>
+    <div class="fg3">
+      <div class="fg"><label>UAN (PF)</label><input id="e-uan" maxlength="12"></div>
+      <div class="fg"><label>ESIC No</label><input id="e-esicno"></div>
+      <div class="fg"><label>PT Applicable</label><select id="e-pt-app"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+    </div>
+
+    <div class="msec">Emergency Contact</div>
+    <div class="fg3">
+      <div class="fg"><label>Contact Name</label><input id="e-emg-name"></div>
+      <div class="fg"><label>Relationship</label><input id="e-emg-rel" placeholder="e.g. Spouse, Parent"></div>
+      <div class="fg"><label>Contact Phone</label><input id="e-emg-phone" type="tel"></div>
+    </div>
+
+  </div>
+  <div class="mf">
+    <button class="btn bo" onclick="closeModal('empModal')">Cancel</button>
+    <button class="btn bn" id="emp-save-btn" onclick="saveEmployee()">Save Employee</button>
+  </div>
+</div>
+</div>
+
+<!-- VIEW EMPLOYEE MODAL -->
+<div class="overlay" id="viewEmpModal">
+<div class="modal mxl">
+  <div class="mh"><h3 id="view-emp-name">Employee Profile</h3><button class="mx" onclick="closeModal('viewEmpModal')">✕</button></div>
+  <div class="mb" id="view-emp-body"></div>
+  <div class="mf">
+    <button class="btn bo" onclick="closeModal('viewEmpModal')">Close</button>
+    <button class="btn bb" id="view-edit-btn" onclick="">✏️ Edit</button>
+    <button class="btn bg" id="view-payslip-btn" onclick="">🖨 Print Payslip</button>
+  </div>
+</div>
+</div>
+
+<!-- PAYSLIP MODAL -->
+<div class="overlay" id="payslipModal">
+<div class="modal msm">
+  <div class="mh"><h3>Print Payslip</h3><button class="mx" onclick="closeModal('payslipModal')">✕</button></div>
+  <div class="mb">
+    <div class="fg2" style="margin-bottom:14px;">
+      <div class="fg"><label>Month</label>
+        <select id="ps-month"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
+      </div>
+      <div class="fg"><label>Year</label><select id="ps-year"></select></div>
+    </div>
+    <div id="ps-preview"></div>
+  </div>
+  <div class="mf">
+    <button class="btn bo" onclick="closeModal('payslipModal')">Cancel</button>
+    <button class="btn bn" onclick="doPrintPayslip()">🖨 Print</button>
+  </div>
+</div>
+</div>
+
+<div id="printArea" style="display:none;"></div>
+<div id="toast"></div>
+
+<script>
+const WEBAPP='https://script.google.com/macros/s/AKfycbwegDzWTVEqwbL_djTx-9oKZ-MYa3v0BKdFCGT5TznSj023bWEr1kjGkVxbxJ8i90NFIg/exec';
+const CREDS={u:'ELEMENT',p:'ELEMENT@250326'};
+const FIRM={name:'THE ELEMENT ENVIRONMENT PRIVATE LIMITED',addr:'SR. NO. 43/76, FLAT NO. 1, Chidanand Heights, Narhe, Vadgaon Budruk, Pune - 411041',gstin:'27AAMCT9717A1Z5',cin:'U74909PN2026PTC253784'};
+
+let employees=[], salaryRecords=[];
+let editEmpId=null, payslipEmpId=null;
+const $=id=>document.getElementById(id);
+const gv=id=>$(id)?$(id).value:'';
+const sv=(id,v)=>{if($(id))$(id).value=v??'';};
+const fmt=n=>'₹'+(parseFloat(n)||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt2=n=>'₹'+(parseFloat(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function toast(msg,t=''){const el=$('toast');el.textContent=msg;el.className='show '+t;setTimeout(()=>el.className='',3200);}
+function fmtD(d){if(!d||d==='Invalid Date')return'—';try{const s=String(d).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const[y,m,dy]=s.split('-');return dy+'/'+m+'/'+y;}const dt=new Date(d);if(!isNaN(dt))return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();}catch(e){}return d;}
+function normD(d){if(!d)return'';try{const s=String(d).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const dt=new Date(s);if(!isNaN(dt))return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}catch(e){}return'';}
+function initials(name){return(name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function numW(n){const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'],w=x=>{if(!x)return'';if(x<20)return o[x]+' ';if(x<100)return t[Math.floor(x/10)]+' '+o[x%10]+' ';if(x<1000)return o[Math.floor(x/100)]+' Hundred '+w(x%100);if(x<100000)return w(Math.floor(x/1000))+'Thousand '+w(x%1000);if(x<10000000)return w(Math.floor(x/100000))+'Lakh '+w(x%100000);return w(Math.floor(x/10000000))+'Crore '+w(x%10000000);};return'Rupees '+w(Math.floor(n)).trim()+' Only';}
+
+// ── SPLASH + LOGIN ──
+window.addEventListener('DOMContentLoaded',()=>{
+  const f=$('spFill');
+  setTimeout(()=>{if(f)f.style.width='80%';},100);
+  setTimeout(()=>{$('splash').classList.add('hide');setTimeout(()=>{$('splash').style.display='none';$('loginWrap').classList.add('show');},450);},1800);
+  initYrSels();
+});
+function doLogin(){const u=gv('lu').trim(),p=gv('lp').trim();if(u===CREDS.u&&p===CREDS.p){$('loginWrap').classList.remove('show');$('app').classList.add('show');initApp();}else{$('lerr').style.display='block';}}
+function doLogout(){$('app').classList.remove('show');$('loginWrap').classList.add('show');sv('lu','');sv('lp','');}
+
+// ── INIT ──
+async function initApp(){
+  const [empD, salD] = await Promise.all([apiGet('getEmployees'), apiGet('getSalaryRecords')]);
+  employees=(empD||[]).map(normalizeEmp);
+  salaryRecords=(salD||[]);
+  populateDeptFilter();
+  renderEmployees();
+  renderStats();
+}
+
+function normalizeEmp(e){
+  return{...e,
+    ctc:parseFloat(e.ctc)||0,
+    basic:parseFloat(e.basic)||0,
+    hra:parseFloat(e.hra)||0,
+    special:parseFloat(e.special)||0,
+    gross:parseFloat(e.gross)||0,
+    empPF:parseFloat(e.empPF)||0,
+    empESIC:parseFloat(e.empESIC)||0,
+    pt:parseFloat(e.pt)||0,
+    netPay:parseFloat(e.netPay)||0,
+    emplPF:parseFloat(e.emplPF)||0,
+    emplESIC:parseFloat(e.emplESIC)||0,
+    totalCTC:parseFloat(e.totalCTC)||0,
+    wdays:parseFloat(e.wdays)||26,
+  };
+}
+
+// ── API ──
+async function apiGet(action,params){
+  let url=WEBAPP+'?action='+action;
+  if(params)url+='&data='+encodeURIComponent(JSON.stringify(params));
+  try{
+    const res=await fetch(url);
+    const text=await res.text();
+    if(text.trim().startsWith('<')){console.error('GAS err',action);return null;}
+    const j=JSON.parse(text);
+    if(j&&j.error){console.error('GAS err',action,j.error);return null;}
+    return j;
+  }catch(e){console.error('apiGet',action,e);return null;}
+}
+async function apiPost(action,data){
+  const fd=new FormData();
+  fd.append('payload',JSON.stringify({action,...data}));
+  try{await fetch(WEBAPP,{method:'POST',mode:'no-cors',body:fd});}
+  catch(e){console.error('apiPost',action,e);}
+}
+
+// ── TABS ──
+const TABS=['employees','salary','statutory'];
+function switchTab(id){
+  document.querySelectorAll('.mt').forEach((b,i)=>b.classList.toggle('active',TABS[i]===id));
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  const tp=$('tp-'+id);if(tp)tp.classList.add('active');
+}
+let curStat='pf';
+function switchStat(t){
+  curStat=t;
+  document.querySelectorAll('#tp-statutory .st').forEach((b,i)=>b.classList.toggle('active',['pf','esic','pt'][i]===t));
+  document.querySelectorAll('#tp-statutory .sp').forEach(p=>p.classList.remove('active'));
+  const sp=$('sp-'+t);if(sp)sp.classList.add('active');
+}
+
+// ── YEAR SELECTORS ──
+function initYrSels(){
+  const y=new Date().getFullYear(),m=String(new Date().getMonth()+1).padStart(2,'0');
+  ['sal-year','stat-year','ps-year'].forEach(id=>{
+    const sel=$(id);if(!sel)return;
+    sel.innerHTML='';
+    for(let i=y-2;i<=y+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===y)o.selected=true;sel.appendChild(o);}
+  });
+  ['sal-month','stat-month','ps-month'].forEach(id=>{const el=$(id);if(el)el.value=m;});
+}
+
+// ── SALARY CALCULATOR ──
+function calcSal(ctc, esicApp='Yes', wdays=26){
+  const c=parseFloat(ctc)||0;
+  if(!c)return null;
+  const basic=Math.max(8000, Math.round(c*0.50));
+  const hra=Math.round(basic*0.40);
+  const gross=c; // gross = ctc before employer contributions
+  const special=Math.max(0, gross - basic - hra);
+  const empPF=Math.round(basic*0.12);
+  const emplPF=Math.round(basic*0.12);
+  const esicApplicable=esicApp==='Yes'&&gross<=21000;
+  const empESIC=esicApplicable?Math.round(gross*0.0075):0;
+  const emplESIC=esicApplicable?Math.round(gross*0.0325):0;
+  const pt=200;
+  const netPay=gross-empPF-empESIC-pt;
+  const totalCTC=gross+emplPF+emplESIC;
+  return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,netPay,totalCTC,esicApplicable,wdays};
+}
+
+function calcSalPreview(){
+  const ctc=parseFloat(gv('e-ctc'))||0;
+  const esicApp=gv('e-esic-app')||'Yes';
+  const wdays=parseInt(gv('e-wdays'))||26;
+  const el=$('sal-preview');
+  if(!ctc){el.innerHTML='Enter CTC to see salary breakdown.';return;}
+  const s=calcSal(ctc,esicApp,wdays);
+  if(!s){el.innerHTML='Invalid CTC.';return;}
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">Earnings</div>
+        <div class="sal-row"><span>Basic</span><span>${fmt(s.basic)}</span></div>
+        <div class="sal-row"><span>HRA</span><span>${fmt(s.hra)}</span></div>
+        <div class="sal-row"><span>Special Allowance</span><span>${fmt(s.special)}</span></div>
+        <div class="sal-row"><span style="font-weight:600;">Gross Salary</span><span style="font-weight:600;">${fmt(s.gross)}</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Deductions</div>
+        <div class="sal-row"><span>Employee PF (12%)</span><span>${fmt(s.empPF)}</span></div>
+        <div class="sal-row"><span>Employee ESIC${s.esicApplicable?'':' (N/A)'}</span><span>${fmt(s.empESIC)}</span></div>
+        <div class="sal-row"><span>Prof. Tax</span><span>${fmt(s.pt)}</span></div>
+        <div class="sal-row"><span>Net Pay</span><span style="color:var(--green);font-weight:700;">${fmt(s.netPay)}</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:24px;font-size:12.5px;">
+      <span>Employer PF: <strong>${fmt(s.emplPF)}</strong></span>
+      <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
+      <span>Total CTC: <strong style="color:var(--navy);">${fmt(s.totalCTC)}</strong></span>
+    </div>`;
+}
+
+// ── STATS ──
+function renderStats(){
+  const total=employees.length;
+  const active=employees.filter(e=>e.status==='Active').length;
+  const prob=employees.filter(e=>e.status==='Probation').length;
+  const contract=employees.filter(e=>e.status==='Contract').length;
+  const inactive=employees.filter(e=>e.status==='Resigned'||e.status==='Terminated').length;
+  const ctcTotal=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated').reduce((s,e)=>s+e.ctc,0);
+  $('s-total').textContent=total;
+  $('s-active').textContent=active;
+  $('s-prob').textContent=prob;
+  $('s-contract').textContent=contract;
+  $('s-inactive').textContent=inactive;
+  $('s-ctc').textContent=fmt(ctcTotal);
+}
+
+// ── DEPT FILTER ──
+function populateDeptFilter(){
+  const depts=[...new Set(employees.map(e=>e.department).filter(Boolean))].sort();
+  const sel=$('e-dept');
+  sel.innerHTML='<option value="">All Departments</option>';
+  depts.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});
+}
+
+// ── RENDER EMPLOYEES ──
+function renderEmployees(){
+  const q=gv('eq').toLowerCase(),dept=gv('e-dept'),status=gv('e-status');
+  const list=employees.filter(e=>
+    (!q||(e.name+e.designation+e.empId).toLowerCase().includes(q))&&
+    (!dept||e.department===dept)&&
+    (!status||e.status===status)
+  );
+  const tb=$('emp-tbody');if(!tb)return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="11" class="no-data">No employees found.</td></tr>';return;}
+  tb.innerHTML=list.map((e,i)=>{
+    const stBadge={Active:'b-active',Probation:'b-probation',Contract:'b-contract',Resigned:'b-resigned',Terminated:'b-resigned'}[e.status]||'b-active';
+    const pfCell=e.uan?`<span style="font-size:11px;">${e.uan}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
+    const esicCell=e.esicNo?`<span style="font-size:11px;">${e.esicNo}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
+    return`<tr>
+      <td style="color:var(--muted);font-size:12px;">${e.empId||i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:9px;">
+        <div class="emp-avatar" style="background:${avatarColor(e.name)};">${initials(e.name)}</div>
+        <div><div style="font-weight:600;">${e.name}</div><div style="font-size:11.5px;color:var(--muted);">${e.empType||'Full Time'}</div></div>
+      </div></td>
+      <td>${e.designation||'—'}</td>
+      <td>${e.department||'—'}</td>
+      <td>${fmtD(e.doj)}</td>
+      <td><strong>${fmt(e.gross)}</strong></td>
+      <td style="color:var(--green);font-weight:600;">${fmt(e.netPay)}</td>
+      <td style="font-size:12px;">${pfCell}</td>
+      <td style="font-size:12px;">${esicCell}</td>
+      <td><span class="badge ${stBadge}">${e.status||'Active'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="bi" onclick="viewEmployee('${e.id}')" title="View">👁</button>
+        <button class="bi" onclick="openEmpModal('${e.id}')" title="Edit">✏️</button>
+        <button class="btn bg bsm" onclick="openPayslipModal('${e.id}')">Payslip</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+const AVATAR_COLORS=['#1F3864','#2E75B6','#0D9488','#7C3AED','#D97706','#DC2626','#16A34A','#0369A1'];
+function avatarColor(name){return AVATAR_COLORS[(name||'').charCodeAt(0)%AVATAR_COLORS.length];}
+
+// ── OPEN EMPLOYEE MODAL ──
+function openEmpModal(id){
+  editEmpId=id||null;
+  $('emp-modal-title').textContent=id?'Edit Employee':'Add Employee';
+  const fields=['e-name','e-dob','e-gender','e-blood','e-aadhaar','e-pan','e-addr','e-phone','e-email','e-doj','e-dol','e-desig','e-dept-inp','e-reports','e-location','e-ctc','e-uan','e-esicno','e-bank','e-accno','e-ifsc','e-branch','e-emg-name','e-emg-rel','e-emg-phone'];
+  if(id){
+    const e=employees.find(x=>x.id===id);if(!e)return;
+    sv('e-name',e.name||'');sv('e-dob',normD(e.dob));sv('e-gender',e.gender||'');sv('e-blood',e.bloodGroup||'');
+    sv('e-aadhaar',e.aadhaar||'');sv('e-pan',e.pan||'');sv('e-addr',e.address||'');
+    sv('e-phone',e.phone||'');sv('e-email',e.email||'');
+    sv('e-id-disp',e.empId||'');sv('e-doj',normD(e.doj));sv('e-dol',normD(e.dol)||'');
+    sv('e-empstatus',e.status||'Active');sv('e-desig',e.designation||'');
+    sv('e-dept-inp',e.department||'');sv('e-emptype',e.empType||'Full Time');
+    sv('e-reports',e.reportsTo||'');sv('e-location',e.location||'');
+    sv('e-ctc',e.ctc||'');sv('e-wdays',e.wdays||26);
+    sv('e-esic-app',e.esicApp||'Yes');sv('e-pt-app',e.ptApp||'Yes');
+    sv('e-uan',e.uan||'');sv('e-esicno',e.esicNo||'');
+    sv('e-bank',e.bank||'');sv('e-accno',e.accNo||'');sv('e-ifsc',e.ifsc||'');sv('e-branch',e.branch||'');sv('e-acctype',e.accType||'Savings');
+    sv('e-emg-name',e.emgName||'');sv('e-emg-rel',e.emgRel||'');sv('e-emg-phone',e.emgPhone||'');
+    calcSalPreview();
+  } else {
+    fields.forEach(f=>sv(f,''));
+    sv('e-empstatus','Active');sv('e-emptype','Full Time');sv('e-wdays','26');
+    sv('e-esic-app','Yes');sv('e-pt-app','Yes');sv('e-acctype','Savings');
+    sv('e-id-disp','Auto');
+    $('sal-preview').textContent='Enter CTC to see salary breakdown.';
+  }
+  $('emp-save-btn').disabled=false;
+  openModal('empModal');
+}
+
+// ── SAVE EMPLOYEE ──
+async function saveEmployee(){
+  const name=gv('e-name').trim();
+  const doj=gv('e-doj');
+  const ctc=parseFloat(gv('e-ctc'))||0;
+  if(!name){toast('Employee name is required','err');return;}
+  if(!doj){toast('Date of Joining is required','err');return;}
+  if(!ctc){toast('CTC is required','err');return;}
+
+  $('emp-save-btn').disabled=true;
+  const esicApp=gv('e-esic-app');
+  const wdays=parseInt(gv('e-wdays'))||26;
+  const s=calcSal(ctc,esicApp,wdays);
+  const id=editEmpId||('EMP'+Date.now());
+  const empId=editEmpId?(employees.find(e=>e.id===editEmpId)?.empId||id):'EMP'+String(employees.length+1).padStart(3,'0');
+
+  const obj={
+    id,empId,name,
+    dob:gv('e-dob'),gender:gv('e-gender'),bloodGroup:gv('e-blood'),
+    aadhaar:gv('e-aadhaar'),pan:gv('e-pan').toUpperCase(),
+    address:gv('e-addr'),phone:gv('e-phone'),email:gv('e-email'),
+    doj,dol:gv('e-dol'),
+    status:gv('e-empstatus'),designation:gv('e-desig'),
+    department:gv('e-dept-inp'),empType:gv('e-emptype'),
+    reportsTo:gv('e-reports'),location:gv('e-location'),
+    ctc,wdays,esicApp,ptApp:gv('e-pt-app'),
+    basic:s.basic,hra:s.hra,special:s.special,gross:s.gross,
+    empPF:s.empPF,emplPF:s.emplPF,
+    empESIC:s.empESIC,emplESIC:s.emplESIC,
+    pt:s.pt,netPay:s.netPay,totalCTC:s.totalCTC,
+    uan:gv('e-uan'),esicNo:gv('e-esicno'),
+    bank:gv('e-bank'),accNo:gv('e-accno'),
+    ifsc:gv('e-ifsc').toUpperCase(),branch:gv('e-branch'),accType:gv('e-acctype'),
+    emgName:gv('e-emg-name'),emgRel:gv('e-emg-rel'),emgPhone:gv('e-emg-phone'),
+  };
+
+  await apiPost('saveEmployee',obj);
+  const idx=employees.findIndex(e=>e.id===id);
+  if(idx>=0) employees[idx]=normalizeEmp(obj); else employees.push(normalizeEmp(obj));
+  populateDeptFilter();
+  renderEmployees();
+  renderStats();
+  closeModal('empModal');
+  toast('Employee saved','ok');
+  $('emp-save-btn').disabled=false;
+}
+
+// ── VIEW EMPLOYEE ──
+function viewEmployee(id){
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  $('view-emp-name').textContent=e.name+' — '+e.empId;
+  const stBadge={Active:'b-active',Probation:'b-probation',Contract:'b-contract',Resigned:'b-resigned',Terminated:'b-resigned'}[e.status]||'b-active';
+  $('view-emp-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div class="emp-avatar" style="width:56px;height:56px;font-size:20px;background:${avatarColor(e.name)};">${initials(e.name)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;">${e.name}</div>
+        <div style="color:var(--muted);font-size:13px;">${e.designation||'—'} ${e.department?'· '+e.department:''}</div>
+        <div style="margin-top:4px;"><span class="badge ${stBadge}">${e.status}</span> <span class="badge b-ft">${e.empType||'Full Time'}</span></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+      ${infoBox('Employment','Employee ID',e.empId,'Date of Joining',fmtD(e.doj),'Date of Leaving',fmtD(e.dol)||'—','Reports To',e.reportsTo||'—','Location',e.location||'—')}
+      ${infoBox('Personal','PAN',e.pan||'—','Aadhaar',e.aadhaar?'XXXX-XXXX-'+e.aadhaar.slice(-4):'—','DOB',fmtD(e.dob)||'—','Phone',e.phone||'—','Email',e.email||'—')}
+      ${infoBox('Bank','Bank',e.bank||'—','Account No',e.accNo||'—','IFSC',e.ifsc||'—','Branch',e.branch||'—','Account Type',e.accType||'—')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">Salary Structure</div>
+        <div class="sal-preview">
+          <div class="sal-row"><span>Basic</span><span>${fmt(e.basic)}</span></div>
+          <div class="sal-row"><span>HRA</span><span>${fmt(e.hra)}</span></div>
+          <div class="sal-row"><span>Special Allowance</span><span>${fmt(e.special)}</span></div>
+          <div class="sal-row"><span>Gross</span><span>${fmt(e.gross)}</span></div>
+          <div class="sal-row"><span>Employee PF</span><span>− ${fmt(e.empPF)}</span></div>
+          <div class="sal-row"><span>Employee ESIC</span><span>− ${fmt(e.empESIC)}</span></div>
+          <div class="sal-row"><span>Prof. Tax</span><span>− ${fmt(e.pt)}</span></div>
+          <div class="sal-row"><span>Net Pay</span><span style="color:var(--green);">${fmt(e.netPay)}</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">Statutory</div>
+        <div class="sal-preview">
+          <div class="sal-row"><span>UAN</span><span>${e.uan||'—'}</span></div>
+          <div class="sal-row"><span>ESIC No</span><span>${e.esicNo||'—'}</span></div>
+          <div class="sal-row"><span>Employer PF</span><span>${fmt(e.emplPF)}</span></div>
+          <div class="sal-row"><span>Employer ESIC</span><span>${fmt(e.emplESIC)}</span></div>
+          <div class="sal-row"><span>Total CTC (incl. employer)</span><span>${fmt(e.totalCTC)}</span></div>
+        </div>
+        ${e.emgName?`<div style="margin-top:12px;background:#FEF2F2;border-radius:8px;padding:12px;font-size:13px;"><div style="font-weight:700;margin-bottom:4px;">Emergency Contact</div><div>${e.emgName} (${e.emgRel||'—'})</div><div>${e.emgPhone||'—'}</div></div>`:''}
+      </div>
+    </div>`;
+  $('view-edit-btn').onclick=()=>{closeModal('viewEmpModal');openEmpModal(id);};
+  $('view-payslip-btn').onclick=()=>{closeModal('viewEmpModal');openPayslipModal(id);};
+  openModal('viewEmpModal');
+}
+
+function infoBox(title,...pairs){
+  let rows='';
+  for(let i=0;i<pairs.length;i+=2){rows+=`<div style="display:flex;flex-direction:column;margin-bottom:8px;"><span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">${pairs[i]}</span><span style="font-weight:600;font-size:13px;">${pairs[i+1]||'—'}</span></div>`;}
+  return`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">${title}</div><div style="background:#F8FAFC;border-radius:8px;padding:12px 14px;">${rows}</div></div>`;
+}
+
+// ── PAYSLIP MODAL ──
+function openPayslipModal(id){
+  payslipEmpId=id;
+  const y=new Date().getFullYear(),m=String(new Date().getMonth()+1).padStart(2,'0');
+  sv('ps-month',m);sv('ps-year',y);
+  buildPayslipPreview();
+  openModal('payslipModal');
+}
+
+function buildPayslipPreview(){
+  const e=employees.find(x=>x.id===payslipEmpId);if(!e)return;
+  const mo=gv('ps-month'),yr=gv('ps-year');
+  const period=yr+'-'+mo;
+  // Find saved salary record for this period
+  const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
+  const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
+  const wdays=e.wdays||26;
+  const ratio=Math.min(present/wdays,1);
+  const gross=Math.round(e.gross*ratio);
+  const basic=Math.round(e.basic*ratio);
+  const hra=Math.round(e.hra*ratio);
+  const special=Math.max(0,gross-basic-hra);
+  const empPF=Math.round(basic*0.12);
+  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
+  const pt=e.ptApp==='Yes'?200:0;
+  const net=gross-empPF-empESIC-pt;
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  $('ps-preview').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--navy);">${e.name} — ${MN[parseInt(mo)-1]} ${yr}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px;">Earnings</div>
+        <div class="ps-modal-row"><span>Basic (${present}/${wdays} days)</span><span>${fmt(basic)}</span></div>
+        <div class="ps-modal-row"><span>HRA</span><span>${fmt(hra)}</span></div>
+        <div class="ps-modal-row"><span>Special Allowance</span><span>${fmt(special)}</span></div>
+        <div class="ps-modal-row"><span>Gross</span><span>${fmt(gross)}</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:8px;">Deductions</div>
+        <div class="ps-modal-row"><span>Employee PF</span><span>${fmt(empPF)}</span></div>
+        <div class="ps-modal-row"><span>ESIC</span><span>${fmt(empESIC)}</span></div>
+        <div class="ps-modal-row"><span>Prof. Tax</span><span>${fmt(pt)}</span></div>
+        <div class="ps-modal-row"><span>Total Deductions</span><span>${fmt(empPF+empESIC+pt)}</span></div>
+      </div>
+    </div>
+    <div class="ps-net-box">
+      <div class="lbl">Net Pay — ${MN[parseInt(mo)-1]} ${yr}</div>
+      <div class="amt">${fmt(net)}</div>
+      <div class="wrd">${numW(net)}</div>
+    </div>`;
+}
+
+$('ps-month')&&$('ps-month').addEventListener('change',buildPayslipPreview);
+$('ps-year')&&$('ps-year').addEventListener('change',buildPayslipPreview);
+
+function doPrintPayslip(){
+  const e=employees.find(x=>x.id===payslipEmpId);if(!e)return;
+  const mo=gv('ps-month'),yr=gv('ps-year');
+  const period=yr+'-'+mo;
+  const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
+  const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
+  const wdays=e.wdays||26;
+  const ratio=Math.min(present/wdays,1);
+  const gross=Math.round(e.gross*ratio);
+  const basic=Math.round(e.basic*ratio);
+  const hra=Math.round(e.hra*ratio);
+  const special=Math.max(0,gross-basic-hra);
+  const empPF=Math.round(basic*0.12);
+  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
+  const pt=e.ptApp==='Yes'?200:0;
+  const net=gross-empPF-empESIC-pt;
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const moName=MN[parseInt(mo)-1]+' '+yr;
+  const pa=$('printArea');pa.style.display='block';
+  pa.innerHTML=`<div class="payslip">
+    <div class="ps-head"><h1>${FIRM.name}</h1><p>${FIRM.addr}</p></div>
+    <div class="ps-title">SALARY SLIP — ${moName.toUpperCase()}</div>
+    <div class="ps-info">
+      <div class="ps-col">
+        <div class="ps-row"><b>Employee Name:</b>${e.name}</div>
+        <div class="ps-row"><b>Employee ID:</b>${e.empId}</div>
+        <div class="ps-row"><b>Designation:</b>${e.designation||'—'}</div>
+        <div class="ps-row"><b>Department:</b>${e.department||'—'}</div>
+        <div class="ps-row"><b>Date of Joining:</b>${fmtD(e.doj)}</div>
+      </div>
+      <div class="ps-col">
+        <div class="ps-row"><b>PAN:</b>${e.pan||'—'}</div>
+        <div class="ps-row"><b>UAN:</b>${e.uan||'—'}</div>
+        <div class="ps-row"><b>ESIC No:</b>${e.esicNo||'—'}</div>
+        <div class="ps-row"><b>Working Days:</b>${wdays}</div>
+        <div class="ps-row"><b>Days Present:</b>${present}</div>
+      </div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-earn">
+        <div class="ps-sec-title">Earnings</div>
+        <div class="ps-item"><span>Basic Salary</span><span>${fmt2(basic)}</span></div>
+        <div class="ps-item"><span>House Rent Allowance</span><span>${fmt2(hra)}</span></div>
+        <div class="ps-item"><span>Special Allowance</span><span>${fmt2(special)}</span></div>
+        <div class="ps-item total"><span>Gross Earnings</span><span>${fmt2(gross)}</span></div>
+      </div>
+      <div class="ps-ded">
+        <div class="ps-sec-title">Deductions</div>
+        <div class="ps-item"><span>Provident Fund (Employee 12%)</span><span>${fmt2(empPF)}</span></div>
+        <div class="ps-item"><span>ESIC (Employee 0.75%)</span><span>${fmt2(empESIC)}</span></div>
+        <div class="ps-item"><span>Professional Tax</span><span>${fmt2(pt)}</span></div>
+        <div class="ps-item total"><span>Total Deductions</span><span>${fmt2(empPF+empESIC+pt)}</span></div>
+      </div>
+    </div>
+    <div class="ps-net">
+      <div><div class="ps-words">${numW(net)}</div></div>
+      <div class="ps-net-amt">${fmt2(net)}</div>
+    </div>
+    <div class="ps-foot">
+      <div><p>Employee Signature: ___________________</p></div>
+      <div style="text-align:right;"><p>For, <strong>${FIRM.name}</strong></p><p style="margin-top:20px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
+    </div>
+  </div>`;
+  closeModal('payslipModal');
+  setTimeout(()=>window.print(),300);
+}
+window.addEventListener('afterprint',()=>{const pa=$('printArea');if(pa){pa.style.display='none';pa.innerHTML='';}});
+
+// ── MONTHLY SALARY SHEET ──
+let currentSalaryData=[];
+async function loadSalarySheet(){
+  const mo=gv('sal-month'),yr=gv('sal-year');
+  if(!yr){toast('Select year','err');return;}
+  const period=yr+'-'+mo;
+  const active=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated');
+  if(!active.length){$('salary-sheet-wrap').innerHTML='<div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">No active employees found.</div>';return;}
+  // Build salary data — merge with saved records
+  currentSalaryData=active.map(e=>{
+    const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
+    const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
+    return{...e,period,present,rec:rec||null};
+  });
+  renderSalarySheet(period);
+  $('sal-save-btn').style.display='';
+  $('sal-csv-btn').style.display='';
+}
+
+function getSalRow(e){
+  const wdays=e.wdays||26;
+  const ratio=Math.min((parseFloat(e.present)||wdays)/wdays,1);
+  const gross=Math.round(e.gross*ratio);
+  const basic=Math.round(e.basic*ratio);
+  const hra=Math.round(e.hra*ratio);
+  const special=Math.max(0,gross-basic-hra);
+  const empPF=Math.round(basic*0.12);
+  const emplPF=Math.round(basic*0.12);
+  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
+  const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0325):0;
+  const pt=e.ptApp==='Yes'?200:0;
+  const totalDed=empPF+empESIC+pt;
+  const net=gross-totalDed;
+  const lop=Math.max(0,(e.wdays||26)-(parseFloat(e.present)||e.wdays));
+  return{gross,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,totalDed,net,lop};
+}
+
+function renderSalarySheet(period){
+  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const [yr,mo]=period.split('-');
+  const moName=MN[parseInt(mo)-1]+' '+yr;
+  let html=`<div class="card"><div class="ch"><h3>Salary Sheet — ${moName}</h3></div><div class="tw"><table class="salary-table">
+    <thead><tr>
+      <th>#</th><th>Employee</th><th>Designation</th>
+      <th>Days</th><th>Present</th><th>LOP</th>
+      <th>Basic</th><th>HRA</th><th>Special</th><th>Gross</th>
+      <th>Emp PF</th><th>Emp ESIC</th><th>PT</th><th>Tot. Ded.</th>
+      <th>Net Pay</th><th>Payslip</th>
+    </tr></thead><tbody>`;
+  let totGross=0,totEmpPF=0,totEmpESIC=0,totPT=0,totNet=0;
+  currentSalaryData.forEach((e,i)=>{
+    const r=getSalRow(e);
+    totGross+=r.gross;totEmpPF+=r.empPF;totEmpESIC+=r.empESIC;totPT+=r.pt;totNet+=r.net;
+    html+=`<tr>
+      <td style="color:var(--muted);">${e.empId||i+1}</td>
+      <td><strong>${e.name}</strong></td>
+      <td style="font-size:12px;">${e.designation||'—'}</td>
+      <td style="text-align:center;">${e.wdays}</td>
+      <td><input type="number" value="${e.present}" min="0" max="${e.wdays}" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;"></td>
+      <td style="text-align:center;color:var(--red);">${r.lop>0?r.lop:'—'}</td>
+      <td>${fmt(r.basic)}</td><td>${fmt(r.hra)}</td><td>${fmt(r.special)}</td>
+      <td><strong>${fmt(r.gross)}</strong></td>
+      <td>${fmt(r.empPF)}</td><td>${fmt(r.empESIC)}</td><td>${fmt(r.pt)}</td>
+      <td style="color:var(--red);">${fmt(r.totalDed)}</td>
+      <td style="color:var(--green);font-weight:700;">${fmt(r.net)}</td>
+      <td><button class="btn bb bsm" onclick="quickPayslip('${e.id}','${period}')">🖨</button></td>
+    </tr>`;
+  });
+  html+=`<tr class="total-row">
+    <td colspan="3">TOTAL</td><td></td><td></td><td></td>
+    <td></td><td></td><td></td>
+    <td>${fmt(totGross)}</td>
+    <td>${fmt(totEmpPF)}</td><td>${fmt(totEmpESIC)}</td><td>${fmt(totPT)}</td>
+    <td>${fmt(totEmpPF+totEmpESIC+totPT)}</td>
+    <td style="color:var(--green);">${fmt(totNet)}</td><td></td>
+  </tr>`;
+  html+=`</tbody></table></div></div>`;
+  $('salary-sheet-wrap').innerHTML=html;
+}
+
+function updatePresent(idx,val){
+  currentSalaryData[idx].present=parseFloat(val)||currentSalaryData[idx].wdays;
+  const period=currentSalaryData[idx].period;
+  renderSalarySheet(period);
+}
+
+async function saveSalarySheet(){
+  if(!currentSalaryData.length){toast('Load salary sheet first','err');return;}
+  $('sal-save-btn').disabled=true;
+  for(const e of currentSalaryData){
+    const r=getSalRow(e);
+    await apiPost('saveSalaryRecord',{
+      id:e.id+'_'+e.period,
+      empId:e.id,empName:e.name,period:e.period,
+      present:e.present,wdays:e.wdays,
+      gross:r.gross,basic:r.basic,hra:r.hra,special:r.special,
+      empPF:r.empPF,emplPF:r.emplPF,empESIC:r.empESIC,emplESIC:r.emplESIC,
+      pt:r.pt,netPay:r.net,
+    });
+  }
+  // Refresh local salary records
+  const salD=await apiGet('getSalaryRecords');
+  salaryRecords=salD||[];
+  toast('Salary sheet saved','ok');
+  $('sal-save-btn').disabled=false;
+}
+
+function exportSalaryCSV(){
+  if(!currentSalaryData.length){toast('Load salary sheet first','err');return;}
+  let csv='Emp ID,Name,Designation,Working Days,Days Present,LOP,Basic,HRA,Special,Gross,Emp PF,Emp ESIC,PT,Total Ded,Net Pay\n';
+  currentSalaryData.forEach(e=>{
+    const r=getSalRow(e);
+    csv+=[e.empId,'"'+e.name+'"','"'+(e.designation||'')+'"',e.wdays,e.present,r.lop,r.basic,r.hra,r.special,r.gross,r.empPF,r.empESIC,r.pt,r.totalDed,r.net].join(',')+'\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='Salary_'+currentSalaryData[0]?.period+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+function quickPayslip(empId,period){
+  payslipEmpId=empId;
+  const [yr,mo]=period.split('-');
+  sv('ps-month',mo);sv('ps-year',yr);
+  doPrintPayslip();
+}
+
+// ── STATUTORY ──
+async function loadStatutory(){
+  const mo=gv('stat-month'),yr=gv('stat-year');
+  if(!yr){toast('Select year','err');return;}
+  const period=yr+'-'+mo;
+  const active=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated');
+  const salData=active.map(e=>{
+    const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
+    const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
+    const r=getSalRow({...e,present});
+    return{...e,...r,present};
+  });
+  renderPF(salData,period);
+  renderESIC(salData,period);
+  renderPT(salData,period);
+}
+
+function renderPF(data,period){
+  const pfEmps=data.filter(e=>e.uan||e.empPF>0);
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const [yr,mo]=period.split('-');
+  const moName=MN[parseInt(mo)-1]+' '+yr;
+  let totEmpPF=0,totEmplPF=0,totWages=0;
+  let rows=pfEmps.map((e,i)=>{totEmpPF+=e.empPF;totEmplPF+=e.emplPF;totWages+=e.gross;
+    return`<tr><td>${i+1}</td><td>${e.uan||'—'}</td><td>${e.name}</td><td>${fmt(e.gross)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.empPF)}</td><td>${fmt(e.emplPF)}</td><td style="font-weight:700;">${fmt(e.empPF+e.emplPF)}</td></tr>`;
+  }).join('');
+  $('sp-pf').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">PF / ECR Working — ${moName}</div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>#</th><th>UAN</th><th>Employee Name</th><th>Gross Wages</th><th>EPF Wages</th><th>EPS Wages</th><th>Employee Share (12%)</th><th>Employer Share (12%)</th><th>Total PF</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="9" class="no-data">No PF records.</td></tr>'}
+      <tr style="font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);">
+        <td colspan="3">TOTAL (${pfEmps.length} employees)</td>
+        <td>${fmt(totWages)}</td><td>—</td><td>—</td>
+        <td>${fmt(totEmpPF)}</td><td>${fmt(totEmplPF)}</td>
+        <td>${fmt(totEmpPF+totEmplPF)}</td>
+      </tr></tbody>
+    </table></div></div>`;
+}
+
+function renderESIC(data,period){
+  const esicEmps=data.filter(e=>e.esicApp==='Yes'&&e.gross<=21000);
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const [yr,mo]=period.split('-');
+  const moName=MN[parseInt(mo)-1]+' '+yr;
+  let totEmp=0,totEmpl=0,totWages=0;
+  let rows=esicEmps.map((e,i)=>{totEmp+=e.empESIC;totEmpl+=e.emplESIC;totWages+=e.gross;
+    return`<tr><td>${i+1}</td><td>${e.esicNo||'—'}</td><td>${e.name}</td><td>${fmt(e.gross)}</td><td>${fmt(e.empESIC)}</td><td>${fmt(e.emplESIC)}</td><td style="font-weight:700;">${fmt(e.empESIC+e.emplESIC)}</td></tr>`;
+  }).join('');
+  $('sp-esic').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">ESIC Working — ${moName}</div>
+    <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#92400E;margin-bottom:14px;">⚠ ESIC applicable only for employees with Gross ≤ ₹21,000/month. Employee: 0.75% | Employer: 3.25%</div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>#</th><th>ESIC No</th><th>Employee Name</th><th>Gross Wages</th><th>Employee (0.75%)</th><th>Employer (3.25%)</th><th>Total</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="7" class="no-data">No ESIC applicable employees.</td></tr>'}
+      <tr style="font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);">
+        <td colspan="3">TOTAL (${esicEmps.length} employees)</td>
+        <td>${fmt(totWages)}</td><td>${fmt(totEmp)}</td><td>${fmt(totEmpl)}</td>
+        <td>${fmt(totEmp+totEmpl)}</td>
+      </tr></tbody>
+    </table></div></div>`;
+}
+
+function renderPT(data,period){
+  const ptEmps=data.filter(e=>e.ptApp==='Yes');
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const [yr,mo]=period.split('-');
+  const moName=MN[parseInt(mo)-1]+' '+yr;
+  let rows=ptEmps.map((e,i)=>`<tr><td>${i+1}</td><td>${e.name}</td><td>${e.designation||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;">₹200</td></tr>`).join('');
+  $('sp-pt').innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">Professional Tax — ${moName}</div>
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: ₹200/month per employee (for salary > ₹10,000/month)</div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>#</th><th>Employee Name</th><th>Designation</th><th>Gross Salary</th><th>PT Amount</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="5" class="no-data">No PT applicable employees.</td></tr>'}
+      <tr style="font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);">
+        <td colspan="4">TOTAL (${ptEmps.length} employees)</td>
+        <td>₹${ptEmps.length*200}</td>
+      </tr></tbody>
+    </table></div></div>`;
+}
+
+function printStatutory(){
+  const pa=$('printArea');pa.style.display='block';
+  const pfContent=$('sp-pf').innerHTML;
+  const esicContent=$('sp-esic').innerHTML;
+  const ptContent=$('sp-pt').innerHTML;
+  pa.innerHTML=`<div style="font-family:Arial,sans-serif;">
+    <h2 style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;">${FIRM.name}</h2>
+    <h3>PF / ECR Working</h3>${pfContent}
+    <div style="page-break-before:always;"></div>
+    <h3>ESIC Working</h3>${esicContent}
+    <div style="page-break-before:always;"></div>
+    <h3>Professional Tax</h3>${ptContent}
+  </div>`;
+  setTimeout(()=>window.print(),300);
+}
+
+// ── MODALS ──
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+</script>
+</body>
+</html>
