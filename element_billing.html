@@ -396,6 +396,7 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
         <div class="fg"><label>Account No</label><input id="s-acc"></div>
         <div class="fg"><label>IFSC</label><input id="s-ifsc"></div>
         <div class="fg"><label>Branch</label><input id="s-branch"></div>
+        <div class="fg s2"><label>Company Email ID</label><input id="s-emailid" type="email" placeholder="office@company.com"></div>
       </div>
       <div style="display:flex;gap:10px;">
         <button class="btn bn" onclick="saveSettings()">Save Settings</button>
@@ -710,8 +711,8 @@ function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 
-function loadSettingsUI(){sv('s-name',_settings.name);sv('s-addr',_settings.addr);sv('s-gstin',_settings.gstin);sv('s-pan',_settings.pan);sv('s-cin',_settings.cin);sv('s-state',_settings.state);sv('s-prefix',_settings.prefix);sv('s-fy',_settings.fy);sv('s-bank',_settings.bank);sv('s-acc',_settings.acc);sv('s-ifsc',_settings.ifsc);sv('s-branch',_settings.branch);}
-async function saveSettings(){const s={name:gv('s-name'),addr:gv('s-addr'),gstin:gv('s-gstin'),pan:gv('s-pan'),cin:gv('s-cin'),state:gv('s-state'),prefix:gv('s-prefix'),fy:gv('s-fy'),bank:gv('s-bank'),acc:gv('s-acc'),ifsc:gv('s-ifsc'),branch:gv('s-branch')};Object.assign(_settings,s);Object.assign(FIRM,s);await apiPost('saveSettings',s);toast('Settings saved','ok');}
+function loadSettingsUI(){sv('s-name',_settings.name);sv('s-addr',_settings.addr);sv('s-gstin',_settings.gstin);sv('s-pan',_settings.pan);sv('s-cin',_settings.cin);sv('s-state',_settings.state);sv('s-prefix',_settings.prefix);sv('s-fy',_settings.fy);sv('s-bank',_settings.bank);sv('s-acc',_settings.acc);sv('s-ifsc',_settings.ifsc);sv('s-branch',_settings.branch);sv('s-emailid',_settings.emailId||'');}
+async function saveSettings(){const s={name:gv('s-name'),addr:gv('s-addr'),gstin:gv('s-gstin'),pan:gv('s-pan'),cin:gv('s-cin'),state:gv('s-state'),prefix:gv('s-prefix'),fy:gv('s-fy'),bank:gv('s-bank'),acc:gv('s-acc'),ifsc:gv('s-ifsc'),branch:gv('s-branch'),emailId:gv('s-emailid')};Object.assign(_settings,s);Object.assign(FIRM,s);await apiPost('saveSettings',s);toast('Settings saved','ok');}
 
 function fillClDDL(){const sel=$('i-client'),cur=sel.value;sel.innerHTML='<option value="">— Select Client —</option>';clients.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;sel.appendChild(o);});if(cur)sel.value=cur;}
 function renderClients(){const q=gv('cl-q').toLowerCase(),st=gv('cl-state'),osOnly=$('cl-os-only')&&$('cl-os-only').checked;const osMap={};outstanding.filter(o=>o.status!=='Paid'&&o.status!=='Cancelled'&&invoices.some(i=>i.id===o.invoiceId&&(!i.type||i.type==='Invoice')&&i.payStatus!=='Cancelled')).forEach(o=>{osMap[o.clientId]=(osMap[o.clientId]||0)+(parseFloat(o.balance)||0);});const tot=Object.values(osMap).reduce((s,v)=>s+v,0),cnt=Object.keys(osMap).length;const sum=$('cl-os-sum');if(sum)sum.textContent=cnt+' clients with outstanding — Total: '+fmt(tot);const list=clients.filter(c=>(!q||(c.name+c.gstin+c.pan).toLowerCase().includes(q))&&(!st||c.state===st)&&(!osOnly||(osMap[c.id]||0)>0));const tb=$('cl-tbody');if(!tb)return;if(!list.length){tb.innerHTML='<tr><td colspan="7" class="no-data">No clients found.</td></tr>';return;}tb.innerHTML=list.map(c=>{const bal=osMap[c.id]||0;const bc=bal>0?`<span class="badge brd" style="cursor:pointer;" onclick="openLedger('${c.id}')">${fmt(bal)}</span>`:'<span class="badge bgr">Nil</span>';return`<tr><td><strong>${c.name}</strong></td><td style="font-size:12px;">${c.gstin||'—'}</td><td>${c.state||'—'}</td><td>${c.city||'—'}</td><td>${c.phone||'—'}</td><td>${bc}</td><td><button class="bi" onclick="openLedger('${c.id}')" title="Ledger" style="color:var(--blue);">📋</button><button class="bi" onclick="openClientModal('${c.id}')" title="Edit">✏️</button></td></tr>`;}).join('');}
@@ -740,7 +741,7 @@ function openInv(type){
   $('inv-title').textContent='New '+(type==='Invoice'?'Tax Invoice':type);
   sv('i-type',type);sv('i-date',new Date().toISOString().split('T')[0]);
   sv('i-client','');sv('i-cgstin','');sv('i-pos','Maharashtra');
-  sv('i-pst','Unpaid');sv('i-notes','');sv('i-wor','');sv('i-wodate','');sv('i-email','');
+  sv('i-pst','Unpaid');sv('i-notes','');sv('i-wor','');sv('i-wodate','');sv('i-email',_settings.emailId||'');
   fillClDDL();$('li-body').innerHTML='';addLI();recalcInv();
   sv('i-no',nextNo(type));
   $('inv-save-btn').disabled=false;
@@ -763,7 +764,7 @@ function editInvoice(id){
   $('inv-save-btn').disabled=false;openModal('invModal');
 }
 
-function onClSel(){const c=clients.find(x=>x.id===gv('i-client'));if(!c)return;sv('i-cgstin',c.gstin||'');sv('i-email',c.email||'');sv('i-pos',(c.state&&c.state!=='Maharashtra')?'Other':'Maharashtra');recalcInv();}
+function onClSel(){const c=clients.find(x=>x.id===gv('i-client'));if(!c)return;sv('i-cgstin',c.gstin||'');sv('i-email',c.email||_settings.emailId||'');sv('i-pos',(c.state&&c.state!=='Maharashtra')?'Other':'Maharashtra');recalcInv();}
 function addLI(it){const tr=document.createElement('tr');tr.innerHTML=`<td><input type="text" value="${it?it.desc||'':''}" placeholder="Service description" oninput="recalcInv()"></td><td><input type="text" value="${it?it.sac||'':''}" style="width:70px;"></td><td><input type="number" value="${it?it.qty||1:1}" min="0.01" step="0.01" style="width:52px;" oninput="recalcInv()"></td><td><input type="number" value="${it?it.rate||'':''}" step="0.01" placeholder="0.00" oninput="recalcInv()"></td><td><select onchange="recalcInv()" style="width:62px;"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select></td><td><input type="text" readonly class="litax"></td><td><input type="text" readonly class="ligst"></td><td><button type="button" onclick="this.closest('tr').remove();recalcInv();" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button></td>`;if(it&&it.gst!=null)tr.querySelector('select').value=it.gst;$('li-body').appendChild(tr);recalcInv();}
 function recalcInv(){const isI=gv('i-pos')!=='Maharashtra';let tax=0,cg=0,sg=0,ig=0;$('li-body').querySelectorAll('tr').forEach(tr=>{const qty=parseFloat(tr.querySelector('td:nth-child(3) input').value)||0,rate=parseFloat(tr.querySelector('td:nth-child(4) input').value)||0,gst=parseFloat(tr.querySelector('select').value)||0,t=qty*rate,g=t*gst/100;tr.querySelector('.litax').value=t.toFixed(2);tr.querySelector('.ligst').value=g.toFixed(2);tax+=t;if(isI)ig+=g;else{cg+=g/2;sg+=g/2;}});const raw=tax+cg+sg+ig,tot=Math.round(raw);$('i-tax').textContent=fmt(tax);$('i-cgst').textContent=fmt(cg);$('i-sgst').textContent=fmt(sg);$('i-igst').textContent=fmt(ig);$('i-roff').textContent=(tot-raw>=0?'+':'')+(tot-raw).toFixed(2);$('i-total').textContent=fmt(tot);$('cgst-row').style.display=isI?'none':'';$('sgst-row').style.display=isI?'none':'';$('igst-row').style.display=isI?'':'none';$('i-words').value=numW(tot);}
 
@@ -844,7 +845,7 @@ function openReceiptModal(invId){
   sv('rdate',new Date().toISOString().split('T')[0]);
   sv('ramt','');sv('rmode','NEFT');sv('rref','');
   sv('rnar',inv?'Against Invoice '+inv.invoiceNo:'');
-  sv('r-email',firstInv?firstInv.clientEmail||firstInv.emailId||'':'');
+  sv('r-email',firstInv?firstInv.clientEmail||firstInv.emailId||_settings.emailId||'':_settings.emailId||'');
   $('rc-sum').textContent='Select invoices and enter amount.';
   $('rc-save-btn').disabled=false;
   openModal('rcptModal');rcAmtCh();
@@ -897,7 +898,7 @@ function openCNModal(invId){
   sv('cn-no',nextNo('CreditNote'));
   sv('cn-date',new Date().toISOString().split('T')[0]);
   sv('cn-amt','');sv('cn-reason','');sv('cn-gstrate','18');
-  sv('cn-email',inv?inv.clientEmail||inv.emailId||'':'');
+  sv('cn-email',inv?inv.clientEmail||inv.emailId||_settings.emailId||'':_settings.emailId||'');
   $('cn-sum').textContent='Select invoice and enter credit amount.';
   $('cn-save-btn').disabled=false;
   openModal('cnModal');
