@@ -358,7 +358,7 @@ tbody tr:hover{background:#F8FAFC;}
     <div class="fg3">
       <div class="fg s2"><label>Full Name *</label><input id="e-name" placeholder="As per Aadhaar"></div>
       <div class="fg"><label>Date of Birth</label><input id="e-dob" type="date"></div>
-      <div class="fg"><label>Gender</label><select id="e-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="fg"><label>Gender</label><select id="e-gender" onchange="calcSalPreview()"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
       <div class="fg"><label>Blood Group</label><select id="e-blood"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
       <div class="fg"><label>Aadhaar No</label><input id="e-aadhaar" maxlength="12" placeholder="12 digits"></div>
       <div class="fg"><label>PAN</label><input id="e-pan" maxlength="10" placeholder="ABCDE1234F" style="text-transform:uppercase;"></div>
@@ -385,7 +385,9 @@ tbody tr:hover{background:#F8FAFC;}
       <div class="fg"><label>Monthly CTC (₹) *</label><input id="e-ctc" type="number" step="100" placeholder="e.g. 25000" oninput="calcSalPreview()"></div>
       <div class="fg"><label>Working Days/Month</label><input id="e-wdays" type="number" value="26" min="1" max="31" oninput="calcSalPreview()"></div>
       <div class="fg"><label>ESIC Applicable</label><select id="e-esic-app" onchange="calcSalPreview()"><option value="Yes">Yes (Gross ≤ ₹21,000)</option><option value="No">No</option></select></div>
+      <div class="fg"><label>PF Applicable (if Gross &gt; ₹15,000)</label><select id="e-pf-app" onchange="calcSalPreview()"><option value="Yes">Yes</option><option value="No">No — Opt Out</option></select></div>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-8px 0 10px;">PF is mandatory below ₹15,000 Gross regardless of this setting. Above ₹15,000, the employee may opt out.</div>
     <div class="sal-preview" id="sal-preview">Enter CTC to see salary breakdown.</div>
 
     <div class="msec">Bank Details</div>
@@ -401,8 +403,9 @@ tbody tr:hover{background:#F8FAFC;}
     <div class="fg3">
       <div class="fg"><label>UAN (PF)</label><input id="e-uan" maxlength="12"></div>
       <div class="fg"><label>ESIC No</label><input id="e-esicno"></div>
-      <div class="fg"><label>PT Applicable</label><select id="e-pt-app"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+      <div class="fg"><label>PT Applicable</label><select id="e-pt-app" onchange="calcSalPreview()"><option value="Yes">Yes</option><option value="No">No</option></select></div>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-8px 0 10px;">Women employees with Gross ≤ ₹25,000/month are exempt from Professional Tax (Maharashtra).</div>
 
     <div class="msec">Emergency Contact</div>
     <div class="fg3">
@@ -472,6 +475,7 @@ function toast(msg,t=''){const el=$('toast');el.textContent=msg;el.className='sh
 function fmtD(d){if(!d||d==='Invalid Date')return'—';try{const s=String(d).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const[y,m,dy]=s.split('-');return dy+'/'+m+'/'+y;}const dt=new Date(d);if(!isNaN(dt))return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();}catch(e){}return d;}
 function normD(d){if(!d)return'';try{const s=String(d).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const dt=new Date(s);if(!isNaN(dt))return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}catch(e){}return'';}
 function initials(name){return(name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function numW(n){const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'],w=x=>{if(!x)return'';if(x<20)return o[x]+' ';if(x<100)return t[Math.floor(x/10)]+' '+o[x%10]+' ';if(x<1000)return o[Math.floor(x/100)]+' Hundred '+w(x%100);if(x<100000)return w(Math.floor(x/1000))+'Thousand '+w(x%1000);if(x<10000000)return w(Math.floor(x/100000))+'Lakh '+w(x%100000);return w(Math.floor(x/10000000))+'Crore '+w(x%10000000);};return'Rupees '+w(Math.floor(n)).trim()+' Only';}
 
 // ── SPLASH + LOGIN ──
@@ -559,13 +563,17 @@ function initYrSels(){
 }
 
 // ── SALARY CALCULATOR (Backward from CTC) ──
-// CTC = Gross + Employer PF + Employer ESIC
+// CTC = Gross + Employer PF (if applicable) + Employer ESIC (if applicable)
 // PF wage ceiling = ₹15,000 → max PF = ₹1,800 (12% × 15,000)
+// PF is mandatory while Gross ≤ ₹15,000. Above ₹15,000 it becomes optional — the
+// employee can opt in/out via e-pf-app; below the ceiling PF always applies.
 // HRA = 50% of Basic (Pune is metro from FY 2026-27)
 // Basic minimum = ₹8,000 or 50% of Gross whichever is higher
 // Special Allowance = Gross − Basic − HRA
-// Solve: CTC = Gross + min(Basic,15000)×0.12 + (Gross≤21000 ? Gross×0.0325 : 0)
-function calcSal(ctc, esicApp='Yes', wdays=26){
+// PT (Maharashtra): flat ₹200/month, except women employees with Gross ≤ ₹25,000
+// are fully exempt.
+// Solve: CTC = Gross + (PF applicable ? min(Basic,15000)×0.12 : 0) + (Gross≤21000 ? Gross×0.0325 : 0)
+function calcSal(ctc, esicApp='Yes', wdays=26, pfApp='Yes', ptApp='Yes', gender=''){
   const c=parseFloat(ctc)||0;
   if(!c)return null;
 
@@ -575,7 +583,8 @@ function calcSal(ctc, esicApp='Yes', wdays=26){
   for(let i=0;i<20;i++){
     const basicEst = Math.max(8000, Math.round(gross*0.50));
     const pfBase   = Math.min(basicEst, 15000);
-    const emplPFEst  = Math.round(pfBase*0.12);
+    const pfApplicableEst = gross<=15000 || pfApp!=='No';
+    const emplPFEst  = pfApplicableEst ? Math.round(pfBase*0.12) : 0;
     const esicApplicableEst = esicApp==='Yes' && gross<=21000;
     const emplESICEst = esicApplicableEst ? Math.round(gross*0.0325) : 0;
     const newGross = c - emplPFEst - emplESICEst;
@@ -589,24 +598,29 @@ function calcSal(ctc, esicApp='Yes', wdays=26){
   const hra      = Math.round(basic*0.50);  // 50% — Pune is metro FY 2026-27
   const special  = Math.max(0, gross - basic - hra);
   const pfBase   = Math.min(basic, 15000);  // PF wage ceiling ₹15,000
-  const empPF    = Math.round(pfBase*0.12); // max ₹1,800
-  const emplPF   = Math.round(pfBase*0.12); // max ₹1,800
+  const pfApplicable = gross<=15000 || pfApp!=='No'; // mandatory ≤15k, optional above
+  const empPF    = pfApplicable ? Math.round(pfBase*0.12) : 0; // max ₹1,800
+  const emplPF   = pfApplicable ? Math.round(pfBase*0.12) : 0; // max ₹1,800
   const esicApplicable = esicApp==='Yes' && gross<=21000;
   const empESIC  = esicApplicable ? Math.round(gross*0.0075) : 0;
   const emplESIC = esicApplicable ? Math.round(gross*0.0325) : 0;
-  const pt       = 200;
+  const ptExempt = gender==='Female' && gross<=25000;
+  const pt       = (ptApp==='Yes' && !ptExempt) ? 200 : 0;
   const netPay   = gross - empPF - empESIC - pt;
   const totalCTC = gross + emplPF + emplESIC; // should = ctc
-  return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,netPay,totalCTC,esicApplicable,wdays,pfBase};
+  return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,netPay,totalCTC,esicApplicable,pfApplicable,wdays,pfBase};
 }
 
 function calcSalPreview(){
   const ctc=parseFloat(gv('e-ctc'))||0;
   const esicApp=gv('e-esic-app')||'Yes';
   const wdays=parseInt(gv('e-wdays'))||26;
+  const pfApp=gv('e-pf-app')||'Yes';
+  const ptApp=gv('e-pt-app')||'Yes';
+  const gender=gv('e-gender')||'';
   const el=$('sal-preview');
   if(!ctc){el.innerHTML='Enter CTC to see salary breakdown.';return;}
-  const s=calcSal(ctc,esicApp,wdays);
+  const s=calcSal(ctc,esicApp,wdays,pfApp,ptApp,gender);
   if(!s){el.innerHTML='Invalid CTC.';return;}
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
@@ -619,9 +633,9 @@ function calcSalPreview(){
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Deductions</div>
-        <div class="sal-row"><span>Employee PF (12% on ${fmt(s.pfBase)}, max ₹1,800)</span><span>${fmt(s.empPF)}</span></div>
+        <div class="sal-row"><span>Employee PF${s.pfApplicable?' (12% on '+fmt(s.pfBase)+', max ₹1,800)':' (N/A — opted out, Gross > ₹15,000)'}</span><span>${fmt(s.empPF)}</span></div>
         <div class="sal-row"><span>Employee ESIC 0.75%${s.esicApplicable?'':' (N/A — Gross > ₹21,000)'}</span><span>${fmt(s.empESIC)}</span></div>
-        <div class="sal-row"><span>Prof. Tax (Maharashtra)</span><span>${fmt(s.pt)}</span></div>
+        <div class="sal-row"><span>Prof. Tax (Maharashtra)${s.ptExempt?' (Exempt — woman, Gross ≤ ₹25,000)':''}</span><span>${fmt(s.pt)}</span></div>
         <div class="sal-row" style="font-weight:700;color:var(--green);"><span>Net Pay</span><span>${fmt(s.netPay)}</span></div>
       </div>
     </div>
@@ -669,22 +683,22 @@ function renderEmployees(){
   if(!list.length){tb.innerHTML='<tr><td colspan="11" class="no-data">No employees found.</td></tr>';return;}
   tb.innerHTML=list.map((e,i)=>{
     const stBadge={Active:'b-active',Probation:'b-probation',Contract:'b-contract',Resigned:'b-resigned',Terminated:'b-resigned'}[e.status]||'b-active';
-    const pfCell=e.uan?`<span style="font-size:11px;">${e.uan}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
-    const esicCell=e.esicNo?`<span style="font-size:11px;">${e.esicNo}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
+    const pfCell=e.uan?`<span style="font-size:11px;">${esc(e.uan)}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
+    const esicCell=e.esicNo?`<span style="font-size:11px;">${esc(e.esicNo)}</span>`:'<span style="color:var(--muted);font-size:11px;">—</span>';
     return`<tr>
-      <td style="color:var(--muted);font-size:12px;">${e.empId||i+1}</td>
+      <td style="color:var(--muted);font-size:12px;">${esc(e.empId)||i+1}</td>
       <td><div style="display:flex;align-items:center;gap:9px;">
         <div class="emp-avatar" style="background:${avatarColor(e.name)};">${initials(e.name)}</div>
-        <div><div style="font-weight:600;">${e.name}</div><div style="font-size:11.5px;color:var(--muted);">${e.empType||'Full Time'}</div></div>
+        <div><div style="font-weight:600;">${esc(e.name)}</div><div style="font-size:11.5px;color:var(--muted);">${esc(e.empType)||'Full Time'}</div></div>
       </div></td>
-      <td>${e.designation||'—'}</td>
-      <td>${e.department||'—'}</td>
+      <td>${esc(e.designation)||'—'}</td>
+      <td>${esc(e.department)||'—'}</td>
       <td>${fmtD(e.doj)}</td>
       <td><strong>${fmt(e.gross)}</strong></td>
       <td style="color:var(--green);font-weight:600;">${fmt(e.netPay)}</td>
       <td style="font-size:12px;">${pfCell}</td>
       <td style="font-size:12px;">${esicCell}</td>
-      <td><span class="badge ${stBadge}">${e.status||'Active'}</span></td>
+      <td><span class="badge ${stBadge}">${esc(e.status)||'Active'}</span></td>
       <td style="white-space:nowrap;">
         <button class="bi" onclick="viewEmployee('${e.id}')" title="View">👁</button>
         <button class="bi" onclick="openEmpModal('${e.id}')" title="Edit">✏️</button>
@@ -712,7 +726,7 @@ function openEmpModal(id){
     sv('e-dept-inp',e.department||'');sv('e-emptype',e.empType||'Full Time');
     sv('e-reports',e.reportsTo||'');sv('e-location',e.location||'');
     sv('e-ctc',e.ctc||'');sv('e-wdays',e.wdays||26);
-    sv('e-esic-app',e.esicApp||'Yes');sv('e-pt-app',e.ptApp||'Yes');
+    sv('e-esic-app',e.esicApp||'Yes');sv('e-pt-app',e.ptApp||'Yes');sv('e-pf-app',e.pfApp||'Yes');
     sv('e-uan',e.uan||'');sv('e-esicno',e.esicNo||'');
     sv('e-bank',e.bank||'');sv('e-accno',e.accNo||'');sv('e-ifsc',e.ifsc||'');sv('e-branch',e.branch||'');sv('e-acctype',e.accType||'Savings');
     sv('e-emg-name',e.emgName||'');sv('e-emg-rel',e.emgRel||'');sv('e-emg-phone',e.emgPhone||'');
@@ -720,7 +734,7 @@ function openEmpModal(id){
   } else {
     fields.forEach(f=>sv(f,''));
     sv('e-empstatus','Active');sv('e-emptype','Full Time');sv('e-wdays','26');
-    sv('e-esic-app','Yes');sv('e-pt-app','Yes');sv('e-acctype','Savings');
+    sv('e-esic-app','Yes');sv('e-pt-app','Yes');sv('e-pf-app','Yes');sv('e-acctype','Savings');
     sv('e-id-disp','Auto');
     $('sal-preview').textContent='Enter CTC to see salary breakdown.';
   }
@@ -740,20 +754,23 @@ async function saveEmployee(){
   $('emp-save-btn').disabled=true;
   const esicApp=gv('e-esic-app');
   const wdays=parseInt(gv('e-wdays'))||26;
-  const s=calcSal(ctc,esicApp,wdays);
+  const pfApp=gv('e-pf-app')||'Yes';
+  const ptApp=gv('e-pt-app')||'Yes';
+  const gender=gv('e-gender');
+  const s=calcSal(ctc,esicApp,wdays,pfApp,ptApp,gender);
   const id=editEmpId||('EMP'+Date.now());
   const empId=editEmpId?(employees.find(e=>e.id===editEmpId)?.empId||id):'EMP'+String(employees.length+1).padStart(3,'0');
 
   const obj={
     id,empId,name,
-    dob:gv('e-dob'),gender:gv('e-gender'),bloodGroup:gv('e-blood'),
+    dob:gv('e-dob'),gender,bloodGroup:gv('e-blood'),
     aadhaar:gv('e-aadhaar'),pan:gv('e-pan').toUpperCase(),
     address:gv('e-addr'),phone:gv('e-phone'),email:gv('e-email'),
     doj,dol:gv('e-dol'),
     status:gv('e-empstatus'),designation:gv('e-desig'),
     department:gv('e-dept-inp'),empType:gv('e-emptype'),
     reportsTo:gv('e-reports'),location:gv('e-location'),
-    ctc,wdays,esicApp,ptApp:gv('e-pt-app'),
+    ctc,wdays,esicApp,ptApp,pfApp,
     basic:s.basic,hra:s.hra,special:s.special,gross:s.gross,
     empPF:s.empPF,emplPF:s.emplPF,
     empESIC:s.empESIC,emplESIC:s.emplESIC,
@@ -784,9 +801,9 @@ function viewEmployee(id){
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
       <div class="emp-avatar" style="width:56px;height:56px;font-size:20px;background:${avatarColor(e.name)};">${initials(e.name)}</div>
       <div>
-        <div style="font-size:18px;font-weight:700;">${e.name}</div>
-        <div style="color:var(--muted);font-size:13px;">${e.designation||'—'} ${e.department?'· '+e.department:''}</div>
-        <div style="margin-top:4px;"><span class="badge ${stBadge}">${e.status}</span> <span class="badge b-ft">${e.empType||'Full Time'}</span></div>
+        <div style="font-size:18px;font-weight:700;">${esc(e.name)}</div>
+        <div style="color:var(--muted);font-size:13px;">${esc(e.designation)||'—'} ${e.department?'· '+esc(e.department):''}</div>
+        <div style="margin-top:4px;"><span class="badge ${stBadge}">${esc(e.status)}</span> <span class="badge b-ft">${esc(e.empType)||'Full Time'}</span></div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
@@ -811,13 +828,13 @@ function viewEmployee(id){
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">Statutory</div>
         <div class="sal-preview">
-          <div class="sal-row"><span>UAN</span><span>${e.uan||'—'}</span></div>
-          <div class="sal-row"><span>ESIC No</span><span>${e.esicNo||'—'}</span></div>
+          <div class="sal-row"><span>UAN</span><span>${esc(e.uan)||'—'}</span></div>
+          <div class="sal-row"><span>ESIC No</span><span>${esc(e.esicNo)||'—'}</span></div>
           <div class="sal-row"><span>Employer PF</span><span>${fmt(e.emplPF)}</span></div>
           <div class="sal-row"><span>Employer ESIC</span><span>${fmt(e.emplESIC)}</span></div>
           <div class="sal-row"><span>Total CTC (incl. employer)</span><span>${fmt(e.totalCTC)}</span></div>
         </div>
-        ${e.emgName?`<div style="margin-top:12px;background:#FEF2F2;border-radius:8px;padding:12px;font-size:13px;"><div style="font-weight:700;margin-bottom:4px;">Emergency Contact</div><div>${e.emgName} (${e.emgRel||'—'})</div><div>${e.emgPhone||'—'}</div></div>`:''}
+        ${e.emgName?`<div style="margin-top:12px;background:#FEF2F2;border-radius:8px;padding:12px;font-size:13px;"><div style="font-weight:700;margin-bottom:4px;">Emergency Contact</div><div>${esc(e.emgName)} (${esc(e.emgRel)||'—'})</div><div>${esc(e.emgPhone)||'—'}</div></div>`:''}
       </div>
     </div>`;
   $('view-edit-btn').onclick=()=>{closeModal('viewEmpModal');openEmpModal(id);};
@@ -827,8 +844,8 @@ function viewEmployee(id){
 
 function infoBox(title,...pairs){
   let rows='';
-  for(let i=0;i<pairs.length;i+=2){rows+=`<div style="display:flex;flex-direction:column;margin-bottom:8px;"><span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">${pairs[i]}</span><span style="font-weight:600;font-size:13px;">${pairs[i+1]||'—'}</span></div>`;}
-  return`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">${title}</div><div style="background:#F8FAFC;border-radius:8px;padding:12px 14px;">${rows}</div></div>`;
+  for(let i=0;i<pairs.length;i+=2){rows+=`<div style="display:flex;flex-direction:column;margin-bottom:8px;"><span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">${esc(pairs[i])}</span><span style="font-weight:600;font-size:13px;">${esc(pairs[i+1])||'—'}</span></div>`;}
+  return`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">${esc(title)}</div><div style="background:#F8FAFC;border-radius:8px;padding:12px 14px;">${rows}</div></div>`;
 }
 
 // ── PAYSLIP MODAL ──
@@ -853,13 +870,16 @@ function buildPayslipPreview(){
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
   const special=Math.max(0,gross-basic-hra);
-  const empPF=Math.round(basic*0.12);
+  const pfBase=Math.min(basic,15000);
+  const pfApplicable=e.gross<=15000||e.pfApp!=='No';
+  const empPF=pfApplicable?Math.round(pfBase*0.12):0;
   const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
-  const pt=e.ptApp==='Yes'?200:0;
+  const ptExempt=e.gender==='Female'&&e.gross<=25000;
+  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
   const net=gross-empPF-empESIC-pt;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   $('ps-preview').innerHTML=`
-    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--navy);">${e.name} — ${MN[parseInt(mo)-1]} ${yr}</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--navy);">${esc(e.name)} — ${MN[parseInt(mo)-1]} ${yr}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px;">Earnings</div>
@@ -870,9 +890,9 @@ function buildPayslipPreview(){
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:8px;">Deductions</div>
-        <div class="ps-modal-row"><span>Employee PF</span><span>${fmt(empPF)}</span></div>
+        <div class="ps-modal-row"><span>Employee PF${pfApplicable?'':' (Opted Out)'}</span><span>${fmt(empPF)}</span></div>
         <div class="ps-modal-row"><span>ESIC</span><span>${fmt(empESIC)}</span></div>
-        <div class="ps-modal-row"><span>Prof. Tax</span><span>${fmt(pt)}</span></div>
+        <div class="ps-modal-row"><span>Prof. Tax${ptExempt?' (Exempt)':''}</span><span>${fmt(pt)}</span></div>
         <div class="ps-modal-row"><span>Total Deductions</span><span>${fmt(empPF+empESIC+pt)}</span></div>
       </div>
     </div>
@@ -898,28 +918,31 @@ function doPrintPayslip(){
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
   const special=Math.max(0,gross-basic-hra);
-  const empPF=Math.round(basic*0.12);
+  const pfBase=Math.min(basic,15000);
+  const pfApplicable=e.gross<=15000||e.pfApp!=='No';
+  const empPF=pfApplicable?Math.round(pfBase*0.12):0;
   const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
-  const pt=e.ptApp==='Yes'?200:0;
+  const ptExempt=e.gender==='Female'&&e.gross<=25000;
+  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
   const net=gross-empPF-empESIC-pt;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const moName=MN[parseInt(mo)-1]+' '+yr;
   const pa=$('printArea');pa.style.display='block';
   pa.innerHTML=`<div class="payslip">
-    <div class="ps-head"><h1>${FIRM.name}</h1><p>${FIRM.addr}</p></div>
+    <div class="ps-head"><h1>${esc(FIRM.name)}</h1><p>${esc(FIRM.addr)}</p></div>
     <div class="ps-title">SALARY SLIP — ${moName.toUpperCase()}</div>
     <div class="ps-info">
       <div class="ps-col">
-        <div class="ps-row"><b>Employee Name:</b>${e.name}</div>
-        <div class="ps-row"><b>Employee ID:</b>${e.empId}</div>
-        <div class="ps-row"><b>Designation:</b>${e.designation||'—'}</div>
-        <div class="ps-row"><b>Department:</b>${e.department||'—'}</div>
+        <div class="ps-row"><b>Employee Name:</b>${esc(e.name)}</div>
+        <div class="ps-row"><b>Employee ID:</b>${esc(e.empId)}</div>
+        <div class="ps-row"><b>Designation:</b>${esc(e.designation)||'—'}</div>
+        <div class="ps-row"><b>Department:</b>${esc(e.department)||'—'}</div>
         <div class="ps-row"><b>Date of Joining:</b>${fmtD(e.doj)}</div>
       </div>
       <div class="ps-col">
-        <div class="ps-row"><b>PAN:</b>${e.pan||'—'}</div>
-        <div class="ps-row"><b>UAN:</b>${e.uan||'—'}</div>
-        <div class="ps-row"><b>ESIC No:</b>${e.esicNo||'—'}</div>
+        <div class="ps-row"><b>PAN:</b>${esc(e.pan)||'—'}</div>
+        <div class="ps-row"><b>UAN:</b>${esc(e.uan)||'—'}</div>
+        <div class="ps-row"><b>ESIC No:</b>${esc(e.esicNo)||'—'}</div>
         <div class="ps-row"><b>Working Days:</b>${wdays}</div>
         <div class="ps-row"><b>Days Present:</b>${present}</div>
       </div>
@@ -934,9 +957,9 @@ function doPrintPayslip(){
       </div>
       <div class="ps-ded">
         <div class="ps-sec-title">Deductions</div>
-        <div class="ps-item"><span>Provident Fund (Employee 12%)</span><span>${fmt2(empPF)}</span></div>
+        <div class="ps-item"><span>Provident Fund (Employee 12%)${pfApplicable?'':' — Opted Out'}</span><span>${fmt2(empPF)}</span></div>
         <div class="ps-item"><span>ESIC (Employee 0.75%)</span><span>${fmt2(empESIC)}</span></div>
-        <div class="ps-item"><span>Professional Tax</span><span>${fmt2(pt)}</span></div>
+        <div class="ps-item"><span>Professional Tax${ptExempt?' — Exempt':''}</span><span>${fmt2(pt)}</span></div>
         <div class="ps-item total"><span>Total Deductions</span><span>${fmt2(empPF+empESIC+pt)}</span></div>
       </div>
     </div>
@@ -946,7 +969,7 @@ function doPrintPayslip(){
     </div>
     <div class="ps-foot">
       <div><p>Employee Signature: ___________________</p></div>
-      <div style="text-align:right;"><p>For, <strong>${FIRM.name}</strong></p><p style="margin-top:20px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
+      <div style="text-align:right;"><p>For, <strong>${esc(FIRM.name)}</strong></p><p style="margin-top:20px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
     </div>
   </div>`;
   closeModal('payslipModal');
@@ -980,15 +1003,18 @@ function getSalRow(e){
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
   const special=Math.max(0,gross-basic-hra);
-  const empPF=Math.round(basic*0.12);
-  const emplPF=Math.round(basic*0.12);
+  const pfBase=Math.min(basic,15000);
+  const pfApplicable=e.gross<=15000||e.pfApp!=='No';
+  const empPF=pfApplicable?Math.round(pfBase*0.12):0;
+  const emplPF=pfApplicable?Math.round(pfBase*0.12):0;
   const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
   const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0325):0;
-  const pt=e.ptApp==='Yes'?200:0;
+  const ptExempt=e.gender==='Female'&&e.gross<=25000;
+  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
   const totalDed=empPF+empESIC+pt;
   const net=gross-totalDed;
   const lop=Math.max(0,(e.wdays||26)-(parseFloat(e.present)||e.wdays));
-  return{gross,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,totalDed,net,lop};
+  return{gross,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop};
 }
 
 function renderSalarySheet(period){
@@ -1008,9 +1034,9 @@ function renderSalarySheet(period){
     const r=getSalRow(e);
     totGross+=r.gross;totEmpPF+=r.empPF;totEmpESIC+=r.empESIC;totPT+=r.pt;totNet+=r.net;
     html+=`<tr>
-      <td style="color:var(--muted);">${e.empId||i+1}</td>
-      <td><strong>${e.name}</strong></td>
-      <td style="font-size:12px;">${e.designation||'—'}</td>
+      <td style="color:var(--muted);">${esc(e.empId)||i+1}</td>
+      <td><strong>${esc(e.name)}</strong></td>
+      <td style="font-size:12px;">${esc(e.designation)||'—'}</td>
       <td style="text-align:center;">${e.wdays}</td>
       <td><input type="number" value="${e.present}" min="0" max="${e.wdays}" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;"></td>
       <td style="text-align:center;color:var(--red);">${r.lop>0?r.lop:'—'}</td>
@@ -1105,7 +1131,7 @@ function renderPF(data,period){
   const moName=MN[parseInt(mo)-1]+' '+yr;
   let totEmpPF=0,totEmplPF=0,totWages=0;
   let rows=pfEmps.map((e,i)=>{totEmpPF+=e.empPF;totEmplPF+=e.emplPF;totWages+=e.gross;
-    return`<tr><td>${i+1}</td><td>${e.uan||'—'}</td><td>${e.name}</td><td>${fmt(e.gross)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.empPF)}</td><td>${fmt(e.emplPF)}</td><td style="font-weight:700;">${fmt(e.empPF+e.emplPF)}</td></tr>`;
+    return`<tr><td>${i+1}</td><td>${esc(e.uan)||'—'}</td><td>${esc(e.name)}</td><td>${fmt(e.gross)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.empPF)}</td><td>${fmt(e.emplPF)}</td><td style="font-weight:700;">${fmt(e.empPF+e.emplPF)}</td></tr>`;
   }).join('');
   $('sp-pf').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">PF / ECR Working — ${moName}</div>
@@ -1128,7 +1154,7 @@ function renderESIC(data,period){
   const moName=MN[parseInt(mo)-1]+' '+yr;
   let totEmp=0,totEmpl=0,totWages=0;
   let rows=esicEmps.map((e,i)=>{totEmp+=e.empESIC;totEmpl+=e.emplESIC;totWages+=e.gross;
-    return`<tr><td>${i+1}</td><td>${e.esicNo||'—'}</td><td>${e.name}</td><td>${fmt(e.gross)}</td><td>${fmt(e.empESIC)}</td><td>${fmt(e.emplESIC)}</td><td style="font-weight:700;">${fmt(e.empESIC+e.emplESIC)}</td></tr>`;
+    return`<tr><td>${i+1}</td><td>${esc(e.esicNo)||'—'}</td><td>${esc(e.name)}</td><td>${fmt(e.gross)}</td><td>${fmt(e.empESIC)}</td><td>${fmt(e.emplESIC)}</td><td style="font-weight:700;">${fmt(e.empESIC+e.emplESIC)}</td></tr>`;
   }).join('');
   $('sp-esic').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">ESIC Working — ${moName}</div>
@@ -1146,19 +1172,21 @@ function renderESIC(data,period){
 
 function renderPT(data,period){
   const ptEmps=data.filter(e=>e.ptApp==='Yes');
+  const exemptCount=ptEmps.filter(e=>e.ptExempt||e.pt===0).length;
+  const totPT=ptEmps.reduce((s,e)=>s+(e.pt||0),0);
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const [yr,mo]=period.split('-');
   const moName=MN[parseInt(mo)-1]+' '+yr;
-  let rows=ptEmps.map((e,i)=>`<tr><td>${i+1}</td><td>${e.name}</td><td>${e.designation||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;">₹200</td></tr>`).join('');
+  let rows=ptEmps.map((e,i)=>`<tr><td>${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.designation)||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;${e.pt>0?'':'color:var(--green);'}">${e.pt>0?'₹'+e.pt:'Exempt'}</td></tr>`).join('');
   $('sp-pt').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">Professional Tax — ${moName}</div>
-    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: ₹200/month per employee (for salary > ₹10,000/month)</div>
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: ₹200/month per employee (for salary > ₹10,000/month). Women employees with Gross ≤ ₹25,000/month are exempt.</div>
     <div class="card"><div class="tw"><table>
       <thead><tr><th>#</th><th>Employee Name</th><th>Designation</th><th>Gross Salary</th><th>PT Amount</th></tr></thead>
       <tbody>${rows||'<tr><td colspan="5" class="no-data">No PT applicable employees.</td></tr>'}
       <tr style="font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);">
-        <td colspan="4">TOTAL (${ptEmps.length} employees)</td>
-        <td>₹${ptEmps.length*200}</td>
+        <td colspan="4">TOTAL (${ptEmps.length} employees, ${exemptCount} exempt)</td>
+        <td>₹${totPT}</td>
       </tr></tbody>
     </table></div></div>`;
 }
@@ -1169,7 +1197,7 @@ function printStatutory(){
   const esicContent=$('sp-esic').innerHTML;
   const ptContent=$('sp-pt').innerHTML;
   pa.innerHTML=`<div style="font-family:Arial,sans-serif;">
-    <h2 style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;">${FIRM.name}</h2>
+    <h2 style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;">${esc(FIRM.name)}</h2>
     <h3>PF / ECR Working</h3>${pfContent}
     <div style="page-break-before:always;"></div>
     <h3>ESIC Working</h3>${esicContent}
