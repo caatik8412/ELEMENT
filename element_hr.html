@@ -382,13 +382,13 @@ tbody tr:hover{background:#F8FAFC;}
 
     <div class="msec">Salary Structure</div>
     <div class="fg3">
-      <div class="fg"><label>Monthly CTC (₹) *</label><input id="e-ctc" type="number" step="100" placeholder="e.g. 25000" oninput="calcSalPreview()"></div>
+      <div class="fg"><label>Monthly Gross Salary (₹) *</label><input id="e-ctc" type="number" step="100" placeholder="e.g. 25000" oninput="calcSalPreview()"></div>
       <div class="fg"><label>Working Days/Month</label><input id="e-wdays" type="number" value="26" min="1" max="31" oninput="calcSalPreview()"></div>
       <div class="fg"><label>ESIC Applicable</label><select id="e-esic-app" onchange="calcSalPreview()"><option value="Yes">Yes (Gross ≤ ₹21,000)</option><option value="No">No</option></select></div>
       <div class="fg"><label>PF Applicable (if Gross &gt; ₹15,000)</label><select id="e-pf-app" onchange="calcSalPreview()"><option value="Yes">Yes</option><option value="No">No — Opt Out</option></select></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin:-8px 0 10px;">PF is mandatory below ₹15,000 Gross regardless of this setting. Above ₹15,000, the employee may opt out.</div>
-    <div class="sal-preview" id="sal-preview">Enter CTC to see salary breakdown.</div>
+    <div class="sal-preview" id="sal-preview">Enter Gross Salary to see salary breakdown.</div>
 
     <div class="msec">Bank Details</div>
     <div class="fg3">
@@ -562,8 +562,10 @@ function initYrSels(){
   ['sal-month','stat-month','ps-month'].forEach(id=>{const el=$(id);if(el)el.value=m;});
 }
 
-// ── SALARY CALCULATOR (Backward from CTC) ──
-// CTC = Gross + Employer PF (if applicable) + Employer ESIC (if applicable)
+// ── SALARY CALCULATOR (Forward from Gross) ──
+// Company now quotes Gross Salary directly to the employee (not CTC).
+// Total CTC = Gross + Employer PF (if applicable) + Employer ESIC (if applicable)
+// — a forward-calculated figure for the employer's own reference only.
 // PF wage ceiling = ₹15,000 → max PF = ₹1,800 (12% × 15,000)
 // PF is mandatory while Gross ≤ ₹15,000. Above ₹15,000 it becomes optional — the
 // employee can opt in/out via e-pf-app; below the ceiling PF always applies.
@@ -572,28 +574,15 @@ function initYrSels(){
 // Special Allowance = Gross − Basic − HRA
 // PT (Maharashtra): flat ₹200/month, except women employees with Gross ≤ ₹25,000
 // are fully exempt.
-// Solve: CTC = Gross + (PF applicable ? min(Basic,15000)×0.12 : 0) + (Gross≤21000 ? Gross×0.0325 : 0)
-function calcSal(ctc, esicApp='Yes', wdays=26, pfApp='Yes', ptApp='Yes', gender=''){
-  const c=parseFloat(ctc)||0;
+// Gross Salary is the direct input (what the company quotes the employee).
+function calcSal(grossInput, esicApp='Yes', wdays=26, pfApp='Yes', ptApp='Yes', gender=''){
+  const c=parseFloat(grossInput)||0;
   if(!c)return null;
 
-  // Iterative backward solve for Gross from CTC
-  // Start with estimate, refine
-  let gross = c; // initial guess
-  for(let i=0;i<20;i++){
-    const basicEst = Math.max(8000, Math.round(gross*0.50));
-    const pfBase   = Math.min(basicEst, 15000);
-    const pfApplicableEst = gross<=15000 || pfApp!=='No';
-    const emplPFEst  = pfApplicableEst ? Math.round(pfBase*0.12) : 0;
-    const esicApplicableEst = esicApp==='Yes' && gross<=21000;
-    const emplESICEst = esicApplicableEst ? Math.round(gross*0.0325) : 0;
-    const newGross = c - emplPFEst - emplESICEst;
-    if(Math.abs(newGross - gross) < 1){ gross = newGross; break; }
-    gross = newGross;
-  }
-  gross = Math.round(gross);
+  // Gross is now entered directly — no back-solving needed.
+  const gross = Math.round(c);
 
-  // Now compute all components from final gross
+  // Compute all components from gross
   const basic    = Math.max(8000, Math.round(gross*0.50));
   const hra      = Math.round(basic*0.50);  // 50% — Pune is metro FY 2026-27
   const special  = Math.max(0, gross - basic - hra);
@@ -607,21 +596,21 @@ function calcSal(ctc, esicApp='Yes', wdays=26, pfApp='Yes', ptApp='Yes', gender=
   const ptExempt = gender==='Female' && gross<=25000;
   const pt       = (ptApp==='Yes' && !ptExempt) ? 200 : 0;
   const netPay   = gross - empPF - empESIC - pt;
-  const totalCTC = gross + emplPF + emplESIC; // should = ctc
+  const totalCTC = gross + emplPF + emplESIC; // employer's total cost, for reference only
   return{basic,hra,special,gross,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,netPay,totalCTC,esicApplicable,pfApplicable,wdays,pfBase};
 }
 
 function calcSalPreview(){
-  const ctc=parseFloat(gv('e-ctc'))||0;
+  const gross=parseFloat(gv('e-ctc'))||0;
   const esicApp=gv('e-esic-app')||'Yes';
   const wdays=parseInt(gv('e-wdays'))||26;
   const pfApp=gv('e-pf-app')||'Yes';
   const ptApp=gv('e-pt-app')||'Yes';
   const gender=gv('e-gender')||'';
   const el=$('sal-preview');
-  if(!ctc){el.innerHTML='Enter CTC to see salary breakdown.';return;}
-  const s=calcSal(ctc,esicApp,wdays,pfApp,ptApp,gender);
-  if(!s){el.innerHTML='Invalid CTC.';return;}
+  if(!gross){el.innerHTML='Enter Gross Salary to see salary breakdown.';return;}
+  const s=calcSal(gross,esicApp,wdays,pfApp,ptApp,gender);
+  if(!s){el.innerHTML='Invalid Gross Salary.';return;}
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
       <div>
@@ -644,7 +633,7 @@ function calcSalPreview(){
       <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
       <span style="color:var(--navy);font-weight:700;">Total CTC (incl. employer cost): <strong>${fmt(s.totalCTC)}</strong></span>
     </div>
-    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">CTC entered: ${fmt(ctc)} → Gross after employer deductions: ${fmt(s.gross)}</div>`;
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Gross Salary entered: ${fmt(gross)} → Total CTC (employer's cost): ${fmt(s.totalCTC)}</div>`;
 }
 
 // ── STATS ──
@@ -654,7 +643,7 @@ function renderStats(){
   const prob=employees.filter(e=>e.status==='Probation').length;
   const contract=employees.filter(e=>e.status==='Contract').length;
   const inactive=employees.filter(e=>e.status==='Resigned'||e.status==='Terminated').length;
-  const ctcTotal=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated').reduce((s,e)=>s+e.ctc,0);
+  const ctcTotal=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated').reduce((s,e)=>s+(e.totalCTC||e.ctc||0),0);
   $('s-total').textContent=total;
   $('s-active').textContent=active;
   $('s-prob').textContent=prob;
@@ -736,7 +725,7 @@ function openEmpModal(id){
     sv('e-empstatus','Active');sv('e-emptype','Full Time');sv('e-wdays','26');
     sv('e-esic-app','Yes');sv('e-pt-app','Yes');sv('e-pf-app','Yes');sv('e-acctype','Savings');
     sv('e-id-disp','Auto');
-    $('sal-preview').textContent='Enter CTC to see salary breakdown.';
+    $('sal-preview').textContent='Enter Gross Salary to see salary breakdown.';
   }
   $('emp-save-btn').disabled=false;
   openModal('empModal');
@@ -746,10 +735,10 @@ function openEmpModal(id){
 async function saveEmployee(){
   const name=gv('e-name').trim();
   const doj=gv('e-doj');
-  const ctc=parseFloat(gv('e-ctc'))||0;
+  const grossSalary=parseFloat(gv('e-ctc'))||0; // field/db name 'ctc' kept for sheet compatibility; now holds Gross Salary
   if(!name){toast('Employee name is required','err');return;}
   if(!doj){toast('Date of Joining is required','err');return;}
-  if(!ctc){toast('CTC is required','err');return;}
+  if(!grossSalary){toast('Gross Salary is required','err');return;}
 
   $('emp-save-btn').disabled=true;
   const esicApp=gv('e-esic-app');
@@ -757,7 +746,7 @@ async function saveEmployee(){
   const pfApp=gv('e-pf-app')||'Yes';
   const ptApp=gv('e-pt-app')||'Yes';
   const gender=gv('e-gender');
-  const s=calcSal(ctc,esicApp,wdays,pfApp,ptApp,gender);
+  const s=calcSal(grossSalary,esicApp,wdays,pfApp,ptApp,gender);
   const id=editEmpId||('EMP'+Date.now());
   const empId=editEmpId?(employees.find(e=>e.id===editEmpId)?.empId||id):'EMP'+String(employees.length+1).padStart(3,'0');
 
@@ -770,7 +759,7 @@ async function saveEmployee(){
     status:gv('e-empstatus'),designation:gv('e-desig'),
     department:gv('e-dept-inp'),empType:gv('e-emptype'),
     reportsTo:gv('e-reports'),location:gv('e-location'),
-    ctc,wdays,esicApp,ptApp,pfApp,
+    ctc:grossSalary,wdays,esicApp,ptApp,pfApp,
     basic:s.basic,hra:s.hra,special:s.special,gross:s.gross,
     empPF:s.empPF,emplPF:s.emplPF,
     empESIC:s.empESIC,emplESIC:s.emplESIC,
