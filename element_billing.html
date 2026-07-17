@@ -253,6 +253,7 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
     <div class="stat r"><div class="slbl">Total Outstanding</div><div class="sval" id="d-os">—</div></div>
     <div class="stat a"><div class="slbl">Est. GST Payable</div><div class="sval" id="d-gst">—</div></div>
     <div class="stat p"><div class="slbl">This Month Purchases</div><div class="sval" id="d-pur">—</div></div>
+    <div class="stat r"><div class="slbl">TDS Deducted (This Month)</div><div class="sval" id="d-tds">—</div></div>
   </div>
   <div class="db-grid">
     <div class="card">
@@ -321,8 +322,8 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
       <select id="pf-st" onchange="renderPurchases()"><option value="">All Status</option><option>Unpaid</option><option>Partial</option><option>Paid</option></select>
     </div>
     <div class="card"><div class="tw"><table>
-      <thead><tr><th>Date</th><th>Vendor</th><th>GSTIN</th><th>Bill No</th><th>Category</th><th>Taxable</th><th>GST%</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>ITC</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="pur-tbody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody>
+      <thead><tr><th>Date</th><th>Vendor</th><th>GSTIN</th><th>Bill No</th><th>Category</th><th>Taxable</th><th>GST%</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>TDS</th><th>Net Payable</th><th>ITC</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="pur-tbody"><tr><td colspan="16" class="no-data">Loading…</td></tr></tbody>
     </table></div></div>
   </div>
   <div class="sp" id="sp-pay">
@@ -354,9 +355,10 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
 </div>
 <!-- REPORTS -->
 <div class="tp" id="tp-reports">
-  <div class="sub-tabs" style="max-width:280px;">
+  <div class="sub-tabs" style="max-width:420px;">
     <button class="st active" onclick="switchRpt('g1')">GSTR-1</button>
     <button class="st" onclick="switchRpt('g3')">Est. GSTR-3B</button>
+    <button class="st" onclick="switchRpt('tds')">TDS Summary</button>
   </div>
   <div class="sp active" id="sp-g1">
     <div class="rpt-filters">
@@ -379,6 +381,17 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
       </div>
     </div>
     <div id="g3-result"></div>
+  </div>
+  <div class="sp" id="sp-tds">
+    <div class="rpt-filters">
+      <div class="fg"><label>Quarter</label><select id="tds-qtr"><option value="Q1">Q1 (Apr–Jun)</option><option value="Q2">Q2 (Jul–Sep)</option><option value="Q3">Q3 (Oct–Dec)</option><option value="Q4">Q4 (Jan–Mar)</option></select></div>
+      <div class="fg"><label>Financial Year</label><select id="tds-fy"></select></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;">
+        <button class="btn bn" onclick="loadTDS()">Load Report</button>
+        <button class="btn bo" onclick="exportTDSCSV()">⬇ CSV</button>
+      </div>
+    </div>
+    <div id="tds-result"></div>
   </div>
 </div>
 <!-- SETTINGS -->
@@ -506,10 +519,10 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
   <div class="mb">
     <div class="fg2">
       <div class="fg"><label>Date *</label><input id="pu-date" type="date"></div>
-      <div class="fg"><label>Vendor / Supplier *</label><input id="pu-vnd" placeholder="Name"></div>
+      <div class="fg"><label>Vendor / Supplier *</label><input id="pu-vnd" placeholder="Name" oninput="calcPur()"></div>
       <div class="fg"><label>Vendor GSTIN</label><input id="pu-gstin" maxlength="15"></div>
       <div class="fg"><label>Bill / Invoice No</label><input id="pu-bill"></div>
-      <div class="fg"><label>Category</label><select id="pu-cat"><option>Professional Fees</option><option>Office Supplies</option><option>Software / Subscription</option><option>Rent</option><option>Travel &amp; Conveyance</option><option>Repairs &amp; Maintenance</option><option>Utilities</option><option>Contract Labour</option><option>Other Services</option></select></div>
+      <div class="fg"><label>Category</label><select id="pu-cat" onchange="onPurCatChange()"><option>Professional Fees</option><option>Office Supplies</option><option>Software / Subscription</option><option>Rent</option><option>Travel &amp; Conveyance</option><option>Repairs &amp; Maintenance</option><option>Utilities</option><option>Contract Labour</option><option>Other Services</option></select></div>
       <div class="fg"><label>Place of Supply</label><select id="pu-pos" onchange="calcPur()"><option value="Maharashtra">Maharashtra (CGST+SGST)</option><option value="Other">Other State (IGST)</option></select></div>
       <div class="fg"><label>Taxable Value (₹) *</label><input id="pu-tax" type="number" step="0.01" oninput="calcPur()"></div>
       <div class="fg"><label>GST Rate %</label><select id="pu-gst" onchange="calcPur()"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></div>
@@ -519,6 +532,14 @@ tbody tr.cancelled-row:hover{background:#FEE2E2;}
       <div class="fg"><label>Total</label><input id="pu-tot" readonly style="font-weight:700;color:var(--navy);"></div>
       <div class="fg"><label>ITC Eligibility</label><select id="pu-itc"><option value="Eligible">Eligible ITC</option><option value="Ineligible">Ineligible (Sec 17(5))</option><option value="Blocked">Blocked Credit</option></select></div>
       <div class="fg"><label>Payment Status</label><select id="pu-st"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
+      <div class="fg s2" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;"><label style="font-weight:700;color:var(--navy);">TDS (Income Tax Withholding)</label></div>
+      <div class="fg"><label>TDS Section</label><select id="pu-tds" onchange="calcPur()"><option value="None">None</option><option value="194J">194J — Professional / Technical Fees</option><option value="194C">194C — Contract Payment</option></select></div>
+      <div class="fg"><label>Vendor PAN</label><input id="pu-pan" maxlength="10" placeholder="ABCDE1234F" oninput="this.value=this.value.toUpperCase();calcPur()"></div>
+      <div class="fg"><label>Payee Type (for 194C rate)</label><select id="pu-payeetype" onchange="calcPur()"><option value="Individual/HUF">Individual / HUF (1%)</option><option value="Other">Company / Firm / Other (2%)</option></select></div>
+      <div class="fg"><label>TDS Rate</label><input id="pu-tdsrate" readonly></div>
+      <div class="fg"><label>TDS Deducted (₹)</label><input id="pu-tdsamt" readonly></div>
+      <div class="fg"><label>Net Payable to Vendor (₹)</label><input id="pu-netpay" readonly style="font-weight:700;color:var(--green);"></div>
+      <div class="fg s2" id="pu-tds-note" style="font-size:11.5px;line-height:1.5;"></div>
       <div class="fg s2"><label>Narration</label><input id="pu-nar" placeholder="Optional"></div>
     </div>
   </div>
@@ -735,7 +756,7 @@ const TABS=['dashboard','records','clients','reports','settings'];
 let curRec='inv',curRpt='g1';
 function switchTab(id){document.querySelectorAll('.mt').forEach((b,i)=>b.classList.toggle('active',TABS[i]===id));document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));const tp=$('tp-'+id);if(tp)tp.classList.add('active');if(id==='dashboard')loadDash();}
 function switchRec(t){curRec=t;const recs=['inv','rcpt','cn','pur','pay'];document.querySelectorAll('#tp-records .st').forEach((b,i)=>b.classList.toggle('active',recs[i]===t));document.querySelectorAll('#tp-records .sp').forEach(p=>p.classList.remove('active'));const sp=$('sp-'+t);if(sp)sp.classList.add('active');}
-function switchRpt(t){curRpt=t;document.querySelectorAll('#tp-reports .st').forEach((b,i)=>b.classList.toggle('active',['g1','g3'][i]===t));document.querySelectorAll('#tp-reports .sp').forEach(p=>p.classList.remove('active'));const sp=$('sp-'+t);if(sp)sp.classList.add('active');}
+function switchRpt(t){curRpt=t;document.querySelectorAll('#tp-reports .st').forEach((b,i)=>b.classList.toggle('active',['g1','g3','tds'][i]===t));document.querySelectorAll('#tp-reports .sp').forEach(p=>p.classList.remove('active'));const sp=$('sp-'+t);if(sp)sp.classList.add('active');}
 function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
@@ -1023,11 +1044,66 @@ async function saveCreditNote(){
 function printCNById(id){const cn=creditNotes.find(x=>x.id===id);if(!cn)return;const inv=invoices.find(i=>i.id===cn.invoiceId)||null;renderCNPrint(cn,inv);setTimeout(()=>window.print(),300);}
 
 // ── PURCHASES ──
-function renderPurchases(){const q=gv('pf-q').toLowerCase(),mo=gv('pf-mo'),st=gv('pf-st');const list=purchases.filter(p=>(!q||(p.vendor+(p.bill||p.billno||'')).toLowerCase().includes(q))&&(!mo||p.date.startsWith(mo))&&(!st||p.status===st)).slice().reverse();const tb=$('pur-tbody');if(!tb)return;if(!list.length){tb.innerHTML='<tr><td colspan="14" class="no-data">No purchases yet.</td></tr>';return;}const ib=v=>v==='Eligible'?'bgr':v==='Ineligible'?'brd':'bam';tb.innerHTML=list.map(p=>`<tr><td>${fmtD(p.date)}</td><td><strong>${esc(p.vendor)||'—'}</strong></td><td style="font-size:11px;">${esc(p.gstin)||'—'}</td><td>${esc(p.bill||p.billno)||'—'}</td><td>${esc(p.category)||'—'}</td><td>${fmt(p.taxable)}</td><td>${p.gstrate||0}%</td><td>${fmt(p.cgst)}</td><td>${fmt(p.sgst)}</td><td>${fmt(p.igst)}</td><td><strong>${fmt(p.total)}</strong></td><td><span class="badge ${ib(p.itc)}">${esc(p.itc)||'—'}</span></td><td>${bdg(p.status)}</td><td>${p.status!=='Paid'?`<button class="btn bn bsm" onclick="openPaymentModal('${p.id}')">Pay</button>`:''}<button class="bi" onclick="delPur('${p.id}')" style="color:var(--red);">🗑</button></td></tr>`).join('');}
+function renderPurchases(){const q=gv('pf-q').toLowerCase(),mo=gv('pf-mo'),st=gv('pf-st');const list=purchases.filter(p=>(!q||(p.vendor+(p.bill||p.billno||'')).toLowerCase().includes(q))&&(!mo||p.date.startsWith(mo))&&(!st||p.status===st)).slice().reverse();const tb=$('pur-tbody');if(!tb)return;if(!list.length){tb.innerHTML='<tr><td colspan="16" class="no-data">No purchases yet.</td></tr>';return;}const ib=v=>v==='Eligible'?'bgr':v==='Ineligible'?'brd':'bam';tb.innerHTML=list.map(p=>`<tr><td>${fmtD(p.date)}</td><td><strong>${esc(p.vendor)||'—'}</strong></td><td style="font-size:11px;">${esc(p.gstin)||'—'}</td><td>${esc(p.bill||p.billno)||'—'}</td><td>${esc(p.category)||'—'}</td><td>${fmt(p.taxable)}</td><td>${p.gstrate||0}%</td><td>${fmt(p.cgst)}</td><td>${fmt(p.sgst)}</td><td>${fmt(p.igst)}</td><td><strong>${fmt(p.total)}</strong></td><td>${p.tdsSection&&p.tdsSection!=='None'?`<span class="badge bam">${esc(p.tdsSection)} ${fmt(p.tdsAmount)}</span>`:'—'}</td><td>${fmt(p.netPayable??p.total)}</td><td><span class="badge ${ib(p.itc)}">${esc(p.itc)||'—'}</span></td><td>${bdg(p.status)}</td><td>${p.status!=='Paid'?`<button class="btn bn bsm" onclick="openPaymentModal('${p.id}')">Pay</button>`:''}<button class="bi" onclick="delPur('${p.id}')" style="color:var(--red);">🗑</button></td></tr>`).join('');}
 function renderPayments(){const q=gv('pyf-q').toLowerCase(),mo=gv('pyf-mo');const list=purPays.filter(p=>(!q||(p.vendor+p.payNo).toLowerCase().includes(q))&&(!mo||p.date.startsWith(mo))).slice().reverse();const tb=$('pay-tbody');if(!tb)return;if(!list.length){tb.innerHTML='<tr><td colspan="8" class="no-data">No payments yet.</td></tr>';return;}tb.innerHTML=list.map(p=>`<tr><td><strong>${p.payNo}</strong></td><td>${fmtD(p.date)}</td><td>${esc(p.vendor)||'—'}</td><td><strong>${fmt(p.amount)}</strong></td><td><span class="badge bbl">${esc(p.mode)||'—'}</span></td><td>${esc(p.ref)||'—'}</td><td style="font-size:12px;">${esc(p.bills)||'—'}</td><td><button class="bi" onclick="printPayById('${p.id}')">🖨</button></td></tr>`).join('');}
-function calcPur(){const tax=parseFloat($('pu-tax').value)||0,rate=parseFloat($('pu-gst').value)||0,isI=$('pu-pos').value!=='Maharashtra',g=tax*rate/100;sv('pu-cgst',isI?'0.00':(g/2).toFixed(2));sv('pu-sgst',isI?'0.00':(g/2).toFixed(2));sv('pu-igst',isI?g.toFixed(2):'0.00');sv('pu-tot',(tax+g).toFixed(2));}
-function openPurchaseModal(){['pu-vnd','pu-gstin','pu-bill','pu-nar'].forEach(i=>sv(i,''));sv('pu-date',new Date().toISOString().split('T')[0]);sv('pu-cat','Professional Fees');sv('pu-pos','Maharashtra');sv('pu-gst','18');sv('pu-itc','Eligible');sv('pu-st','Unpaid');sv('pu-tax','');calcPur();$('pur-save-btn').disabled=false;openModal('purModal');}
-async function savePurchase(){const vendor=gv('pu-vnd').trim();if(!vendor){toast('Vendor required','err');return;}const tax=parseFloat(gv('pu-tax'))||0;if(!tax){toast('Enter taxable value','err');return;}$('pur-save-btn').disabled=true;const isI=gv('pu-pos')!=='Maharashtra',rate=parseFloat(gv('pu-gst'))||0,g=tax*rate/100;const obj={id:Date.now().toString(),date:gv('pu-date'),vendor,gstin:gv('pu-gstin'),bill:gv('pu-bill'),category:gv('pu-cat'),pos:gv('pu-pos'),taxable:tax,gstrate:rate,cgst:isI?0:g/2,sgst:isI?0:g/2,igst:isI?g:0,total:tax+g,itc:gv('pu-itc'),status:gv('pu-st'),narration:gv('pu-nar'),received:0,balance:tax+g};await apiPost('savePurchase',obj);purchases.push(obj);closeModal('purModal');renderPurchases();loadDash();toast('Purchase saved','ok');$('pur-save-btn').disabled=false;}
+// ── TDS (194J Professional / 194C Contract) ──
+// TDS is computed on Taxable Value (GST excluded, per CBDT Circular 23/2017 where GST is shown separately).
+// 194J: flat 10% (20% without PAN — Sec 206AA). No TDS while FY-cumulative taxable value to this vendor under 194J stays ≤ ₹30,000.
+// 194C: 1% Individual/HUF or 2% Others (20% without PAN). No TDS unless this single bill > ₹30,000 OR FY-cumulative to this vendor under 194C > ₹1,00,000.
+// Thresholds are evaluated for information only — once TDS becomes applicable for the year, deducting on every
+// subsequent bill is standard practice, but catching up TDS on earlier un-deducted bills is a judgment call for your CA.
+function finYearRange(dateStr){const d=dateStr?new Date(dateStr):new Date();const y=d.getFullYear(),m=d.getMonth()+1;const fy=m>=4?y:y-1;return{from:fy+'-04-01',to:(fy+1)+'-03-31'};}
+function vendorTdsBase(vendor,section,dateStr){
+  if(!vendor||!section||section==='None')return 0;
+  const{from,to}=finYearRange(dateStr);const vN=vendor.trim().toLowerCase();
+  return purchases.filter(p=>(p.vendor||'').trim().toLowerCase()===vN&&p.tdsSection===section&&p.date>=from&&p.date<=to)
+    .reduce((s,p)=>s+(parseFloat(p.taxable)||0),0);
+}
+function onPurCatChange(){const cat=gv('pu-cat');sv('pu-tds',cat==='Professional Fees'?'194J':cat==='Contract Labour'?'194C':'None');calcPur();}
+function calcPur(){
+  const tax=parseFloat($('pu-tax').value)||0,rate=parseFloat($('pu-gst').value)||0,isI=$('pu-pos').value!=='Maharashtra',g=tax*rate/100;
+  sv('pu-cgst',isI?'0.00':(g/2).toFixed(2));sv('pu-sgst',isI?'0.00':(g/2).toFixed(2));sv('pu-igst',isI?g.toFixed(2):'0.00');
+  const total=tax+g;sv('pu-tot',total.toFixed(2));
+
+  const section=gv('pu-tds')||'None',pan=(gv('pu-pan')||'').trim(),payeeType=gv('pu-payeetype')||'Individual/HUF',date=gv('pu-date');
+  const note=$('pu-tds-note');let tdsRate=0,tdsAmt=0,thresholdCrossed=false,priorBase=0,hasPan=pan.length===10;
+  if(section!=='None'&&tax>0){
+    priorBase=vendorTdsBase(gv('pu-vnd'),section,date);
+    const cumulative=priorBase+tax;
+    if(section==='194J'){
+      tdsRate=hasPan?10:20;
+      if(cumulative>30000){tdsAmt=Math.round((tax*tdsRate/100)/10)*10;thresholdCrossed=priorBase>0&&priorBase<=30000;}
+    }else if(section==='194C'){
+      tdsRate=hasPan?(payeeType==='Individual/HUF'?1:2):20;
+      const singleTrig=tax>30000,cumTrig=cumulative>100000;
+      if(singleTrig||cumTrig){tdsAmt=Math.round((tax*tdsRate/100)/10)*10;thresholdCrossed=cumTrig&&priorBase>0&&priorBase<=100000;}
+    }
+  }
+  sv('pu-tdsrate',section==='None'?'—':tdsRate+'%');
+  sv('pu-tdsamt',tdsAmt.toFixed(2));
+  sv('pu-netpay',(total-tdsAmt).toFixed(2));
+  $('pu-payeetype').closest('.fg').style.display=section==='194C'?'':'none';
+  if(note){
+    if(section==='None'){note.textContent='';}
+    else if(tdsAmt===0){note.innerHTML=`Below TDS threshold this FY for this vendor (prior: ₹${fmt(priorBase)} + this bill: ₹${fmt(tax)}) — no TDS deducted.`;note.style.color='var(--muted)';}
+    else{
+      let msg=`TDS ₹${fmt(tdsAmt)} @ ${tdsRate}% on taxable value ₹${fmt(tax)}.`;
+      if(!hasPan)msg+=' ⚠ No valid 10-digit PAN — 20% rate applied (Sec 206AA).';
+      if(thresholdCrossed)msg+=' ⚠ This bill crosses the FY threshold for this vendor — check with your CA whether catch-up TDS is owed on earlier bills that had no TDS deducted.';
+      note.innerHTML=msg;note.style.color=(thresholdCrossed||!hasPan)?'var(--red)':'var(--navy)';
+    }
+  }
+}
+function openPurchaseModal(){['pu-vnd','pu-gstin','pu-bill','pu-nar','pu-pan'].forEach(i=>sv(i,''));sv('pu-date',new Date().toISOString().split('T')[0]);sv('pu-cat','Professional Fees');sv('pu-pos','Maharashtra');sv('pu-gst','18');sv('pu-itc','Eligible');sv('pu-st','Unpaid');sv('pu-tax','');sv('pu-tds','194J');sv('pu-payeetype','Individual/HUF');calcPur();$('pur-save-btn').disabled=false;openModal('purModal');}
+async function savePurchase(){
+  const vendor=gv('pu-vnd').trim();if(!vendor){toast('Vendor required','err');return;}
+  const tax=parseFloat(gv('pu-tax'))||0;if(!tax){toast('Enter taxable value','err');return;}
+  $('pur-save-btn').disabled=true;
+  const isI=gv('pu-pos')!=='Maharashtra',rate=parseFloat(gv('pu-gst'))||0,g=tax*rate/100,total=tax+g;
+  const tdsSection=gv('pu-tds')||'None',tdsRate=parseFloat(gv('pu-tdsrate'))||0,tdsAmount=parseFloat(gv('pu-tdsamt'))||0,netPayable=Math.round((total-tdsAmount)*100)/100;
+  const obj={id:Date.now().toString(),date:gv('pu-date'),vendor,gstin:gv('pu-gstin'),bill:gv('pu-bill'),category:gv('pu-cat'),pos:gv('pu-pos'),taxable:tax,gstrate:rate,cgst:isI?0:g/2,sgst:isI?0:g/2,igst:isI?g:0,total,tdsSection,vendorPan:gv('pu-pan'),payeeType:gv('pu-payeetype'),tdsRate,tdsAmount,netPayable,itc:gv('pu-itc'),status:gv('pu-st'),narration:gv('pu-nar'),received:0,balance:netPayable};
+  await apiPost('savePurchase',obj);purchases.push(obj);closeModal('purModal');renderPurchases();loadDash();toast('Purchase saved','ok');$('pur-save-btn').disabled=false;
+}
 async function delPur(id){if(!confirm('Delete?'))return;await apiPost('deletePurchase',{id});purchases=purchases.filter(p=>p.id!==id);renderPurchases();loadDash();toast('Deleted');}
 
 function openPaymentModal(purId){
@@ -1035,7 +1111,7 @@ function openPaymentModal(purId){
   const pending=purchases.filter(p=>p.status!=='Paid'&&(!vendor||p.vendor===vendor));
   $('pay-vnd').textContent=pur?pur.vendor:'(All Vendors)';
   const list=$('pay-bill-list');
-  list.innerHTML=!pending.length?'<div style="padding:14px;text-align:center;color:var(--muted);">No pending bills.</div>':pending.map(p=>`<div class="cl-row ${purId===p.id?'sel':''}" onclick="togClRow(this,'${p.id}','p')"><input type="checkbox" ${purId===p.id?'checked':''} onclick="event.stopPropagation();togClRow(this.closest('.cl-row'),'${p.id}','p')"><div class="cl-info"><div class="cl-ref">${esc(p.vendor)} — ${esc(p.bill)||p.id.slice(-6)}</div><div class="cl-meta">Date: ${fmtD(p.date)} | Bill: ${fmt(p.total)}</div></div><div class="cl-bal">${fmt(p.balance)}</div></div>`).join('');
+  list.innerHTML=!pending.length?'<div style="padding:14px;text-align:center;color:var(--muted);">No pending bills.</div>':pending.map(p=>`<div class="cl-row ${purId===p.id?'sel':''}" onclick="togClRow(this,'${p.id}','p')"><input type="checkbox" ${purId===p.id?'checked':''} onclick="event.stopPropagation();togClRow(this.closest('.cl-row'),'${p.id}','p')"><div class="cl-info"><div class="cl-ref">${esc(p.vendor)} — ${esc(p.bill)||p.id.slice(-6)}</div><div class="cl-meta">Date: ${fmtD(p.date)} | Bill: ${fmt(p.total)}${p.tdsSection&&p.tdsSection!=='None'?` | TDS ${esc(p.tdsSection)}: ${fmt(p.tdsAmount)}`:''}</div></div><div class="cl-bal">${fmt(p.balance)}</div></div>`).join('');
   sv('pno',nextNo('Payment'));sv('pdate',new Date().toISOString().split('T')[0]);sv('pamt','');sv('pmode','NEFT');sv('pref','');sv('pnar',pur?'Against Bill '+(pur.bill||''):'');$('pay-sum').textContent='Select bills and enter amount.';$('pay-save-btn').disabled=false;openModal('payModal');payAmtCh();
 }
 function getSelBills(){const rows=document.querySelectorAll('#pay-bill-list .cl-row'),sel=[];rows.forEach(row=>{const cb=row.querySelector('input[type=checkbox]');if(cb&&cb.checked){const m=row.getAttribute('onclick').match(/'([^']+)'/);if(m){const p=purchases.find(x=>x.id===m[1]);if(p)sel.push(p);}}});return sel;}
@@ -1049,7 +1125,7 @@ async function savePayment(){
   for(const p of payments)await apiPost('recordPurchasePayment',{purchaseId:p.purchaseId,amount:p.amount,date,mode,ref,payNo});
   await apiPost('savePurchasePayment',{id:Date.now().toString(),payNo,date,vendor:sel[0].vendor,amount:amt,mode,ref,narration:nar,bills:payments.map(p=>p.bill).join(', '),incrementCounter:true});
   bumpCounter('Payment');
-  payments.forEach(p=>{const pur=purchases.find(x=>x.id===p.purchaseId);if(pur){pur.received=(pur.received||0)+p.amount;pur.balance=Math.max(0,pur.total-pur.received);pur.status=pur.balance<=0?'Paid':'Partial';}});
+  payments.forEach(p=>{const pur=purchases.find(x=>x.id===p.purchaseId);if(pur){pur.received=(pur.received||0)+p.amount;pur.balance=Math.max(0,(pur.netPayable??pur.total)-pur.received);pur.status=pur.balance<=0?'Paid':'Partial';}});
   purPays.unshift({id:Date.now().toString(),payNo,date,vendor:sel[0].vendor,amount:amt,mode,ref,narration:nar,bills:payments.map(p=>p.bill).join(', ')});
   closeModal('payModal');renderPurchases();renderPayments();loadDash();toast('Payment saved','ok');
   renderPaymentPrint({payNo,date,vendor:sel[0].vendor,amount:amt,mode,ref,narration:nar,amtWords:numW(amt),bills:payments});
@@ -1076,12 +1152,25 @@ function loadDash(){
   const itcGST=purchases.filter(p=>p.date.startsWith(mo)&&p.itc==='Eligible').reduce((s,p)=>s+p.cgst+p.sgst+p.igst,0);
   set('d-gst',fmt(Math.max(0,outGST-cnGST-itcGST)));
   set('d-pur',fmt(moPur.reduce((s,p)=>s+p.total,0)));
+  set('d-tds',fmt(moPur.reduce((s,p)=>s+(parseFloat(p.tdsAmount)||0),0)));
   const tb1=$('d-inv');if(tb1)tb1.innerHTML=[...invoices].filter(i=>(!i.type||i.type==='Invoice')&&i.payStatus!=='Cancelled').reverse().slice(0,7).map(i=>`<tr><td><strong>${i.invoiceNo}</strong></td><td>${fmtD(i.date)}</td><td>${esc(i.clientName)||'—'}</td><td>${fmt(i.total)}</td><td>${bdg(i.payStatus)}</td></tr>`).join('')||'<tr><td colspan="5" class="no-data">No invoices yet.</td></tr>';
   const tb2=$('d-os-tbody');if(tb2){const today=new Date();tb2.innerHTML=osUnpaid.sort((a,b)=>b.balance-a.balance).slice(0,7).map(o=>{const days=o.date?Math.floor((today-new Date(o.date))/86400000):0;return`<tr><td>${esc(o.clientName)||'—'}</td><td>${o.invoiceNo}</td><td style="font-weight:700;color:${days>30?'var(--red)':'var(--amber)'};">${fmt(o.balance)}</td><td>${days}d</td><td><button class="btn bg bsm" onclick="openReceiptModal('${o.invoiceId}')">Receipt</button></td></tr>`;}).join('')||'<tr><td colspan="5" class="no-data" style="color:var(--green);">✓ All clear!</td></tr>';}
 }
 
 // ── REPORTS ──
-function initYrSels(){const y=new Date().getFullYear(),m=String(new Date().getMonth()+1).padStart(2,'0');['g1-yr','g3-yr'].forEach(id=>{const sel=$(id);if(!sel)return;sel.innerHTML='';for(let i=y-2;i<=y+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===y)o.selected=true;sel.appendChild(o);}});['g1-mo','g3-mo'].forEach(id=>{const el=$(id);if(el)el.value=m;});}
+function initYrSels(){
+  const y=new Date().getFullYear(),m=String(new Date().getMonth()+1).padStart(2,'0');
+  ['g1-yr','g3-yr'].forEach(id=>{const sel=$(id);if(!sel)return;sel.innerHTML='';for(let i=y-2;i<=y+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===y)o.selected=true;sel.appendChild(o);}});
+  ['g1-mo','g3-mo'].forEach(id=>{const el=$(id);if(el)el.value=m;});
+  const fySel=$('tds-fy');
+  if(fySel){
+    const curFY=parseInt(m)>=4?y:y-1;
+    fySel.innerHTML='';
+    for(let i=curFY-2;i<=curFY+1;i++){const o=document.createElement('option');o.value=i;o.textContent=i+'-'+String((i+1)%100).padStart(2,'0');if(i===curFY)o.selected=true;fySel.appendChild(o);}
+  }
+  const qtrSel=$('tds-qtr');
+  if(qtrSel){const mi=parseInt(m);qtrSel.value=mi>=4&&mi<=6?'Q1':mi>=7&&mi<=9?'Q2':mi>=10&&mi<=12?'Q3':'Q4';}
+}
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 function loadG1(){
@@ -1115,6 +1204,57 @@ function loadG3(){
 function exportG1CSV(){const m=gv('g1-mo'),y=gv('g1-yr');if(!y){toast('Select year first','err');return;}const invs=invoices.filter(i=>(!i.type||i.type==='Invoice')&&i.date.startsWith(y+'-'+m)&&i.payStatus!=='Cancelled');let csv='Type,Date,Invoice No,WO Ref,WO Date,Client,GSTIN,Email,Taxable,CGST,SGST,IGST,Total\n';invs.forEach(i=>{csv+=['INV',i.date,i.invoiceNo,i.workOrderRef||'',i.workOrderDate||'','"'+(i.clientName||'')+'"',i.clientGstin||'',i.clientEmail||i.emailId||'',i.taxable,i.cgst,i.sgst,i.igst,i.total].join(',')+'\n';});const cns=creditNotes.filter(c=>c.date.startsWith(y+'-'+m));cns.forEach(c=>{csv+=['CN',c.date,c.cnNo,'','','"'+(c.clientName||'')+'"','',c.clientEmail||'',-c.taxable,-c.cgst,-c.sgst,-c.igst,-c.amount].join(',')+'\n';});dlCSV(csv,'GSTR1_'+y+'_'+m+'.csv');}
 function exportG3CSV(){const m=gv('g3-mo'),y=gv('g3-yr');if(!y){toast('Select year first','err');return;}const invs=invoices.filter(i=>(!i.type||i.type==='Invoice')&&i.date.startsWith(y+'-'+m)&&i.payStatus!=='Cancelled');const cns=creditNotes.filter(c=>c.date.startsWith(y+'-'+m));const purs=purchases.filter(p=>p.date.startsWith(y+'-'+m)&&p.itc==='Eligible');const nC=Math.max(0,invs.reduce((s,i)=>s+i.cgst,0)-cns.reduce((s,c)=>s+c.cgst,0)-purs.reduce((s,p)=>s+p.cgst,0)),nS=Math.max(0,invs.reduce((s,i)=>s+i.sgst,0)-cns.reduce((s,c)=>s+c.sgst,0)-purs.reduce((s,p)=>s+p.sgst,0)),nI=Math.max(0,invs.reduce((s,i)=>s+i.igst,0)-cns.reduce((s,c)=>s+c.igst,0)-purs.reduce((s,p)=>s+p.igst,0));let csv='Section,Description,Taxable,CGST,SGST,IGST\n';csv+=['OUTPUT','Sales',invs.reduce((s,i)=>s+i.taxable,0),invs.reduce((s,i)=>s+i.cgst,0),invs.reduce((s,i)=>s+i.sgst,0),invs.reduce((s,i)=>s+i.igst,0)].join(',')+'\n';csv+=['CN','Credit Notes',cns.reduce((s,c)=>s+c.taxable,0),cns.reduce((s,c)=>s+c.cgst,0),cns.reduce((s,c)=>s+c.sgst,0),cns.reduce((s,c)=>s+c.igst,0)].join(',')+'\n';csv+=['ITC','Eligible Purchases',purs.reduce((s,p)=>s+p.taxable,0),purs.reduce((s,p)=>s+p.cgst,0),purs.reduce((s,p)=>s+p.sgst,0),purs.reduce((s,p)=>s+p.igst,0)].join(',')+'\n';csv+=['NET','GST Payable','',nC,nS,nI].join(',')+'\n';dlCSV(csv,'GSTR3B_'+y+'_'+m+'.csv');}
 function dlCSV(csv,fn){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();URL.revokeObjectURL(a.href);}
+
+// ── TDS SUMMARY (Form 26Q basis — quarterly) ──
+function qtrRange(fy,qtr){
+  fy=parseInt(fy);
+  const ranges={Q1:[fy+'-04-01',fy+'-06-30'],Q2:[fy+'-07-01',fy+'-09-30'],Q3:[fy+'-10-01',fy+'-12-31'],Q4:[(fy+1)+'-01-01',(fy+1)+'-03-31']};
+  return{from:ranges[qtr][0],to:ranges[qtr][1]};
+}
+const QTR_DUE={Q1:'31 Jul',Q2:'31 Oct',Q3:'31 Jan',Q4:'31 May'};
+function loadTDS(){
+  const qtr=gv('tds-qtr'),fy=gv('tds-fy');if(!fy){toast('Select financial year','err');return;}
+  const{from,to}=qtrRange(fy,qtr);
+  const fyLabel=fy+'-'+String((parseInt(fy)+1)%100).padStart(2,'0');
+  const txns=purchases.filter(p=>p.tdsSection&&p.tdsSection!=='None'&&(parseFloat(p.tdsAmount)||0)>0&&p.date>=from&&p.date<=to).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const el=$('tds-result');if(!el)return;
+  if(!txns.length){el.innerHTML=`<div class="no-data" style="background:#fff;border-radius:10px;padding:32px;">No TDS deductions in ${qtr} (${fmtD(from)} – ${fmtD(to)}) FY ${fyLabel}.</div>`;return;}
+
+  // Deductee-wise summary (grouped by vendor + section — the shape Form 26Q needs)
+  const groups={};
+  txns.forEach(p=>{
+    const key=(p.vendor||'').trim()+'|'+p.tdsSection;
+    if(!groups[key])groups[key]={vendor:p.vendor,pan:p.vendorPan,section:p.tdsSection,count:0,taxable:0,tds:0};
+    groups[key].count++;groups[key].taxable+=parseFloat(p.taxable)||0;groups[key].tds+=parseFloat(p.tdsAmount)||0;
+    if(p.vendorPan)groups[key].pan=p.vendorPan;
+  });
+  const glist=Object.values(groups).sort((a,b)=>(a.vendor||'').localeCompare(b.vendor||''));
+  const g194J=txns.filter(p=>p.tdsSection==='194J'),g194C=txns.filter(p=>p.tdsSection==='194C');
+  const t194J=g194J.reduce((s,p)=>s+(parseFloat(p.tdsAmount)||0),0),t194C=g194C.reduce((s,p)=>s+(parseFloat(p.tdsAmount)||0),0);
+
+  const summaryRows=glist.map(g=>`<tr><td><strong>${esc(g.vendor)}</strong></td><td>${esc(g.pan)||'<span style="color:var(--red);">No PAN</span>'}</td><td><span class="badge bam">${g.section}</span></td><td style="text-align:center;">${g.count}</td><td>${fmt(g.taxable)}</td><td><strong>${fmt(g.tds)}</strong></td></tr>`).join('');
+  const summaryTotalRow=`<tr class="rtot"><td colspan="4">TOTAL</td><td>${fmt(glist.reduce((s,g)=>s+g.taxable,0))}</td><td>${fmt(glist.reduce((s,g)=>s+g.tds,0))}</td></tr>`;
+
+  const txnRows=txns.map(p=>`<tr><td>${fmtD(p.date)}</td><td>${esc(p.vendor)}</td><td style="font-size:11px;">${esc(p.vendorPan)||'—'}</td><td>${esc(p.bill||p.billno)||'—'}</td><td><span class="badge bam">${esc(p.tdsSection)}</span></td><td>${fmt(p.taxable)}</td><td style="text-align:center;">${p.tdsRate}%</td><td><strong>${fmt(p.tdsAmount)}</strong></td><td>${fmt(p.netPayable??p.total)}</td></tr>`).join('');
+
+  el.innerHTML=`<div class="disc"><strong>⚠ Compliance Notes:</strong> This is a working summary, not a filed return. TDS deducted each month is due to the government by the <strong>7th of the following month</strong>. Form 26Q for ${qtr} FY ${fyLabel} is due by <strong>${QTR_DUE[qtr]}</strong>. Verify PAN validity, lower/nil-deduction certificates (Form 13/15G/15H), and any catch-up TDS flagged at entry, with your CA before filing.</div>
+  <div style="font-size:13px;font-weight:700;margin-bottom:12px;">TDS Summary — ${qtr} (${fmtD(from)} – ${fmtD(to)}) | FY ${fyLabel}</div>
+  <div class="net-box" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+    <div class="net-item"><div class="nl">194J — Professional (${g194J.length} txns)</div><div class="nv">${fmt(t194J)}</div></div>
+    <div class="net-item"><div class="nl">194C — Contract (${g194C.length} txns)</div><div class="nv">${fmt(t194C)}</div></div>
+    <div class="net-item tot"><div class="nl">TOTAL TDS DEDUCTED</div><div class="nv">${fmt(t194J+t194C)}</div></div>
+  </div>
+  <div class="rsec"><div class="rhd">Deductee-wise Summary — ${glist.length} vendor(s)</div><div class="tw"><table><thead><tr><th>Vendor</th><th>PAN</th><th>Section</th><th>Bills</th><th>Amount Paid/Credited</th><th>TDS Deducted</th></tr></thead><tbody>${summaryRows}${summaryTotalRow}</tbody></table></div></div>
+  <div class="rsec"><div class="rhd">Transaction Detail — ${txns.length} bill(s)</div><div class="tw"><table><thead><tr><th>Date</th><th>Vendor</th><th>PAN</th><th>Bill No</th><th>Section</th><th>Taxable</th><th>Rate</th><th>TDS</th><th>Net Payable</th></tr></thead><tbody>${txnRows}</tbody></table></div></div>`;
+}
+function exportTDSCSV(){
+  const qtr=gv('tds-qtr'),fy=gv('tds-fy');if(!fy){toast('Select financial year first','err');return;}
+  const{from,to}=qtrRange(fy,qtr);
+  const txns=purchases.filter(p=>p.tdsSection&&p.tdsSection!=='None'&&(parseFloat(p.tdsAmount)||0)>0&&p.date>=from&&p.date<=to).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  let csv='Date,Vendor,PAN,Bill No,Section,Taxable Amount,TDS Rate %,TDS Deducted,Net Payable\n';
+  txns.forEach(p=>{csv+=[p.date,'"'+(p.vendor||'')+'"',p.vendorPan||'',p.bill||p.billno||'',p.tdsSection,p.taxable,p.tdsRate,p.tdsAmount,p.netPayable??p.total].join(',')+'\n';});
+  dlCSV(csv,'TDS_'+fy+'_'+qtr+'.csv');
+}
 
 // ── PRINT TEMPLATES (ALL BLACK) ──
 function renderInvPrint(inv,sig=true){
