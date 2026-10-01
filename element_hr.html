@@ -264,6 +264,7 @@ tbody tr:hover{background:#F8FAFC;}
     <button class="mt active" onclick="switchTab('employees')">👥 Employees</button>
     <button class="mt" onclick="switchTab('salary')">💰 Monthly Salary</button>
     <button class="mt" onclick="switchTab('statutory')">📋 Statutory</button>
+    <button class="mt" onclick="switchTab('ctccalc')">🧮 CTC Breakdown</button>
   </div>
 
   <!-- EMPLOYEES TAB -->
@@ -345,6 +346,27 @@ tbody tr:hover{background:#F8FAFC;}
     <div class="sp active" id="sp-pf"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
     <div class="sp" id="sp-esic"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
     <div class="sp" id="sp-pt"><div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select period and click Load.</div></div>
+  </div>
+
+  <!-- CTC BREAKDOWN CALCULATOR TAB (for quoting new hires — calculator only, nothing is saved) -->
+  <div class="tp" id="tp-ctccalc">
+    <div class="card" style="max-width:720px;margin:0 auto;padding:20px;">
+      <div class="msec" style="margin-top:0;">New Employee — CTC Breakdown</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:-6px 0 14px;">Enter a target CTC (total cost to company) and this works backward to the Gross Salary and full breakdown — handy when quoting an offer by CTC instead of Gross. This is a calculator only; it does not create or save an employee record.</div>
+      <div class="fg3">
+        <div class="fg"><label>Candidate / Role Name (optional)</label><input id="cc-name" placeholder="e.g. offer reference"></div>
+        <div class="fg"><label>Designation (optional)</label><input id="cc-desig" placeholder="e.g. Site Engineer"></div>
+        <div class="fg"><label>Target CTC (₹/month) *</label><input id="cc-ctc" type="number" step="100" placeholder="e.g. 50000" oninput="calcCtcPreview()"></div>
+        <div class="fg"><label>Gender (for PT exemption)</label><select id="cc-gender" onchange="calcCtcPreview()"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="fg"><label>ESIC Applicable</label><select id="cc-esic-app" onchange="calcCtcPreview()"><option value="Yes">Yes (Gross ≤ ₹21,000)</option><option value="No">No</option></select></div>
+        <div class="fg"><label>PF Applicable (if Gross &gt; ₹25,000)</label><select id="cc-pf-app" onchange="calcCtcPreview()"><option value="Yes">Yes</option><option value="No">No — Opt Out</option></select></div>
+        <div class="fg"><label>PT Applicable</label><select id="cc-pt-app" onchange="calcCtcPreview()"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+      </div>
+      <div class="sal-preview" id="ctc-preview">Enter a target CTC to see the salary breakdown.</div>
+      <div style="margin-top:14px;text-align:right;">
+        <button class="btn bo" id="ctc-print-btn" onclick="printCtcBreakdown()" style="display:none;">🖨 Print</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -537,7 +559,7 @@ async function apiPost(action,data){
 }
 
 // ── TABS ──
-const TABS=['employees','salary','statutory'];
+const TABS=['employees','salary','statutory','ctccalc'];
 function switchTab(id){
   document.querySelectorAll('.mt').forEach((b,i)=>b.classList.toggle('active',TABS[i]===id));
   document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
@@ -638,6 +660,123 @@ function calcSalPreview(){
       <span style="color:var(--navy);font-weight:700;">Total CTC (incl. employer cost): <strong>${fmt(s.totalCTC)}</strong></span>
     </div>
     <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Gross Salary entered: ${fmt(gross)} → Total CTC (employer's cost): ${fmt(s.totalCTC)}</div>`;
+}
+
+// ── CTC BREAKDOWN CALCULATOR (Reverse: CTC → Gross) ──
+// The rest of the app quotes Gross directly (calcSal() above). This is the one place that
+// goes the other way — HR often negotiates/quotes a new hire by total CTC, so this back-solves
+// for the Gross that produces that CTC, then runs the exact same calcSal() to break it down.
+// totalCTC = gross + emplPF + emplESIC, both of which are non-linear (capped/thresholded) in
+// gross, so there's no clean inverse formula — binary search converges in <30 steps since
+// calcSal()'s totalCTC is monotonically non-decreasing in gross.
+function solveGrossFromCTC(targetCTC, esicApp, pfApp, ptApp, gender){
+  const target = Math.round(parseFloat(targetCTC) || 0);
+  if (!target) return null;
+  let lo = 0, hi = target; // gross can never exceed CTC (employer add-ons are >= 0)
+  let best = calcSal(hi, esicApp, 26, pfApp, ptApp, gender);
+  // Edge case: if even gross=target doesn't reach target CTC (shouldn't happen since
+  // add-ons are a % of gross, not fixed) widen hi defensively.
+  while (best && best.totalCTC < target && hi < target * 2) { hi = Math.round(hi * 1.2); best = calcSal(hi, esicApp, 26, pfApp, ptApp, gender); }
+  for (let i = 0; i < 60 && hi - lo > 1; i++){
+    const mid = Math.round((lo + hi) / 2);
+    const s = calcSal(mid, esicApp, 26, pfApp, ptApp, gender);
+    if (!s) break;
+    if (s.totalCTC <= target) lo = mid; else hi = mid;
+  }
+  return calcSal(lo, esicApp, 26, pfApp, ptApp, gender);
+}
+
+function calcCtcPreview(){
+  const targetCTC=parseFloat(gv('cc-ctc'))||0;
+  const esicApp=gv('cc-esic-app')||'Yes';
+  const pfApp=gv('cc-pf-app')||'Yes';
+  const ptApp=gv('cc-pt-app')||'Yes';
+  const gender=gv('cc-gender')||'';
+  const el=$('ctc-preview');
+  const printBtn=$('ctc-print-btn');
+  if(!targetCTC){el.innerHTML='Enter a target CTC to see the salary breakdown.';if(printBtn)printBtn.style.display='none';return;}
+  const s=solveGrossFromCTC(targetCTC,esicApp,pfApp,ptApp,gender);
+  if(!s){el.innerHTML='Invalid CTC.';if(printBtn)printBtn.style.display='none';return;}
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">Earnings (Gross: ${fmt(s.gross)})</div>
+        <div class="sal-row"><span>Basic (50% of Gross)</span><span>${fmt(s.basic)}</span></div>
+        <div class="sal-row"><span>HRA (50% of Basic — Pune Metro)</span><span>${fmt(s.hra)}</span></div>
+        <div class="sal-row"><span>Special Allowance</span><span>${fmt(s.special)}</span></div>
+        <div class="sal-row" style="font-weight:600;"><span>Gross Salary</span><span>${fmt(s.gross)}</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Deductions</div>
+        <div class="sal-row"><span>Employee PF${s.pfApplicable?' (12% on '+fmt(s.pfBase)+', max ₹3,000)':' (N/A — opted out, Gross > ₹25,000)'}</span><span>${fmt(s.empPF)}</span></div>
+        <div class="sal-row"><span>Employee ESIC 0.75%${s.esicApplicable?'':' (N/A — Gross > ₹21,000)'}</span><span>${fmt(s.empESIC)}</span></div>
+        <div class="sal-row"><span>Prof. Tax (Maharashtra)${s.ptExempt?' (Exempt — woman, Gross ≤ ₹25,000)':''}</span><span>${fmt(s.pt)}</span></div>
+        <div class="sal-row" style="font-weight:700;color:var(--green);"><span>Net Pay (take-home)</span><span>${fmt(s.netPay)}</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:12.5px;flex-wrap:wrap;">
+      <span>Employer PF: <strong>${fmt(s.emplPF)}</strong></span>
+      <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
+      <span style="color:var(--navy);font-weight:700;">Total CTC (target): <strong>${fmt(s.totalCTC)}</strong></span>
+    </div>
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Target CTC entered: ${fmt(targetCTC)} → solved Gross Salary: ${fmt(s.gross)} (resulting CTC: ${fmt(s.totalCTC)}, rounding may cause a ₹1–2 difference from the target)</div>`;
+  if(printBtn)printBtn.style.display='inline-block';
+}
+$('cc-ctc')&&$('cc-ctc').addEventListener('input',calcCtcPreview);
+
+function printCtcBreakdown(){
+  const targetCTC=parseFloat(gv('cc-ctc'))||0;
+  if(!targetCTC)return;
+  const esicApp=gv('cc-esic-app')||'Yes';
+  const pfApp=gv('cc-pf-app')||'Yes';
+  const ptApp=gv('cc-pt-app')||'Yes';
+  const gender=gv('cc-gender')||'';
+  const name=gv('cc-name')||'';
+  const desig=gv('cc-desig')||'';
+  const s=solveGrossFromCTC(targetCTC,esicApp,pfApp,ptApp,gender);
+  if(!s)return;
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  const pa=$('printArea');pa.style.display='block';
+  pa.innerHTML=`<div class="payslip">
+    <div class="ps-head"><h1>${esc(FIRM.name)}</h1><p>${esc(FIRM.addr)}</p></div>
+    <div class="ps-title">CTC BREAKDOWN${name?' — '+esc(name).toUpperCase():''}</div>
+    <div class="ps-info">
+      <div class="ps-col">
+        ${name?`<div class="ps-row"><b>Name:</b>${esc(name)}</div>`:''}
+        ${desig?`<div class="ps-row"><b>Designation:</b>${esc(desig)}</div>`:''}
+        <div class="ps-row"><b>Date:</b>${today}</div>
+      </div>
+      <div class="ps-col">
+        <div class="ps-row"><b>Target CTC:</b>${fmt2(targetCTC)}/month</div>
+        <div class="ps-row"><b>Solved Gross Salary:</b>${fmt2(s.gross)}/month</div>
+      </div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-earn">
+        <div class="ps-sec-title">Earnings</div>
+        <div class="ps-item"><span>Basic Salary</span><span>${fmt2(s.basic)}</span></div>
+        <div class="ps-item"><span>House Rent Allowance</span><span>${fmt2(s.hra)}</span></div>
+        <div class="ps-item"><span>Special Allowance</span><span>${fmt2(s.special)}</span></div>
+        <div class="ps-item total"><span>Gross Earnings</span><span>${fmt2(s.gross)}</span></div>
+      </div>
+      <div class="ps-ded">
+        <div class="ps-sec-title">Deductions</div>
+        <div class="ps-item"><span>Provident Fund (Employee 12%)${s.pfApplicable?'':' — Not Applicable'}</span><span>${fmt2(s.empPF)}</span></div>
+        <div class="ps-item"><span>ESIC (Employee 0.75%)${s.esicApplicable?'':' — Not Applicable'}</span><span>${fmt2(s.empESIC)}</span></div>
+        <div class="ps-item"><span>Professional Tax${s.ptExempt?' — Exempt':''}</span><span>${fmt2(s.pt)}</span></div>
+        <div class="ps-item total"><span>Total Deductions</span><span>${fmt2(s.empPF+s.empESIC+s.pt)}</span></div>
+      </div>
+    </div>
+    <div class="ps-net">
+      <div><div class="ps-words">Net Take-Home: ${numW(s.netPay)}</div></div>
+      <div class="ps-net-amt">${fmt2(s.netPay)}</div>
+    </div>
+    <div class="ps-foot">
+      <div><p>Employer PF: ${fmt2(s.emplPF)} &nbsp;|&nbsp; Employer ESIC: ${fmt2(s.emplESIC)}</p><p style="margin-top:6px;"><b>Total CTC (Employer Cost): ${fmt2(s.totalCTC)}/month</b></p></div>
+      <div style="text-align:right;"><p>For, <strong>${esc(FIRM.name)}</strong></p><p style="margin-top:20px;border-top:1px solid #000;padding-top:4px;">Authorised Signatory</p></div>
+    </div>
+  </div>`;
+  setTimeout(()=>window.print(),300);
 }
 
 // ── STATS ──
