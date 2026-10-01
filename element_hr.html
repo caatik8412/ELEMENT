@@ -317,6 +317,11 @@ tbody tr:hover{background:#F8FAFC;}
       <button class="btn bn" onclick="loadSalarySheet()">Load Sheet</button>
       <button class="btn bo" id="sal-save-btn" onclick="saveSalarySheet()" style="display:none;">💾 Save Sheet</button>
       <button class="btn bo" id="sal-csv-btn" onclick="exportSalaryCSV()" style="display:none;">⬇ Export CSV</button>
+      <span id="sal-bulk-days-wrap" style="display:none;margin-left:auto;align-items:center;gap:6px;">
+        <label style="font-size:12.5px;color:var(--muted);">Working days this month:</label>
+        <input type="number" id="sal-bulk-days" min="1" max="31" step="0.5" style="width:60px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;">
+        <button class="btn bo bsm" onclick="applyBulkWdays()">Apply to all</button>
+      </span>
     </div>
     <div id="salary-sheet-wrap">
       <div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">Select month and year, then click Load Sheet.</div>
@@ -1117,36 +1122,49 @@ async function loadSalarySheet(){
   const period=yr+'-'+mo;
   const active=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated');
   if(!active.length){$('salary-sheet-wrap').innerHTML='<div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">No active employees found.</div>';return;}
-  // Build salary data — merge with saved records
+  // Build salary data — merge with saved records. wdays is per-period (working days vary
+  // month to month), so a saved record's own wdays wins; otherwise default to the employee's
+  // standard wdays as a starting point — editable per row, or in bulk, right here on the sheet.
   currentSalaryData=active.map(e=>{
     const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
-    const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
-    return{...e,period,present,rec:rec||null};
+    const wdays=rec&&rec.wdays?parseFloat(rec.wdays):(e.wdays||26);
+    const present=rec?parseFloat(rec.present)||wdays:wdays;
+    return{...e,period,present,wdays,rec:rec||null};
   });
   renderSalarySheet(period);
   $('sal-save-btn').style.display='';
   $('sal-csv-btn').style.display='';
+  const bw=$('sal-bulk-days-wrap');if(bw)bw.style.display='flex';
 }
 
 function getSalRow(e){
   const wdays=e.wdays||26;
-  const ratio=Math.min((parseFloat(e.present)||wdays)/wdays,1);
-  const gross=Math.round(e.gross*ratio);
+  const present=parseFloat(e.present)||wdays;
+  const ratio=Math.min(present/wdays,1);
+  const baseGross=Math.round(e.gross*ratio);
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
-  const special=Math.max(0,gross-basic-hra);
+  const special=Math.max(0,baseGross-basic-hra);
+  // Worked beyond this period's working days (e.g. called in on a holiday/Sunday) — paid
+  // extra at the employee's standard per-day Gross rate, on top of the full-month Gross.
+  // Not run through Basic/HRA/PF/ESIC — treated as a straight extra-day payout, added to
+  // Gross and Net only.
+  const extraDays=Math.max(0,present-wdays);
+  const perDayGross=e.gross/wdays;
+  const extraPay=Math.round(perDayGross*extraDays);
+  const gross=baseGross+extraPay;
   const pfBase=Math.min(basic,25000);
   const pfApplicable=e.gross<=25000||e.pfApp!=='No';
   const empPF=pfApplicable?Math.round(pfBase*0.12):0;
   const emplPF=pfApplicable?Math.round(pfBase*0.12):0;
-  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
-  const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0325):0;
+  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(baseGross*0.0075):0;
+  const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(baseGross*0.0325):0;
   const ptExempt=e.gender==='Female'&&e.gross<=25000;
   const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
   const totalDed=empPF+empESIC+pt;
   const net=gross-totalDed;
-  const lop=Math.max(0,(e.wdays||26)-(parseFloat(e.present)||e.wdays));
-  return{gross,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop};
+  const lop=Math.max(0,wdays-present);
+  return{gross,baseGross,extraDays,extraPay,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop};
 }
 
 function renderSalarySheet(period){
@@ -1156,7 +1174,7 @@ function renderSalarySheet(period){
   let html=`<div class="card"><div class="ch"><h3>Salary Sheet — ${moName}</h3></div><div class="tw"><table class="salary-table">
     <thead><tr>
       <th>#</th><th>Employee</th><th>Designation</th>
-      <th>Days</th><th>Present</th><th>LOP</th>
+      <th>Days</th><th>Present</th><th>LOP</th><th>Extra</th>
       <th>Basic</th><th>HRA</th><th>Special</th><th>Gross</th>
       <th>Emp PF</th><th>Emp ESIC</th><th>PT</th><th>Tot. Ded.</th>
       <th>Net Pay</th><th>Payslip</th>
@@ -1169,9 +1187,10 @@ function renderSalarySheet(period){
       <td style="color:var(--muted);">${esc(e.empId)||i+1}</td>
       <td><strong>${esc(e.name)}</strong></td>
       <td style="font-size:12px;">${esc(e.designation)||'—'}</td>
-      <td style="text-align:center;">${e.wdays}</td>
-      <td><input type="number" value="${e.present}" min="0" max="${e.wdays}" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;"></td>
+      <td><input type="number" value="${e.wdays}" min="1" max="31" step="0.5" onchange="updateWdays(${i},this.value)" style="width:50px;" title="Working days this period — editable, since it changes month to month."></td>
+      <td><input type="number" value="${e.present}" min="0" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;" title="Days present — can exceed Working Days (paid extra at the daily rate)."></td>
       <td style="text-align:center;color:var(--red);">${r.lop>0?r.lop:'—'}</td>
+      <td style="text-align:center;color:var(--green);" title="${r.extraDays>0?r.extraDays+' day(s) beyond Working Days, @ '+fmt(Math.round(e.gross/e.wdays))+'/day = '+fmt(r.extraPay):''}">${r.extraDays>0?'+'+fmt(r.extraPay):'—'}</td>
       <td>${fmt(r.basic)}</td><td>${fmt(r.hra)}</td><td>${fmt(r.special)}</td>
       <td><strong>${fmt(r.gross)}</strong></td>
       <td>${fmt(r.empPF)}</td><td>${fmt(r.empESIC)}</td><td>${fmt(r.pt)}</td>
@@ -1181,7 +1200,7 @@ function renderSalarySheet(period){
     </tr>`;
   });
   html+=`<tr class="total-row">
-    <td colspan="3">TOTAL</td><td></td><td></td><td></td>
+    <td colspan="3">TOTAL</td><td></td><td></td><td></td><td></td>
     <td></td><td></td><td></td>
     <td>${fmt(totGross)}</td>
     <td>${fmt(totEmpPF)}</td><td>${fmt(totEmpESIC)}</td><td>${fmt(totPT)}</td>
@@ -1196,6 +1215,26 @@ function updatePresent(idx,val){
   currentSalaryData[idx].present=parseFloat(val)||currentSalaryData[idx].wdays;
   const period=currentSalaryData[idx].period;
   renderSalarySheet(period);
+}
+
+function updateWdays(idx,val){
+  const w=parseFloat(val);
+  if(!w||w<1){renderSalarySheet(currentSalaryData[idx].period);return;}
+  currentSalaryData[idx].wdays=w;
+  const period=currentSalaryData[idx].period;
+  renderSalarySheet(period);
+}
+
+// Bulk-apply one working-days figure to every row — the common case, since a company's
+// working-days count for a given month is usually the same across employees. Per-row edits
+// (updateWdays above) still override individually afterward if needed.
+function applyBulkWdays(){
+  const w=parseFloat(gv('sal-bulk-days'));
+  if(!w||w<1){toast('Enter a valid number of working days','err');return;}
+  if(!currentSalaryData.length){toast('Load salary sheet first','err');return;}
+  currentSalaryData.forEach(e=>{e.wdays=w;});
+  renderSalarySheet(currentSalaryData[0].period);
+  toast('Applied '+w+' working days to all employees','ok');
 }
 
 async function saveSalarySheet(){
