@@ -606,6 +606,20 @@ function initYrSels(){
 // PT (Maharashtra): flat ₹200/month, except women employees with Gross ≤ ₹25,000
 // are fully exempt.
 // Gross Salary is the direct input (what the company quotes the employee).
+// ── TDS (Income Tax on Salary) WARNING ──
+// New regime FY 2026-27: ₹75,000 standard deduction + Sec 87A rebate (taxable income up to
+// ₹12 lakh is nil) ⇒ salary up to ₹12.75 lakh/year attracts no tax. Above this, the employer
+// must deduct TDS u/s 192 monthly. This app does NOT compute TDS — it only flags the case.
+// Assumes new regime and salary as the only income; employees on the old regime or with
+// other income have different limits — confirm with your CA.
+const TDS_ANNUAL_LIMIT=1275000;
+function tdsAnnual(monthlyGross){return Math.round((parseFloat(monthlyGross)||0)*12);}
+function tdsApplicable(monthlyGross){return tdsAnnual(monthlyGross)>TDS_ANNUAL_LIMIT;}
+function tdsWarnHTML(monthlyGross){
+  if(!tdsApplicable(monthlyGross))return '';
+  return `<div style="margin-top:10px;padding:9px 12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;font-size:12px;color:#92400E;">⚠ <b>TDS applicable:</b> annual salary ${fmt(tdsAnnual(monthlyGross))} exceeds ₹12.75 lakh (new regime: ₹75,000 std. deduction + ₹12 lakh rebate limit). <b>Ask your CA</b> whether TDS (u/s 192) should be deducted from this employee's salary and how much. This app does not calculate or deduct it.</div>`;
+}
+
 function calcSal(grossInput, esicApp='Yes', wdays=26, pfApp='Yes', ptApp='Yes', gender=''){
   const c=parseFloat(grossInput)||0;
   if(!c)return null;
@@ -664,7 +678,7 @@ function calcSalPreview(){
       <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
       <span style="color:var(--navy);font-weight:700;">Total CTC (incl. employer cost): <strong>${fmt(s.totalCTC)}</strong></span>
     </div>
-    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Gross Salary entered: ${fmt(gross)} → Total CTC (employer's cost): ${fmt(s.totalCTC)}</div>`;
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Gross Salary entered: ${fmt(gross)} → Total CTC (employer's cost): ${fmt(s.totalCTC)}</div>${tdsWarnHTML(s.gross)}`;
 }
 
 // ── CTC BREAKDOWN CALCULATOR (Reverse: CTC → Gross) ──
@@ -724,7 +738,7 @@ function calcCtcPreview(){
       <span>Employer ESIC: <strong>${fmt(s.emplESIC)}</strong></span>
       <span style="color:var(--navy);font-weight:700;">Total CTC (target): <strong>${fmt(s.totalCTC)}</strong></span>
     </div>
-    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Target CTC entered: ${fmt(targetCTC)} → solved Gross Salary: ${fmt(s.gross)} (resulting CTC: ${fmt(s.totalCTC)}, rounding may cause a ₹1–2 difference from the target)</div>`;
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">Target CTC entered: ${fmt(targetCTC)} → solved Gross Salary: ${fmt(s.gross)} (resulting CTC: ${fmt(s.totalCTC)}, rounding may cause a ₹1–2 difference from the target)</div>${tdsWarnHTML(s.gross)}`;
   if(printBtn)printBtn.style.display='inline-block';
 }
 $('cc-ctc')&&$('cc-ctc').addEventListener('input',calcCtcPreview);
@@ -831,7 +845,7 @@ function renderEmployees(){
       <td>${esc(e.designation)||'—'}</td>
       <td>${esc(e.department)||'—'}</td>
       <td>${fmtD(e.doj)}</td>
-      <td><strong>${fmt(e.gross)}</strong></td>
+      <td><strong>${fmt(e.gross)}</strong>${tdsApplicable(e.gross)?'<div style="font-size:10.5px;color:#92400E;background:#FEF3C7;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:2px;" title="Annual salary above ₹12.75 lakh — TDS applicable. Ask your CA whether to deduct.">⚠ TDS applicable</div>':''}</td>
       <td style="color:var(--green);font-weight:600;">${fmt(e.netPay)}</td>
       <td style="font-size:12px;">${pfCell}</td>
       <td style="font-size:12px;">${esicCell}</td>
@@ -998,31 +1012,20 @@ function buildPayslipPreview(){
   const e=employees.find(x=>x.id===payslipEmpId);if(!e)return;
   const mo=gv('ps-month'),yr=gv('ps-year');
   const period=yr+'-'+mo;
-  // Find saved salary record for this period
-  const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
-  const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
-  const wdays=e.wdays||26;
-  const ratio=Math.min(present/wdays,1);
-  const gross=Math.round(e.gross*ratio);
-  const basic=Math.round(e.basic*ratio);
-  const hra=Math.round(e.hra*ratio);
-  const special=Math.max(0,gross-basic-hra);
-  const pfBase=Math.min(basic,25000);
-  const pfApplicable=e.gross<=25000||e.pfApp!=='No';
-  const empPF=pfApplicable?Math.round(pfBase*0.12):0;
-  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
-  const ptExempt=e.gender==='Female'&&e.gross<=25000;
-  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
-  const net=gross-empPF-empESIC-pt;
+  // Same engine as the salary sheet: saved per-period days, paid leave, extra-day pay.
+  const ep=empForPeriod(e,period);
+  const r=getSalRow(ep);
+  const {present,wdays,paidLeave,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,empESIC,ptExempt,pt,net}=r;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   $('ps-preview').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--navy);">${esc(e.name)} — ${MN[parseInt(mo)-1]} ${yr}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px;">Earnings</div>
-        <div class="ps-modal-row"><span>Basic (${present}/${wdays} days)</span><span>${fmt(basic)}</span></div>
+        <div class="ps-modal-row"><span>Basic (${present}${paidLeave?'+'+paidLeave+' PL':''}/${wdays} days)</span><span>${fmt(basic)}</span></div>
         <div class="ps-modal-row"><span>HRA</span><span>${fmt(hra)}</span></div>
         <div class="ps-modal-row"><span>Special Allowance</span><span>${fmt(special)}</span></div>
+        ${extraPay>0?`<div class="ps-modal-row"><span>Extra Days Pay (${extraDays} day${extraDays===1?'':'s'})</span><span>${fmt(extraPay)}</span></div>`:''}
         <div class="ps-modal-row"><span>Gross</span><span>${fmt(gross)}</span></div>
       </div>
       <div>
@@ -1047,21 +1050,9 @@ function doPrintPayslip(){
   const e=employees.find(x=>x.id===payslipEmpId);if(!e)return;
   const mo=gv('ps-month'),yr=gv('ps-year');
   const period=yr+'-'+mo;
-  const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
-  const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
-  const wdays=e.wdays||26;
-  const ratio=Math.min(present/wdays,1);
-  const gross=Math.round(e.gross*ratio);
-  const basic=Math.round(e.basic*ratio);
-  const hra=Math.round(e.hra*ratio);
-  const special=Math.max(0,gross-basic-hra);
-  const pfBase=Math.min(basic,25000);
-  const pfApplicable=e.gross<=25000||e.pfApp!=='No';
-  const empPF=pfApplicable?Math.round(pfBase*0.12):0;
-  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
-  const ptExempt=e.gender==='Female'&&e.gross<=25000;
-  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
-  const net=gross-empPF-empESIC-pt;
+  const ep=empForPeriod(e,period);
+  const r=getSalRow(ep);
+  const {present,wdays,paidLeave,lop,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,emplPF,empESIC,emplESIC,ptExempt,pt,net,totalDed}=r;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const moName=MN[parseInt(mo)-1]+' '+yr;
   const pa=$('printArea');pa.style.display='block';
@@ -1082,6 +1073,8 @@ function doPrintPayslip(){
         <div class="ps-row"><b>ESIC No:</b>${esc(e.esicNo)||'—'}</div>
         <div class="ps-row"><b>Working Days:</b>${wdays}</div>
         <div class="ps-row"><b>Days Present:</b>${present}</div>
+        <div class="ps-row"><b>Paid Leave:</b>${paidLeave}</div>
+        <div class="ps-row"><b>Loss of Pay (LOP):</b>${lop}${extraDays>0?' &nbsp;|&nbsp; <b style="min-width:0;">Extra Days:</b> '+extraDays:''}</div>
       </div>
     </div>
     <div class="ps-body">
@@ -1090,6 +1083,7 @@ function doPrintPayslip(){
         <div class="ps-item"><span>Basic Salary</span><span>${fmt2(basic)}</span></div>
         <div class="ps-item"><span>House Rent Allowance</span><span>${fmt2(hra)}</span></div>
         <div class="ps-item"><span>Special Allowance</span><span>${fmt2(special)}</span></div>
+        ${extraPay>0?`<div class="ps-item"><span>Extra Days Pay (${extraDays} day${extraDays===1?'':'s'})</span><span>${fmt2(extraPay)}</span></div>`:''}
         <div class="ps-item total"><span>Gross Earnings</span><span>${fmt2(gross)}</span></div>
       </div>
       <div class="ps-ded">
@@ -1097,12 +1091,17 @@ function doPrintPayslip(){
         <div class="ps-item"><span>Provident Fund (Employee 12%)${pfApplicable?'':' — Opted Out'}</span><span>${fmt2(empPF)}</span></div>
         <div class="ps-item"><span>ESIC (Employee 0.75%)</span><span>${fmt2(empESIC)}</span></div>
         <div class="ps-item"><span>Professional Tax${ptExempt?' — Exempt':''}</span><span>${fmt2(pt)}</span></div>
-        <div class="ps-item total"><span>Total Deductions</span><span>${fmt2(empPF+empESIC+pt)}</span></div>
+        <div class="ps-item total"><span>Total Deductions</span><span>${fmt2(totalDed)}</span></div>
       </div>
     </div>
     <div class="ps-net">
       <div><div class="ps-words">${numW(net)}</div></div>
       <div class="ps-net-amt">${fmt2(net)}</div>
+    </div>
+    <div style="padding:6px 16px;border-top:1px solid #000;font-size:8.5pt;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <span><b>Employer Contributions (not deducted from salary):</b></span>
+      <span>Employer PF: ${fmt2(emplPF)}</span>
+      <span>Employer ESIC: ${fmt2(emplESIC)}</span>
     </div>
     <div class="ps-foot">
       <div><p>Employee Signature: ___________________</p></div>
@@ -1113,6 +1112,24 @@ function doPrintPayslip(){
   setTimeout(()=>window.print(),300);
 }
 window.addEventListener('afterprint',()=>{const pa=$('printArea');if(pa){pa.style.display='none';pa.innerHTML='';}});
+
+// ── PERIOD HELPERS (single source of truth for payslip, salary sheet and statutory) ──
+function normPeriod(p){
+  const s=String(p||'').trim();
+  if(/^\d{4}-\d{2}$/.test(s))return s;
+  const d=new Date(s);
+  return isNaN(d)?s:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+// Employee merged with that period's saved record (working days, present, paid leave).
+// Falls back to the employee's standard days when nothing is saved for the period.
+function empForPeriod(e,period){
+  const rec=salaryRecords.find(r=>String(r.empId)===String(e.id)&&normPeriod(r.period)===period);
+  const wdays=rec&&rec.wdays?parseFloat(rec.wdays):(e.wdays||26);
+  const pv=rec?parseFloat(rec.present):NaN;
+  const present=isNaN(pv)?wdays:pv;
+  const paidLeave=rec?(parseFloat(rec.paidLeave)||0):0;
+  return{...e,period,present,wdays,paidLeave,rec:rec||null};
+}
 
 // ── MONTHLY SALARY SHEET ──
 let currentSalaryData=[];
@@ -1126,22 +1143,8 @@ async function loadSalarySheet(){
   // as saved (present days, working days) instead of falling back to defaults.
   const fresh=await apiGet('getSalaryRecords');
   if(Array.isArray(fresh))salaryRecords=fresh;
-  // Normalise period text — Sheets can auto-convert "2026-09" into a date cell.
-  const normP=p=>{
-    const s=String(p||'').trim();
-    if(/^\d{4}-\d{2}$/.test(s))return s;
-    const d=new Date(s);
-    return isNaN(d)?s:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  };
-  // Build salary data — merge with saved records. wdays is per-period (working days vary
-  // month to month), so a saved record's own wdays wins; otherwise default to the employee's
-  // standard wdays as a starting point — editable per row, or in bulk, right here on the sheet.
-  currentSalaryData=active.map(e=>{
-    const rec=salaryRecords.find(r=>String(r.empId)===String(e.id)&&normP(r.period)===period);
-    const wdays=rec&&rec.wdays?parseFloat(rec.wdays):(e.wdays||26);
-    const present=rec?parseFloat(rec.present)||wdays:wdays;
-    return{...e,period,present,wdays,rec:rec||null};
-  });
+  // Build salary data — merge with saved records (see empForPeriod).
+  currentSalaryData=active.map(e=>empForPeriod(e,period));
   renderSalarySheet(period);
   $('sal-save-btn').style.display='';
   $('sal-csv-btn').style.display='';
@@ -1150,8 +1153,11 @@ async function loadSalarySheet(){
 
 function getSalRow(e){
   const wdays=e.wdays||26;
-  const present=parseFloat(e.present)||wdays;
-  const ratio=Math.min(present/wdays,1);
+  const pv=parseFloat(e.present);
+  const present=isNaN(pv)?wdays:pv;              // 0 is a valid value (e.g. all paid leave)
+  const paidLeave=parseFloat(e.paidLeave)||0;     // paid leave days — paid in full, not LOP
+  const payable=present+paidLeave;
+  const ratio=Math.min(payable/wdays,1);
   const baseGross=Math.round(e.gross*ratio);
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
@@ -1168,38 +1174,46 @@ function getSalRow(e){
   const pfApplicable=e.gross<=25000||e.pfApp!=='No';
   const empPF=pfApplicable?Math.round(pfBase*0.12):0;
   const emplPF=pfApplicable?Math.round(pfBase*0.12):0;
-  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(baseGross*0.0075):0;
-  const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(baseGross*0.0325):0;
+  // ESIC wages include all remuneration (extra-day pay too), unlike PF which is Basic-based.
+  const empESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0075):0;
+  const emplESIC=e.esicApp==='Yes'&&e.gross<=21000?Math.round(gross*0.0325):0;
+  // Maharashtra PT (as per company rule): above ₹7,500 → ₹200/month, ₹300 in February.
+  // Up to ₹7,500 nil. Women with Gross ≤ ₹25,000 are exempt.
   const ptExempt=e.gender==='Female'&&e.gross<=25000;
-  const pt=(e.ptApp==='Yes'&&!ptExempt)?200:0;
+  const ptMonth=parseInt(String(e.period||'').slice(5,7))||0;
+  let pt=0;
+  if(e.ptApp==='Yes'&&!ptExempt&&e.gross>7500)pt=ptMonth===2?300:200;
   const totalDed=empPF+empESIC+pt;
   const net=gross-totalDed;
-  const lop=Math.max(0,wdays-present);
-  return{gross,baseGross,extraDays,extraPay,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop};
+  const lop=Math.max(0,wdays-payable);
+  return{gross,baseGross,extraDays,extraPay,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop,present,paidLeave,wdays,pfBase};
 }
 
 function renderSalarySheet(period){
   const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const [yr,mo]=period.split('-');
   const moName=MN[parseInt(mo)-1]+' '+yr;
-  let html=`<div class="card"><div class="ch"><h3>Salary Sheet — ${moName}</h3></div><div class="tw"><table class="salary-table">
+  const tdsEmps=currentSalaryData.filter(e=>tdsApplicable(e.gross));
+  let html=tdsEmps.length?`<div style="margin-bottom:12px;padding:10px 14px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;font-size:12.5px;color:#92400E;">⚠ <b>TDS applicable</b> (annual salary above ₹12.75 lakh): ${tdsEmps.map(e=>esc(e.name)+' ('+fmt(tdsAnnual(e.gross))+'/yr)').join(', ')}. <b>Ask your CA</b> whether TDS (u/s 192) should be deducted for these employees and how much — this app does not calculate or deduct it.</div>`:'';
+  html+=`<div class="card"><div class="ch"><h3>Salary Sheet — ${moName}</h3></div><div class="tw"><table class="salary-table">
     <thead><tr>
       <th>#</th><th>Employee</th><th>Designation</th>
-      <th>Days</th><th>Present</th><th>LOP</th><th>Extra</th>
+      <th>Days</th><th>Present</th><th>Paid Leave</th><th>LOP</th><th>Extra</th>
       <th>Basic</th><th>HRA</th><th>Special</th><th>Gross</th>
       <th>Emp PF</th><th>Emp ESIC</th><th>PT</th><th>Tot. Ded.</th>
-      <th>Net Pay</th><th>Payslip</th>
+      <th>Net Pay</th><th>Empl. PF</th><th>Empl. ESIC</th><th>Employer Cost</th><th>Payslip</th>
     </tr></thead><tbody>`;
-  let totGross=0,totEmpPF=0,totEmpESIC=0,totPT=0,totNet=0;
+  let totGross=0,totEmpPF=0,totEmpESIC=0,totPT=0,totNet=0,totEmplPF=0,totEmplESIC=0;
   currentSalaryData.forEach((e,i)=>{
     const r=getSalRow(e);
-    totGross+=r.gross;totEmpPF+=r.empPF;totEmpESIC+=r.empESIC;totPT+=r.pt;totNet+=r.net;
+    totGross+=r.gross;totEmpPF+=r.empPF;totEmpESIC+=r.empESIC;totPT+=r.pt;totNet+=r.net;totEmplPF+=r.emplPF;totEmplESIC+=r.emplESIC;
     html+=`<tr>
       <td style="color:var(--muted);">${esc(e.empId)||i+1}</td>
-      <td><strong>${esc(e.name)}</strong></td>
+      <td><strong>${esc(e.name)}</strong>${tdsApplicable(e.gross)?' <span style="font-size:10px;color:#92400E;background:#FEF3C7;border-radius:4px;padding:1px 5px;" title="Annual salary above ₹12.75 lakh — TDS applicable. Ask your CA whether to deduct.">⚠ TDS applicable</span>':''}</td>
       <td style="font-size:12px;">${esc(e.designation)||'—'}</td>
       <td><input type="number" value="${e.wdays}" min="1" max="31" step="0.5" onchange="updateWdays(${i},this.value)" style="width:50px;" title="Working days this period — editable, since it changes month to month."></td>
       <td><input type="number" value="${e.present}" min="0" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;" title="Days present — can exceed Working Days (paid extra at the daily rate)."></td>
+      <td><input type="number" value="${e.paidLeave||0}" min="0" step="0.5" onchange="updatePaidLeave(${i},this.value)" style="width:50px;" title="Paid leave days — paid in full, not counted as LOP."></td>
       <td style="text-align:center;color:var(--red);">${r.lop>0?r.lop:'—'}</td>
       <td style="text-align:center;color:var(--green);" title="${r.extraDays>0?r.extraDays+' day(s) beyond Working Days, @ '+fmt(Math.round(e.gross/e.wdays))+'/day = '+fmt(r.extraPay):''}">${r.extraDays>0?'+'+fmt(r.extraPay):'—'}</td>
       <td>${fmt(r.basic)}</td><td>${fmt(r.hra)}</td><td>${fmt(r.special)}</td>
@@ -1207,25 +1221,35 @@ function renderSalarySheet(period){
       <td>${fmt(r.empPF)}</td><td>${fmt(r.empESIC)}</td><td>${fmt(r.pt)}</td>
       <td style="color:var(--red);">${fmt(r.totalDed)}</td>
       <td style="color:var(--green);font-weight:700;">${fmt(r.net)}</td>
+      <td>${fmt(r.emplPF)}</td><td>${fmt(r.emplESIC)}</td>
+      <td style="font-weight:600;">${fmt(r.gross+r.emplPF+r.emplESIC)}</td>
       <td><button class="btn bb bsm" onclick="quickPayslip('${e.id}','${period}')">🖨</button></td>
     </tr>`;
   });
   html+=`<tr class="total-row">
-    <td colspan="3">TOTAL</td><td></td><td></td><td></td><td></td>
+    <td colspan="3">TOTAL</td><td></td><td></td><td></td><td></td><td></td>
     <td></td><td></td><td></td>
     <td>${fmt(totGross)}</td>
     <td>${fmt(totEmpPF)}</td><td>${fmt(totEmpESIC)}</td><td>${fmt(totPT)}</td>
     <td>${fmt(totEmpPF+totEmpESIC+totPT)}</td>
-    <td style="color:var(--green);">${fmt(totNet)}</td><td></td>
+    <td style="color:var(--green);">${fmt(totNet)}</td>
+    <td>${fmt(totEmplPF)}</td><td>${fmt(totEmplESIC)}</td><td>${fmt(totGross+totEmplPF+totEmplESIC)}</td><td></td>
   </tr>`;
   html+=`</tbody></table></div></div>`;
   $('salary-sheet-wrap').innerHTML=html;
 }
 
 function updatePresent(idx,val){
-  currentSalaryData[idx].present=parseFloat(val)||currentSalaryData[idx].wdays;
+  const v=parseFloat(val);
+  currentSalaryData[idx].present=isNaN(v)?currentSalaryData[idx].wdays:v;
   const period=currentSalaryData[idx].period;
   renderSalarySheet(period);
+}
+
+function updatePaidLeave(idx,val){
+  const v=parseFloat(val);
+  currentSalaryData[idx].paidLeave=isNaN(v)||v<0?0:v;
+  renderSalarySheet(currentSalaryData[idx].period);
 }
 
 function updateWdays(idx,val){
@@ -1256,7 +1280,7 @@ async function saveSalarySheet(){
     await apiPost('saveSalaryRecord',{
       id:e.id+'_'+e.period,
       empId:e.id,empName:e.name,period:e.period,
-      present:e.present,wdays:e.wdays,
+      present:e.present,wdays:e.wdays,paidLeave:e.paidLeave||0,
       gross:r.gross,basic:r.basic,hra:r.hra,special:r.special,
       empPF:r.empPF,emplPF:r.emplPF,empESIC:r.empESIC,emplESIC:r.emplESIC,
       pt:r.pt,netPay:r.net,
@@ -1271,10 +1295,10 @@ async function saveSalarySheet(){
 
 function exportSalaryCSV(){
   if(!currentSalaryData.length){toast('Load salary sheet first','err');return;}
-  let csv='Emp ID,Name,Designation,Working Days,Days Present,LOP,Basic,HRA,Special,Gross,Emp PF,Emp ESIC,PT,Total Ded,Net Pay\n';
+  let csv='Emp ID,Name,Designation,Working Days,Days Present,Paid Leave,LOP,Extra Day Pay,Basic,HRA,Special,Gross,Emp PF,Emp ESIC,PT,Total Ded,Net Pay,Employer PF,Employer ESIC,Employer Cost\n';
   currentSalaryData.forEach(e=>{
     const r=getSalRow(e);
-    csv+=[e.empId,'"'+e.name+'"','"'+(e.designation||'')+'"',e.wdays,e.present,r.lop,r.basic,r.hra,r.special,r.gross,r.empPF,r.empESIC,r.pt,r.totalDed,r.net].join(',')+'\n';
+    csv+=[e.empId,'"'+e.name+'"','"'+(e.designation||'')+'"',e.wdays,e.present,e.paidLeave||0,r.lop,r.extraPay,r.basic,r.hra,r.special,r.gross,r.empPF,r.empESIC,r.pt,r.totalDed,r.net,r.emplPF,r.emplESIC,r.gross+r.emplPF+r.emplESIC].join(',')+'\n';
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -1290,17 +1314,60 @@ function quickPayslip(empId,period){
 }
 
 // ── STATUTORY ──
+let lastStat={data:[],period:''};
+
+// EPFO ECR 2.0 text file (fields separated by #~#): UAN, Member Name, Gross Wages, EPF Wages,
+// EPS Wages, EDLI Wages, EPF Contribution (employee), EPS Contribution, EPF-EPS Diff (employer),
+// NCP Days, Refund of Advances. Whole rupees only; only members with a UAN can be uploaded.
+function exportECR(){
+  const {data,period}=lastStat;
+  if(!data.length){toast('Load a period first','err');return;}
+  const rows=[],skipped=[];
+  data.filter(e=>e.pfApplicable&&e.empPF>0).forEach(e=>{
+    if(!e.uan||!/^\d{12}$/.test(String(e.uan).trim())){skipped.push(e.name);return;}
+    const epfW=Math.min(Math.round(e.basic),25000);
+    const eps=Math.round(epfW*0.0833);
+    const ncp=Math.max(0,Math.round(e.lop||0));
+    rows.push([String(e.uan).trim(),String(e.name).replace(/#~#/g,' ').trim(),Math.round(e.gross),epfW,epfW,epfW,
+      Math.round(e.empPF),eps,Math.round(e.emplPF)-eps,ncp,0].join('#~#'));
+  });
+  if(!rows.length){toast('No PF members with a valid 12-digit UAN','err');return;}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/plain'}));
+  a.download='ECR_'+period+'.txt';a.click();URL.revokeObjectURL(a.href);
+  toast('ECR file ready ('+rows.length+' members)'+(skipped.length?' — skipped, no valid UAN: '+skipped.join(', '):''),skipped.length?'err':'ok');
+}
+
+// ESIC monthly contribution upload sheet (CSV; open in Excel / paste into the portal template):
+// IP Number, IP Name, No. of Days wages paid/payable, Total Monthly Wages, Reason Code, Last Working Day.
+function exportESICCsv(){
+  const {data,period}=lastStat;
+  if(!data.length){toast('Load a period first','err');return;}
+  const list=data.filter(e=>e.esicApp==='Yes'&&e.gross<=21000);
+  if(!list.length){toast('No ESIC-applicable employees','err');return;}
+  const missing=list.filter(e=>!e.esicNo).map(e=>e.name);
+  let csv='IP Number,IP Name,No of Days for which wages paid/payable,Total Monthly Wages,Reason Code for Zero workings days(numeric only; provide 0 for all other reasons),Last Working Day\n';
+  list.forEach(e=>{
+    const days=Math.round((e.present||0)+(e.paidLeave||0)+(e.extraDays||0));
+    csv+=[e.esicNo||'','"'+String(e.name).replace(/"/g,'""')+'"',days,Math.round(e.gross),days===0?'':0,''].join(',')+'\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='ESIC_'+period+'.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('ESIC file ready'+(missing.length?' — missing IP number: '+missing.join(', '):''),missing.length?'err':'ok');
+}
+
 async function loadStatutory(){
   const mo=gv('stat-month'),yr=gv('stat-year');
   if(!yr){toast('Select year','err');return;}
   const period=yr+'-'+mo;
   const active=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated');
   const salData=active.map(e=>{
-    const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
-    const present=rec?parseFloat(rec.present)||e.wdays:e.wdays;
-    const r=getSalRow({...e,present});
-    return{...e,...r,present};
+    const ep=empForPeriod(e,period);
+    const r=getSalRow(ep);
+    return{...ep,...r};
   });
+  lastStat={data:salData,period};
   renderPF(salData,period);
   renderESIC(salData,period);
   renderPT(salData,period);
@@ -1311,19 +1378,27 @@ function renderPF(data,period){
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const [yr,mo]=period.split('-');
   const moName=MN[parseInt(mo)-1]+' '+yr;
-  let totEmpPF=0,totEmplPF=0,totWages=0;
-  let rows=pfEmps.map((e,i)=>{totEmpPF+=e.empPF;totEmplPF+=e.emplPF;totWages+=e.gross;
-    return`<tr><td>${i+1}</td><td>${esc(e.uan)||'—'}</td><td>${esc(e.name)}</td><td>${fmt(e.gross)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.basic)}</td><td>${fmt(e.empPF)}</td><td>${fmt(e.emplPF)}</td><td style="font-weight:700;">${fmt(e.empPF+e.emplPF)}</td></tr>`;
+  let totEmpPF=0,totEmplPF=0,totWages=0,totEPS=0;
+  // EPF/EPS wages are capped at the wage ceiling (₹25,000 from Sept 2026). Employer's 12% is
+  // split: 8.33% of EPS wages to EPS, remainder to EPF (a/c 1).
+  let rows=pfEmps.map((e,i)=>{
+    const epfWages=e.pfApplicable?Math.min(e.basic,25000):0;
+    const eps=e.pfApplicable?Math.round(epfWages*0.0833):0;
+    totEmpPF+=e.empPF;totEmplPF+=e.emplPF;totWages+=e.gross;totEPS+=eps;
+    return`<tr><td>${i+1}</td><td>${esc(e.uan)||'—'}</td><td>${esc(e.name)}</td><td>${fmt(e.gross)}</td><td>${fmt(epfWages)}</td><td>${fmt(epfWages)}</td><td>${fmt(e.empPF)}</td><td>${fmt(eps)}</td><td>${fmt(e.emplPF-eps)}</td><td style="font-weight:700;">${fmt(e.empPF+e.emplPF)}</td></tr>`;
   }).join('');
   $('sp-pf').innerHTML=`
-    <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">PF / ECR Working — ${moName}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);">PF / ECR Working — ${moName}</div>
+      <button class="btn bn bsm" onclick="exportECR()">⬇ Download ECR file (.txt)</button>
+    </div>
     <div class="card"><div class="tw"><table>
-      <thead><tr><th>#</th><th>UAN</th><th>Employee Name</th><th>Gross Wages</th><th>EPF Wages</th><th>EPS Wages</th><th>Employee Share (12%)</th><th>Employer Share (12%)</th><th>Total PF</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="9" class="no-data">No PF records.</td></tr>'}
+      <thead><tr><th>#</th><th>UAN</th><th>Employee Name</th><th>Gross Wages</th><th>EPF Wages</th><th>EPS Wages</th><th>Employee EPF (12%)</th><th>Employer EPS (8.33%)</th><th>Employer EPF (3.67%)</th><th>Total PF</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="10" class="no-data">No PF records.</td></tr>'}
       <tr style="font-weight:700;background:#EBF3FB;border-top:2px solid var(--navy);">
         <td colspan="3">TOTAL (${pfEmps.length} employees)</td>
         <td>${fmt(totWages)}</td><td>—</td><td>—</td>
-        <td>${fmt(totEmpPF)}</td><td>${fmt(totEmplPF)}</td>
+        <td>${fmt(totEmpPF)}</td><td>${fmt(totEPS)}</td><td>${fmt(totEmplPF-totEPS)}</td>
         <td>${fmt(totEmpPF+totEmplPF)}</td>
       </tr></tbody>
     </table></div></div>`;
@@ -1339,7 +1414,10 @@ function renderESIC(data,period){
     return`<tr><td>${i+1}</td><td>${esc(e.esicNo)||'—'}</td><td>${esc(e.name)}</td><td>${fmt(e.gross)}</td><td>${fmt(e.empESIC)}</td><td>${fmt(e.emplESIC)}</td><td style="font-weight:700;">${fmt(e.empESIC+e.emplESIC)}</td></tr>`;
   }).join('');
   $('sp-esic').innerHTML=`
-    <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">ESIC Working — ${moName}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);">ESIC Working — ${moName}</div>
+      <button class="btn bn bsm" onclick="exportESICCsv()">⬇ Download ESIC upload sheet (.csv)</button>
+    </div>
     <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#92400E;margin-bottom:14px;">⚠ ESIC applicable only for employees with Gross ≤ ₹21,000/month. Employee: 0.75% | Employer: 3.25%</div>
     <div class="card"><div class="tw"><table>
       <thead><tr><th>#</th><th>ESIC No</th><th>Employee Name</th><th>Gross Wages</th><th>Employee (0.75%)</th><th>Employer (3.25%)</th><th>Total</th></tr></thead>
@@ -1362,7 +1440,7 @@ function renderPT(data,period){
   let rows=ptEmps.map((e,i)=>`<tr><td>${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.designation)||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;${e.pt>0?'':'color:var(--green);'}">${e.pt>0?'₹'+e.pt:'Exempt'}</td></tr>`).join('');
   $('sp-pt').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">Professional Tax — ${moName}</div>
-    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: ₹200/month per employee (for salary > ₹10,000/month). Women employees with Gross ≤ ₹25,000/month are exempt.</div>
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: above ₹7,500 salary → ₹200/month, ₹300 in February. Women employees with Gross ≤ ₹25,000/month are exempt.</div>
     <div class="card"><div class="tw"><table>
       <thead><tr><th>#</th><th>Employee Name</th><th>Designation</th><th>Gross Salary</th><th>PT Amount</th></tr></thead>
       <tbody>${rows||'<tr><td colspan="5" class="no-data">No PT applicable employees.</td></tr>'}
