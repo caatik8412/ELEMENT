@@ -1122,11 +1122,22 @@ async function loadSalarySheet(){
   const period=yr+'-'+mo;
   const active=employees.filter(e=>e.status!=='Resigned'&&e.status!=='Terminated');
   if(!active.length){$('salary-sheet-wrap').innerHTML='<div class="no-data" style="background:#fff;border-radius:10px;padding:40px;">No active employees found.</div>';return;}
+  // Always pull the latest saved records first, so a previously saved month reloads exactly
+  // as saved (present days, working days) instead of falling back to defaults.
+  const fresh=await apiGet('getSalaryRecords');
+  if(Array.isArray(fresh))salaryRecords=fresh;
+  // Normalise period text — Sheets can auto-convert "2026-09" into a date cell.
+  const normP=p=>{
+    const s=String(p||'').trim();
+    if(/^\d{4}-\d{2}$/.test(s))return s;
+    const d=new Date(s);
+    return isNaN(d)?s:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  };
   // Build salary data — merge with saved records. wdays is per-period (working days vary
   // month to month), so a saved record's own wdays wins; otherwise default to the employee's
   // standard wdays as a starting point — editable per row, or in bulk, right here on the sheet.
   currentSalaryData=active.map(e=>{
-    const rec=salaryRecords.find(r=>r.empId===e.id&&r.period===period);
+    const rec=salaryRecords.find(r=>String(r.empId)===String(e.id)&&normP(r.period)===period);
     const wdays=rec&&rec.wdays?parseFloat(rec.wdays):(e.wdays||26);
     const present=rec?parseFloat(rec.present)||wdays:wdays;
     return{...e,period,present,wdays,rec:rec||null};
