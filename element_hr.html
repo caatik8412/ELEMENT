@@ -1441,7 +1441,12 @@ function renderPT(data,period){
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const [yr,mo]=period.split('-');
   const moName=MN[parseInt(mo)-1]+' '+yr;
-  let rows=ptEmps.map((e,i)=>`<tr><td>${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.designation)||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;${e.pt>0?'':'color:var(--green);'}">${e.pt>0?'₹'+e.pt:'Exempt'}</td></tr>`).join('');
+  // Show every active employee so the list matches the headcount; those with "PT Applicable = No"
+  // on their record are listed as "Not applicable" and excluded from the totals above.
+  let rows=data.map((e,i)=>{
+    const na=e.ptApp!=='Yes';
+    return `<tr><td>${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.designation)||'—'}</td><td>${fmt(e.gross)}</td><td style="font-weight:700;${na?'color:var(--muted);':(e.pt>0?'':'color:var(--green);')}">${na?'Not applicable (PT off on record)':(e.pt>0?'₹'+e.pt:'Exempt')}</td></tr>`;
+  }).join('');
   $('sp-pt').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--navy);">Professional Tax — ${moName}</div>
     <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1E40AF;margin-bottom:14px;">Maharashtra PT: above ₹7,500 salary → ₹200/month, ₹300 in February. Women employees with Gross ≤ ₹25,000/month are exempt.</div>
