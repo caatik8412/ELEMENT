@@ -1015,17 +1015,17 @@ function buildPayslipPreview(){
   // Same engine as the salary sheet: saved per-period days, paid leave, extra-day pay.
   const ep=empForPeriod(e,period);
   const r=getSalRow(ep);
-  const {present,wdays,paidLeave,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,empESIC,ptExempt,pt,net}=r;
+  const {wdays,paidLeave,leaves,lateMarks,payable,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,empESIC,ptExempt,pt,net}=r;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   $('ps-preview').innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--navy);">${esc(e.name)} — ${MN[parseInt(mo)-1]} ${yr}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px;">Earnings</div>
-        <div class="ps-modal-row"><span>Basic (${present}${paidLeave?'+'+paidLeave+' PL':''}/${wdays} days)</span><span>${fmt(basic)}</span></div>
+        <div class="ps-modal-row"><span>Basic (${+payable.toFixed(2)} of ${wdays} days)</span><span>${fmt(basic)}</span></div>
         <div class="ps-modal-row"><span>HRA</span><span>${fmt(hra)}</span></div>
         <div class="ps-modal-row"><span>Special Allowance</span><span>${fmt(special)}</span></div>
-        ${extraPay>0?`<div class="ps-modal-row"><span>Extra Days Pay (${extraDays} day${extraDays===1?'':'s'})</span><span>${fmt(extraPay)}</span></div>`:''}
+        ${extraPay>0?`<div class="ps-modal-row"><span>Pay for days beyond full month</span><span>${fmt(extraPay)}</span></div>`:''}
         <div class="ps-modal-row"><span>Gross</span><span>${fmt(gross)}</span></div>
       </div>
       <div>
@@ -1057,7 +1057,7 @@ function doPrintPayslip(){
   const period=yr+'-'+mo;
   const ep=empForPeriod(e,period);
   const r=getSalRow(ep);
-  const {present,wdays,paidLeave,lop,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,emplPF,empESIC,emplESIC,ptExempt,pt,net,totalDed}=r;
+  const {wdays,paidLeave,leaves,lateMarks,lateDed,payable,lop,basic,hra,special,gross,extraPay,extraDays,pfApplicable,empPF,emplPF,empESIC,emplESIC,ptExempt,pt,net,totalDed}=r;
   const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const moName=MN[parseInt(mo)-1]+' '+yr;
   const pa=$('printArea');pa.style.display='block';
@@ -1076,10 +1076,10 @@ function doPrintPayslip(){
         <div class="ps-row"><b>PAN:</b>${esc(e.pan)||'—'}</div>
         <div class="ps-row"><b>UAN:</b>${esc(e.uan)||'—'}</div>
         <div class="ps-row"><b>ESIC No:</b>${esc(e.esicNo)||'—'}</div>
-        <div class="ps-row"><b>Working Days:</b>${wdays}</div>
-        <div class="ps-row"><b>Days Present:</b>${present}</div>
-        <div class="ps-row"><b>Paid Leave:</b>${paidLeave}</div>
-        <div class="ps-row"><b>Loss of Pay (LOP):</b>${lop}${extraDays>0?' &nbsp;|&nbsp; <b style="min-width:0;">Extra Days:</b> '+extraDays:''}</div>
+        <div class="ps-row"><b>Total Days:</b>${wdays}</div>
+        <div class="ps-row"><b>Leaves Taken:</b>${leaves}${lateMarks?' &nbsp;|&nbsp; <b style="min-width:0;">Late Marks:</b> '+lateMarks+' ('+(+lateDed.toFixed(2))+' day)':''}</div>
+        <div class="ps-row"><b>Paid Leave:</b>${paidLeave}${extraDays?' &nbsp;|&nbsp; <b style="min-width:0;">Extra Days:</b> '+extraDays:''}</div>
+        <div class="ps-row"><b>Payable Days:</b>${+payable.toFixed(2)}</div>
       </div>
     </div>
     <div class="ps-body">
@@ -1088,7 +1088,7 @@ function doPrintPayslip(){
         <div class="ps-item"><span>Basic Salary</span><span>${fmt2(basic)}</span></div>
         <div class="ps-item"><span>House Rent Allowance</span><span>${fmt2(hra)}</span></div>
         <div class="ps-item"><span>Special Allowance</span><span>${fmt2(special)}</span></div>
-        ${extraPay>0?`<div class="ps-item"><span>Extra Days Pay (${extraDays} day${extraDays===1?'':'s'})</span><span>${fmt2(extraPay)}</span></div>`:''}
+        ${extraPay>0?`<div class="ps-item"><span>Pay for days beyond full month</span><span>${fmt2(extraPay)}</span></div>`:''}
         <div class="ps-item total"><span>Gross Earnings</span><span>${fmt2(gross)}</span></div>
       </div>
       <div class="ps-ded">
@@ -1130,10 +1130,17 @@ function normPeriod(p){
 function empForPeriod(e,period){
   const rec=salaryRecords.find(r=>String(r.empId)===String(e.id)&&normPeriod(r.period)===period);
   const wdays=rec&&rec.wdays?parseFloat(rec.wdays):(e.wdays||26);
-  const pv=rec?parseFloat(rec.present):NaN;
-  const present=isNaN(pv)?wdays:pv;
+  const has=v=>v!==undefined&&v!==null&&v!=='';
   const paidLeave=rec?(parseFloat(rec.paidLeave)||0):0;
-  return{...e,period,present,wdays,paidLeave,rec:rec||null};
+  const extraDays=rec&&has(rec.extraDays)?(parseFloat(rec.extraDays)||0):0;
+  const lateMarks=rec&&has(rec.lateMarks)?(parseFloat(rec.lateMarks)||0):0;
+  // Records saved before leaves were tracked only have "present" — derive leaves from it.
+  let leaves=0;
+  if(rec){
+    if(has(rec.leaves))leaves=parseFloat(rec.leaves)||0;
+    else{const pv=parseFloat(rec.present);leaves=isNaN(pv)?0:Math.max(0,wdays-pv);}
+  }
+  return{...e,period,wdays,leaves,lateMarks,paidLeave,extraDays,rec:rec||null};
 }
 
 // ── MONTHLY SALARY SHEET ──
@@ -1156,25 +1163,31 @@ async function loadSalarySheet(){
   const bw=$('sal-bulk-days-wrap');if(bw)bw.style.display='flex';
 }
 
+// Mirrors the company's "Salary Working" sheet (TEEPL-Working):
+//   Per Day        = Total Salary ÷ Days in month
+//   Late deduction = Late Marks ÷ 6   (6 late marks = 1 day)
+//   Payable Days   = Days − Leaves Taken − Late deduction + Paid Leave + Extra Days
+//   Pay            = Per Day × Payable Days   (can exceed full salary when Payable > Days)
+// Leaves Taken includes half-days (0.5 each). Paid Leave is added back against leaves taken.
+// PF is on Basic pro-rated for min(Payable, Days)/Days (capped at the ₹25,000 ceiling);
+// ESIC is on the full pay including extra days.
+const LATE_MARKS_PER_DAY=6;
 function getSalRow(e){
   const wdays=e.wdays||26;
-  const pv=parseFloat(e.present);
-  const present=isNaN(pv)?wdays:pv;              // 0 is a valid value (e.g. all paid leave)
-  const paidLeave=parseFloat(e.paidLeave)||0;     // paid leave days — paid in full, not LOP
-  const payable=present+paidLeave;
-  const ratio=Math.min(payable/wdays,1);
+  const leaves=parseFloat(e.leaves)||0;
+  const lateMarks=parseFloat(e.lateMarks)||0;
+  const lateDed=lateMarks/LATE_MARKS_PER_DAY;
+  const paidLeave=parseFloat(e.paidLeave)||0;
+  const extraDays=parseFloat(e.extraDays)||0;
+  const payable=Math.max(0,wdays-leaves-lateDed+paidLeave+extraDays);
+  const ratio=Math.min(payable/wdays,1);           // basic/HRA/PF never exceed the monthly structure
   const baseGross=Math.round(e.gross*ratio);
   const basic=Math.round(e.basic*ratio);
   const hra=Math.round(e.hra*ratio);
   const special=Math.max(0,baseGross-basic-hra);
-  // Worked beyond this period's working days (e.g. called in on a holiday/Sunday) — paid
-  // extra at the employee's standard per-day Gross rate, on top of the full-month Gross.
-  // Not run through Basic/HRA/PF/ESIC — treated as a straight extra-day payout, added to
-  // Gross and Net only.
-  const extraDays=Math.max(0,present-wdays);
-  const perDayGross=e.gross/wdays;
-  const extraPay=Math.round(perDayGross*extraDays);
-  const gross=baseGross+extraPay;
+  const gross=Math.round(e.gross/wdays*payable);   // per day × payable days (uncapped)
+  const extraPay=Math.max(0,gross-baseGross);      // pay for days beyond the full month
+  const present=wdays-leaves-lateDed;              // days attended after leaves & late marks
   const pfBase=Math.min(basic,25000);
   const pfApplicable=e.gross<=25000||e.pfApp!=='No';
   const empPF=pfApplicable?Math.round(pfBase*0.12):0;
@@ -1191,7 +1204,7 @@ function getSalRow(e){
   const totalDed=empPF+empESIC+pt;
   const net=gross-totalDed;
   const lop=Math.max(0,wdays-payable);
-  return{gross,baseGross,extraDays,extraPay,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop,present,paidLeave,wdays,pfBase};
+  return{gross,baseGross,extraDays,extraPay,basic,hra,special,empPF,emplPF,empESIC,emplESIC,pt,ptExempt,pfApplicable,totalDed,net,lop,present,paidLeave,leaves,lateMarks,lateDed,payable,wdays,pfBase};
 }
 
 function renderSalarySheet(period){
@@ -1203,7 +1216,7 @@ function renderSalarySheet(period){
   html+=`<div class="card"><div class="ch"><h3>Salary Sheet — ${moName}</h3></div><div class="tw"><table class="salary-table">
     <thead><tr>
       <th>#</th><th>Employee</th>
-      <th>Days</th><th>Present</th><th>Paid Leave</th><th>LOP</th><th>Extra</th>
+      <th>Days</th><th>Leaves</th><th>Late Marks</th><th>Paid Leave</th><th>Extra Days</th><th>Payable Days</th>
       <th>Basic</th><th>HRA</th><th>Special</th><th>Gross</th>
       <th>Emp PF</th><th>Emp ESIC</th><th>PT</th><th>Tot. Ded.</th>
       <th>Net Pay</th><th>Empl. PF</th><th>Empl. ESIC</th><th>Employer Cost</th><th>Payslip</th>
@@ -1216,10 +1229,11 @@ function renderSalarySheet(period){
       <td style="color:var(--muted);">${esc(e.empId)||i+1}</td>
       <td><strong>${esc(e.name)}</strong>${tdsApplicable(e.gross)?' <span style="font-size:10px;color:#92400E;background:#FEF3C7;border-radius:4px;padding:1px 5px;" title="Annual salary above ₹12.75 lakh — TDS applicable. Ask your CA whether to deduct.">⚠ TDS applicable</span>':''}</td>
       <td><input type="number" value="${e.wdays}" min="1" max="31" step="0.5" onchange="updateWdays(${i},this.value)" style="width:50px;" title="Working days this period — editable, since it changes month to month."></td>
-      <td><input type="number" value="${e.present}" min="0" step="0.5" onchange="updatePresent(${i},this.value)" style="width:55px;" title="Days present — can exceed Working Days (paid extra at the daily rate)."></td>
-      <td><input type="number" value="${e.paidLeave||0}" min="0" step="0.5" onchange="updatePaidLeave(${i},this.value)" style="width:50px;" title="Paid leave days — paid in full, not counted as LOP."></td>
-      <td style="text-align:center;color:var(--red);">${r.lop>0?r.lop:'—'}</td>
-      <td style="text-align:center;color:var(--green);" title="${r.extraDays>0?r.extraDays+' day(s) beyond Working Days, @ '+fmt(Math.round(e.gross/e.wdays))+'/day = '+fmt(r.extraPay):''}">${r.extraDays>0?'+'+fmt(r.extraPay):'—'}</td>
+      <td><input type="number" value="${e.leaves||0}" min="0" step="0.5" onchange="updateDayField(${i},'leaves',this.value)" style="width:52px;" title="Leaves taken (half-day = 0.5)."></td>
+      <td><input type="number" value="${e.lateMarks||0}" min="0" step="1" onchange="updateDayField(${i},'lateMarks',this.value)" style="width:52px;" title="Late marks — every ${LATE_MARKS_PER_DAY} late marks deduct 1 day."></td>
+      <td><input type="number" value="${e.paidLeave||0}" min="0" step="0.5" onchange="updateDayField(${i},'paidLeave',this.value)" style="width:52px;" title="Paid leave days — added back against leaves taken."></td>
+      <td><input type="number" value="${e.extraDays||0}" min="0" step="0.5" onchange="updateDayField(${i},'extraDays',this.value)" style="width:52px;" title="Extra days worked (holidays/Sundays/long hours) — paid at the daily rate."></td>
+      <td style="text-align:center;font-weight:600;${r.payable>e.wdays?'color:var(--green);':(r.payable<e.wdays?'color:var(--red);':'')}" title="${e.wdays} days − ${r.leaves} leaves − ${(r.lateDed).toFixed(2)} late-mark days + ${r.paidLeave} paid leave + ${r.extraDays} extra">${+r.payable.toFixed(2)}</td>
       <td>${fmt(r.basic)}</td><td>${fmt(r.hra)}</td><td>${fmt(r.special)}</td>
       <td><strong>${fmt(r.gross)}</strong></td>
       <td>${fmt(r.empPF)}</td><td>${fmt(r.empESIC)}</td><td>${fmt(r.pt)}</td>
@@ -1231,7 +1245,7 @@ function renderSalarySheet(period){
     </tr>`;
   });
   html+=`<tr class="total-row">
-    <td colspan="2">TOTAL</td><td></td><td></td><td></td><td></td><td></td>
+    <td colspan="2">TOTAL</td><td></td><td></td><td></td><td></td><td></td><td></td>
     <td></td><td></td><td></td>
     <td>${fmt(totGross)}</td>
     <td>${fmt(totEmpPF)}</td><td>${fmt(totEmpESIC)}</td><td>${fmt(totPT)}</td>
@@ -1243,16 +1257,9 @@ function renderSalarySheet(period){
   $('salary-sheet-wrap').innerHTML=html;
 }
 
-function updatePresent(idx,val){
+function updateDayField(idx,field,val){
   const v=parseFloat(val);
-  currentSalaryData[idx].present=isNaN(v)?currentSalaryData[idx].wdays:v;
-  const period=currentSalaryData[idx].period;
-  renderSalarySheet(period);
-}
-
-function updatePaidLeave(idx,val){
-  const v=parseFloat(val);
-  currentSalaryData[idx].paidLeave=isNaN(v)||v<0?0:v;
+  currentSalaryData[idx][field]=isNaN(v)||v<0?0:v;
   renderSalarySheet(currentSalaryData[idx].period);
 }
 
@@ -1284,7 +1291,7 @@ async function saveSalarySheet(){
     await apiPost('saveSalaryRecord',{
       id:e.id+'_'+e.period,
       empId:e.id,empName:e.name,period:e.period,
-      present:e.present,wdays:e.wdays,paidLeave:e.paidLeave||0,
+      present:+r.payable.toFixed(2),wdays:e.wdays,paidLeave:e.paidLeave||0,leaves:e.leaves||0,lateMarks:e.lateMarks||0,extraDays:e.extraDays||0,
       gross:r.gross,basic:r.basic,hra:r.hra,special:r.special,
       empPF:r.empPF,emplPF:r.emplPF,empESIC:r.empESIC,emplESIC:r.emplESIC,
       pt:r.pt,netPay:r.net,
@@ -1299,10 +1306,10 @@ async function saveSalarySheet(){
 
 function exportSalaryCSV(){
   if(!currentSalaryData.length){toast('Load salary sheet first','err');return;}
-  let csv='Emp ID,Name,Designation,Working Days,Days Present,Paid Leave,LOP,Extra Day Pay,Basic,HRA,Special,Gross,Emp PF,Emp ESIC,PT,Total Ded,Net Pay,Employer PF,Employer ESIC,Employer Cost\n';
+  let csv='Emp ID,Name,Designation,Total Days,Leaves Taken,Late Marks,Paid Leave,Extra Days,Payable Days,Basic,HRA,Special,Gross,Emp PF,Emp ESIC,PT,Total Ded,Net Pay,Employer PF,Employer ESIC,Employer Cost\n';
   currentSalaryData.forEach(e=>{
     const r=getSalRow(e);
-    csv+=[e.empId,'"'+e.name+'"','"'+(e.designation||'')+'"',e.wdays,e.present,e.paidLeave||0,r.lop,r.extraPay,r.basic,r.hra,r.special,r.gross,r.empPF,r.empESIC,r.pt,r.totalDed,r.net,r.emplPF,r.emplESIC,r.gross+r.emplPF+r.emplESIC].join(',')+'\n';
+    csv+=[e.empId,'"'+e.name+'"','"'+(e.designation||'')+'"',e.wdays,e.leaves||0,e.lateMarks||0,e.paidLeave||0,e.extraDays||0,+r.payable.toFixed(2),r.basic,r.hra,r.special,r.gross,r.empPF,r.empESIC,r.pt,r.totalDed,r.net,r.emplPF,r.emplESIC,r.gross+r.emplPF+r.emplESIC].join(',')+'\n';
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -1352,7 +1359,7 @@ function exportESICCsv(){
   const missing=list.filter(e=>!e.esicNo).map(e=>e.name);
   let csv='IP Number,IP Name,No of Days for which wages paid/payable,Total Monthly Wages,Reason Code for Zero workings days(numeric only; provide 0 for all other reasons),Last Working Day\n';
   list.forEach(e=>{
-    const days=Math.round((e.present||0)+(e.paidLeave||0)+(e.extraDays||0));
+    const days=Math.round(e.payable||0);
     csv+=[e.esicNo||'','"'+String(e.name).replace(/"/g,'""')+'"',days,Math.round(e.gross),days===0?'':0,''].join(',')+'\n';
   });
   const a=document.createElement('a');
