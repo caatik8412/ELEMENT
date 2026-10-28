@@ -709,24 +709,19 @@ async function initApp(){
   const today=new Date().toISOString().split('T')[0];
   sv('i-date',today);sv('rdate',today);sv('pu-date',today);sv('pdate',today);
   initYrSels();
-  const [settD,ctrD,clD,invD,osD,rcptD,purD,ppD,cnD]=await Promise.all([
-    apiGet('getSettings'),apiGet('getCounters'),apiGet('getClients'),
-    apiGet('getInvoices'),apiGet('getOutstanding'),apiGet('getReceipts'),
-    apiGet('getPurchases'),apiGet('getPurchasePayments'),apiGet('getCreditNotes'),
-  ]);
+  // Single bundled request instead of 9 separate ones — see getInitData() in the backend.
+  const initData=await apiGet('getInitData');
+  const settD=initData?.settings,ctrD=initData?.counters,clD=initData?.clients,
+        invD=initData?.invoices,osD=initData?.outstanding,rcptD=initData?.receipts,
+        purD=initData?.purchases,ppD=initData?.purchasePayments,cnD=initData?.creditNotes;
   if(settD){Object.assign(_settings,settD);Object.assign(FIRM,settD);loadSettingsUI();}
   if(ctrD)Object.assign(counters,ctrD);
   clients=(clD||[]).map(c=>({...c}));
-  invoices=(invD||[]).map(i=>{
-    const items=(i.items||[]).map(it=>({
-      ...it,
-      qty:     parseFloat(it.qty)     || 1,
-      rate:    parseFloat(it.rate)    || 0,
-      gst:     parseFloat(it.gst)     || 0,
-      taxable: parseFloat(it.taxable) || 0,
-      gstAmt:  parseFloat(it.gstAmt)  || 0,
-    }));
-    return{...i,
+  // NOTE: invoices no longer arrive with .items pre-populated — line-item detail for a
+  // specific invoice is fetched on demand by getInvItems() the first time it's needed
+  // (opening for edit, or printing). Leave .items unset here (not []) so that helper can
+  // tell "not fetched yet" apart from "genuinely has zero items".
+  invoices=(invD||[]).map(i=>({...i,
       date:         normD(i.date),
       taxable:      parseFloat(i.taxable)  || 0,
       cgst:         parseFloat(i.cgst)     || 0,
@@ -741,9 +736,7 @@ async function initApp(){
       clientEmail:   i.clientEmail   || '',
       emailId:       i.emailId       || '',
       isIGST:        i.isIGST===true||i.isIGST==='TRUE'||i.isIGST==='true',
-      items,
-    };
-  });
+  }));
   outstanding=(osD||[]).map(o=>({...o,date:normD(o.date),invoiceAmt:parseFloat(o.invoiceAmt)||0,received:parseFloat(o.received)||0,balance:parseFloat(o.balance)||0}));
   receipts=(rcptD||[]).map(r=>({...r,date:normD(r.date),amount:parseFloat(r.amount)||0}));
   purchases=(purD||[]).map(p=>({...p,date:normD(p.date),taxable:parseFloat(p.taxable)||0,cgst:parseFloat(p.cgst)||0,sgst:parseFloat(p.sgst)||0,igst:parseFloat(p.igst)||0,total:parseFloat(p.total)||0,received:parseFloat(p.received)||0,balance:parseFloat(p.balance)||0}));
@@ -799,7 +792,30 @@ function openInv(type){
 }
 function refreshInvNo(){sv('i-no',nextNo(gv('i-type')));}
 
-function editInvoice(id){
+// Fetches an invoice's line items on first access and caches them on the invoice object,
+// so re-opening or re-printing the same invoice doesn't hit the backend again. See the
+// getInvoiceItems() note in the backend for why this is on-demand rather than bulk-loaded.
+async function getInvItems(inv){
+  if(inv.items&&inv.items.length)return inv.items;
+  const res=await apiGet('getInvoiceItems',{invoiceId:inv.id});
+  if(!Array.isArray(res)){
+    // Backend unreachable / old backend without getInvoiceItems — don't cache, tell the user.
+    toast('Could not load line items — update the Apps Script backend (element_backend_v4.gs) and redeploy','err');
+    return [];
+  }
+  const raw=res;
+  inv.items=raw.map(it=>({
+    ...it,
+    qty:     parseFloat(it.qty)     || 1,
+    rate:    parseFloat(it.rate)    || 0,
+    gst:     parseFloat(it.gst)     || 0,
+    taxable: parseFloat(it.taxable) || 0,
+    gstAmt:  parseFloat(it.gstAmt)  || 0,
+  }));
+  return inv.items;
+}
+
+async function editInvoice(id){
   const inv=invoices.find(i=>i.id===id);if(!inv)return;
   editInvId=id;
   $('inv-title').textContent='Edit — '+inv.invoiceNo;
@@ -810,7 +826,8 @@ function editInvoice(id){
   sv('i-pst',inv.payStatus==='Cancelled'?'Unpaid':inv.payStatus||'Unpaid');
   sv('i-notes',inv.notes||'');sv('i-wor',inv.workOrderRef||'');
   sv('i-wodate',inv.workOrderDate||'');
-  $('li-body').innerHTML='';(inv.items||[]).forEach(it=>addLI(it));recalcInv();
+  const items=await getInvItems(inv);
+  $('li-body').innerHTML='';items.forEach(it=>addLI(it));recalcInv();
   $('inv-save-btn').disabled=false;openModal('invModal');
 }
 
@@ -865,8 +882,9 @@ async function confirmCancelInvoice(){
 
 // ── PRINT ──
 function printCurInv(){pendingPrint=getInvData();$('sig-ref').textContent=pendingPrint.invoiceNo;openModal('sigModal');}
-function printInvById(id){
+async function printInvById(id){
   const inv=invoices.find(i=>i.id===id);if(!inv)return;
+  await getInvItems(inv);
   // Recalculate totals from line items to ensure accuracy
   const isI=inv.isIGST||inv.pos==='Other';
   let tax=0,cg=0,sg=0,ig=0;
